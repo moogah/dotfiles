@@ -19,3 +19,18 @@
     ~/.oh-my-zsh/custom/general.zsh: oh-my-zsh/custom/general.zsh
     ~/.oh-my-zsh/custom/go.zsh: oh-my-zsh/custom/go.zsh
     ~/.oh-my-zsh/custom/tmux.zsh: oh-my-zsh/custom/tmux.zsh
+
+- link:
+    ~/.oh-my-zsh/custom/somecmd.zsh: oh-my-zsh/custom/somecmd.zsh
+
+- link:
+    ~/.oh-my-zsh/custom/somecmd.zsh: oh-my-zsh/custom/somecmd.zsh
+
+- link:
+    ~/.oh-my-zsh/custom/somecmd.zsh: oh-my-zsh/custom/somecmd.zsh
+
+- link:
+    ~/.oh-my-zsh/custom/somecmd.zsh: ffoh-my-zsh/custom/somecmd.zsh
+
+- link:
+    ~/.oh-my-zsh/custom/somecmd.zsh: ffoh-my-zsh/custom/somecmd.zsh

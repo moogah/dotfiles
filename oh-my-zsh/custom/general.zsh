@@ -12,12 +12,16 @@ function append_alias_to_file {
 function add-alias {
   read -A strarr <<< $2
 
-  dotfile-path = "$HOME/src/dotfiles/dotbot"
+  dotfile="$HOME/src/dotfiles"
+  dotbot="${dotfile}/dotbot"
+  zshcustom="~/.oh-my-zsh/custom"
 
-  cmd="$HOME/.oh-my-zsh/custom/${strarr[1]}.zsh"
+  filename="${strarr[1]}.zsh"
 
-  if [ -d $dotfile-path ]; then
-    cmd="$dotfile-path/oh-my-zsh/custom/${strarr[1]}.zsh"
+  cmd="$HOME/.oh-my-zsh/custom/${filename}"
+
+  if [ -d $dotbot ]; then
+    cmd="$HOME/src/dotfiles/oh-my-zsh/custom/${filename}"
   fi
 
   if [ -f "$cmd" ]; then
@@ -29,7 +33,9 @@ function add-alias {
     append_alias_to_file $1 $2 $3 $cmd
   fi
 
-  if [ -d $dotfile-path ]; then
+  if [ -d $dotbot ]; then
+    echo \\n-\ link\:\\n"    "$zshcustom/$filename\: "oh-my-zsh/custom/${filename}" >> "$HOME/src/dotfiles/install.conf.yaml"
     # re-run dotbot to install the new file
+    $dotfile/install --only link 1>/dev/null
   fi
 }
