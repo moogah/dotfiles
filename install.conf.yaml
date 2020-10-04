@@ -1,0 +1,21 @@
+- defaults:
+    link:
+      relink: true
+      force: true
+
+- clean: ['~']
+
+- link:
+    ~/.zshrc: zshrc
+    ~/.tmux.conf: tmux.conf
+    ~/.kube/config: kube/config
+    "~/Library/Application Support/Code/User/settings.json": 
+      path: vscode/settings.json
+    "~/Library/Application Support/Code/User/keybindings.json": 
+      path: vscode/keybindings.json
+    ~/.oh-my-zsh/custom/git.zsh: oh-my-zsh/custom/git.zsh
+    ~/.oh-my-zsh/custom/docker-compose.zsh: oh-my-zsh/custom/docker-compose.zsh
+    ~/.oh-my-zsh/custom/docker.zsh: oh-my-zsh/custom/docker.zsh
+    ~/.oh-my-zsh/custom/general.zsh: oh-my-zsh/custom/general.zsh
+    ~/.oh-my-zsh/custom/go.zsh: oh-my-zsh/custom/go.zsh
+    ~/.oh-my-zsh/custom/tmux.zsh: oh-my-zsh/custom/tmux.zsh

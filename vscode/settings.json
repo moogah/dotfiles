@@ -1,0 +1,27 @@
+{
+    "workbench.colorTheme": "Min Dark",
+    "workbench.tree.indent": 14,
+    "sshfs.configs": [
+        {
+            "host": "norns.local",
+            "label": "norns",
+            "name": "norns",
+            "password": "sleep",
+            "root": "/home/we",
+            "username": "we"
+        }
+    ],
+    "editor.tabSize": 2,
+    "editor.renderWhitespace": "selection",
+    "window.zoomLevel": 1,
+    "git.enableSmartCommit": true,
+    "explorer.confirmDelete": false,
+    "explorer.confirmDragAndDrop": false,
+    "python.testing.unittestArgs": [
+        "-v",
+        "-s",
+        ".",
+        "-p"
+    ],
+    "diffEditor.ignoreTrimWhitespace": false
+}
