@@ -34,3 +34,12 @@
 
 - link:
     ~/.oh-my-zsh/custom/somecmd.zsh: ffoh-my-zsh/custom/somecmd.zsh
+
+- link:
+    ~/.oh-my-zsh/custom/virsh.zsh: oh-my-zsh/custom/virsh.zsh
+
+- link:
+    ~/.oh-my-zsh/custom/terraform.zsh: oh-my-zsh/custom/terraform.zsh
+
+- link:
+    ~/.oh-my-zsh/custom/terraform.zsh: oh-my-zsh/custom/terraform.zsh
