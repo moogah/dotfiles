@@ -1,0 +1,7 @@
+# don't check host keys on .local
+Host *.local
+    IdentityFile ~/.ssh/id_rsa
+    UseKeychain yes
+    User jefarr
+    StrictHostKeyChecking no
+    UserKnownHostsFile /dev/null ~/.ssh/known_hosts
