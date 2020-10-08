@@ -23,5 +23,6 @@
         ".",
         "-p"
     ],
-    "diffEditor.ignoreTrimWhitespace": false
+    "diffEditor.ignoreTrimWhitespace": false,
+    "go.formatTool": "goimports"
 }

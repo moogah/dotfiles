@@ -5,7 +5,7 @@ alias gd="git diff"
 
 alias ga="git add"
 alias gc="git commit -am"
-alias gp="git push origin $(git rev-parse --abbrev-ref HEAD)"
+alias gp="git push"
 
 alias gcm="git checkout master"
 alias gcp="git checkout -"

@@ -5,3 +5,10 @@ Host *.local
     User jefarr
     StrictHostKeyChecking no
     UserKnownHostsFile /dev/null ~/.ssh/known_hosts
+
+Host 192.168.*
+    IdentityFile ~/.ssh/id_rsa
+    UseKeychain yes
+    User jefarr
+    StrictHostKeyChecking no
+    UserKnownHostsFile /dev/null ~/.ssh/known_hosts
