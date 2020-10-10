@@ -24,5 +24,10 @@
         "-p"
     ],
     "diffEditor.ignoreTrimWhitespace": false,
-    "go.formatTool": "goimports"
+    "go.formatTool": "goimports",
+    "python.pythonPath": "/usr/local/bin/python3",
+    "editor.formatOnSave": true,
+    "editor.formatOnSaveMode": "modifications",
+    "editor.parameterHints.enabled": false,
+    "gitlens.currentLine.enabled": false
 }
