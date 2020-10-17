@@ -12,3 +12,7 @@ Host 192.168.*
     User jefarr
     StrictHostKeyChecking no
     UserKnownHostsFile /dev/null ~/.ssh/known_hosts
+
+Host norns.local
+    IdentityFile ~/.ssh/id_rsa
+    User we

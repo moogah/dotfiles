@@ -13,6 +13,8 @@
     ],
     "editor.tabSize": 2,
     "editor.renderWhitespace": "selection",
+    "editor.autoClosingQuotes": "never",
+    //"editor.autoSurround": "never",
     "window.zoomLevel": 1,
     "git.enableSmartCommit": true,
     "explorer.confirmDelete": false,

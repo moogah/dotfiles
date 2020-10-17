@@ -111,14 +111,10 @@ source $ZSH/oh-my-zsh.sh
 alias ll="ls -alh"
 alias timemachine-activity="sudo fs_usage -w |grep -i backupd |grep -i fsctl"
 
+setopt auto_pushd
 
+# Power Level 10k Configuration
 source /usr/local/opt/powerlevel10k/powerlevel10k.zsh-theme
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
-
-# Load helm autocompletions
-source ~/helm.zsh
-
-# Istio config
-export PATH="$PATH:/Users/jefffarr/src/kubernetes-the-hard-way/istio-1.5.2/bin"

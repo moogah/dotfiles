@@ -7,6 +7,7 @@
 
 - link:
     ~/.ssh/config: ssh/config
+    ~/.vimrc: vimrc
     ~/.zshrc: zshrc
     ~/.tmux.conf: tmux.conf
     ~/.kube/config: kube/config
@@ -20,12 +21,8 @@
     ~/.oh-my-zsh/custom/general.zsh: oh-my-zsh/custom/general.zsh
     ~/.oh-my-zsh/custom/go.zsh: oh-my-zsh/custom/go.zsh
     ~/.oh-my-zsh/custom/tmux.zsh: oh-my-zsh/custom/tmux.zsh
-
-- link:
     ~/.oh-my-zsh/custom/virsh.zsh: oh-my-zsh/custom/virsh.zsh
-
-- link:
     ~/.oh-my-zsh/custom/terraform.zsh: oh-my-zsh/custom/terraform.zsh
+    ~/.oh-my-zsh/custom/helm.zsh: oh-my-zsh/custom/helm.zsh
+    ~/.oh-my-zsh/custom/istio.zsh: oh-my-zsh/custom/istio.zsh
 
-- link:
-    ~/.oh-my-zsh/custom/terraform.zsh: oh-my-zsh/custom/terraform.zsh
