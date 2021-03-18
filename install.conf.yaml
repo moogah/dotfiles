@@ -8,6 +8,8 @@
 - link:
     ~/.ssh/config: ssh/config
     ~/.vimrc: vimrc
+    ~/.config/nvim/init.vim: init.vim
+    ~/.config/nvim/coc-settings.json: coc-settings.json
     ~/.zshrc: zshrc
     ~/.tmux.conf: tmux.conf
     ~/.kube/config: kube/config
@@ -26,3 +28,54 @@
     ~/.oh-my-zsh/custom/helm.zsh: oh-my-zsh/custom/helm.zsh
     ~/.oh-my-zsh/custom/istio.zsh: oh-my-zsh/custom/istio.zsh
 
+
+- link:
+    ~/.oh-my-zsh/custom/docker.zsh: oh-my-zsh/custom/docker.zsh
+
+- link:
+    ~/.oh-my-zsh/custom/docker.zsh: oh-my-zsh/custom/docker.zsh
+
+- link:
+    ~/.oh-my-zsh/custom/docker.zsh: oh-my-zsh/custom/docker.zsh
+
+- link:
+    ~/.oh-my-zsh/custom/kubectl.zsh: oh-my-zsh/custom/kubectl.zsh
+
+- link:
+    ~/.oh-my-zsh/custom/kubectl.zsh: oh-my-zsh/custom/kubectl.zsh
+
+- link:
+    ~/.oh-my-zsh/custom/kubectl.zsh: oh-my-zsh/custom/kubectl.zsh
+
+- link:
+    ~/.oh-my-zsh/custom/kubectl.zsh: oh-my-zsh/custom/kubectl.zsh
+
+- link:
+    ~/.oh-my-zsh/custom/kubectl.zsh: oh-my-zsh/custom/kubectl.zsh
+
+- link:
+    ~/.oh-my-zsh/custom/kubectl.zsh: oh-my-zsh/custom/kubectl.zsh
+
+- link:
+    ~/.oh-my-zsh/custom/kubectl.zsh: oh-my-zsh/custom/kubectl.zsh
+
+- link:
+    ~/.oh-my-zsh/custom/kubectl.zsh: oh-my-zsh/custom/kubectl.zsh
+
+- link:
+    ~/.oh-my-zsh/custom/python3.zsh: oh-my-zsh/custom/python3.zsh
+
+- link:
+    ~/.oh-my-zsh/custom/p3.zsh: oh-my-zsh/custom/p3.zsh
+
+- link:
+    ~/.oh-my-zsh/custom/python3.zsh: oh-my-zsh/custom/python3.zsh
+
+- link:
+    ~/.oh-my-zsh/custom/python3.zsh: oh-my-zsh/custom/python3.zsh
+
+- link:
+    ~/.oh-my-zsh/custom/p3.zsh: oh-my-zsh/custom/p3.zsh
+
+- link:
+    ~/.oh-my-zsh/custom/p3m.zsh: oh-my-zsh/custom/p3m.zsh

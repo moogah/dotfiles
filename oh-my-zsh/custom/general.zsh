@@ -4,6 +4,8 @@ export CDPATH=.:~:~/src:~/src/norns_apps:~/src/homelab
 # create a 4 word password ie: soviethamsterpastaberry 
 alias xkcdpass='shuf -n4 /usr/share/dict/words | tr -d '\n''
 
+alias rmf='rm -rf'
+
 function append_alias_to_file {
   echo \\n\# $3\\nalias $1=\"$2\" >> $cmd
   source $cmd
