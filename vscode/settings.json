@@ -28,17 +28,17 @@
     "diffEditor.ignoreTrimWhitespace": false,
     "go.formatTool": "goimports",
     "python.pythonPath": "/usr/local/bin/python3",
-    "editor.formatOnSave": true,
     "editor.formatOnSaveMode": "modifications",
     "editor.parameterHints.enabled": false,
     "gitlens.currentLine.enabled": false,
     "files.insertFinalNewline": true,
     "files.trimFinalNewlines": true,
-    "workbench.editorAssociations": [
-        {
-            "viewType": "jupyter.notebook.ipynb",
-            "filenamePattern": "*.ipynb"
-        }
-    ],
-    "editor.renderLineHighlight": "gutter"
+    "workbench.editorAssociations": {
+        "*.ipynb": "jupyter.notebook.ipynb"
+    },
+    "editor.renderLineHighlight": "gutter",
+    "files.trimTrailingWhitespace": true,
+    "vim.useSystemClipboard": true,
+    "vva.trustedDomain": true,
+    "python.defaultInterpreterPath": "/usr/local/bin/python3"
 }

@@ -36,30 +36,6 @@
     ~/.oh-my-zsh/custom/docker.zsh: oh-my-zsh/custom/docker.zsh
 
 - link:
-    ~/.oh-my-zsh/custom/docker.zsh: oh-my-zsh/custom/docker.zsh
-
-- link:
-    ~/.oh-my-zsh/custom/kubectl.zsh: oh-my-zsh/custom/kubectl.zsh
-
-- link:
-    ~/.oh-my-zsh/custom/kubectl.zsh: oh-my-zsh/custom/kubectl.zsh
-
-- link:
-    ~/.oh-my-zsh/custom/kubectl.zsh: oh-my-zsh/custom/kubectl.zsh
-
-- link:
-    ~/.oh-my-zsh/custom/kubectl.zsh: oh-my-zsh/custom/kubectl.zsh
-
-- link:
-    ~/.oh-my-zsh/custom/kubectl.zsh: oh-my-zsh/custom/kubectl.zsh
-
-- link:
-    ~/.oh-my-zsh/custom/kubectl.zsh: oh-my-zsh/custom/kubectl.zsh
-
-- link:
-    ~/.oh-my-zsh/custom/kubectl.zsh: oh-my-zsh/custom/kubectl.zsh
-
-- link:
     ~/.oh-my-zsh/custom/kubectl.zsh: oh-my-zsh/custom/kubectl.zsh
 
 - link:
@@ -79,3 +55,6 @@
 
 - link:
     ~/.oh-my-zsh/custom/p3m.zsh: oh-my-zsh/custom/p3m.zsh
+
+- link:
+    ~/.oh-my-zsh/custom/docker-compose.zsh: oh-my-zsh/custom/docker-compose.zsh
