@@ -27,6 +27,7 @@
     ~/.oh-my-zsh/custom/terraform.zsh: oh-my-zsh/custom/terraform.zsh
     ~/.oh-my-zsh/custom/helm.zsh: oh-my-zsh/custom/helm.zsh
     ~/.oh-my-zsh/custom/istio.zsh: oh-my-zsh/custom/istio.zsh
+    ~/.emacs.d/init.el: emacs/init.el
 
 
 - link:
@@ -58,3 +59,6 @@
 
 - link:
     ~/.oh-my-zsh/custom/docker-compose.zsh: oh-my-zsh/custom/docker-compose.zsh
+
+- link:
+    ~/.oh-my-zsh/custom/ansible.zsh: oh-my-zsh/custom/ansible.zsh

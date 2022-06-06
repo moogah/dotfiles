@@ -40,5 +40,9 @@
     "files.trimTrailingWhitespace": true,
     "vim.useSystemClipboard": true,
     "vva.trustedDomain": true,
-    "python.defaultInterpreterPath": "/usr/local/bin/python3"
+    "python.defaultInterpreterPath": "/usr/local/bin/python3",
+    "redhat.telemetry.enabled": true,
+    "gitlens.codeLens.authors.enabled": false,
+    "gitlens.codeLens.recentChange.enabled": false,
+    "editor.accessibilitySupport": "off"
 }

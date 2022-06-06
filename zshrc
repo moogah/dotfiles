@@ -77,8 +77,9 @@ ZSH_THEME="powerlevel10k/powerlevel10k"
 # Add wisely, as too many plugins slow down shell startup.
 plugins=(
   git
-  osx
+  macos
   docker
+  zsh-vi-mode
 )
 
 source $ZSH/oh-my-zsh.sh
@@ -110,6 +111,37 @@ source $ZSH/oh-my-zsh.sh
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 alias ll="ls -alh"
 alias timemachine-activity="sudo fs_usage -w |grep -i backupd |grep -i fsctl"
+function timemachine-logs() {
+    echo teest
+    printf '\e[3J' && log show --predicate 'subsystem == "com.apple.TimeMachine"' --info --last 6h | grep -F 'eMac' | grep -Fv 'etat' | awk -F']' '{print substr($0,1,19), $NF}'
+}
+
+function ytdl() {
+  #youtube-dl "https://www.youtube.com/watch?v=$1" -o - | ffmpeg -i pipe: $2.wav
+  youtube-dl "www.youtube.com/watch?v=$1" -x --write-thumbnail --audio-format wav --audio-quality 0 --write-description -o "~/Music/Samples/Vintage Obscura/%(title)s - %(id)s.%(ext)s"
+  # use id3ed to tag
+}
+
+function syncmpclive() {
+  rsync --verbose --progress --partial --ignore-existing --exclude '*.webp' --exclude '*.description' --exclude '*.alp' --copy-links --recursive Music/Samples/MPCLive /Volumes/MPCLive2
+}
+
+function mpclivediff() {
+  rsync --exclude '*.description' --exclude '*.alp' --copy-links --dry-run --verbose Music/Samples/MPCLive /Volumes/MPCLive2
+}
+
+function open-rx9() {
+  open -a "iZotope RX9 Audio Editor" "$@"
+}
+
+function ot-convert() {
+  # @TODO: reduce volume to prevent clipping, then normalize
+  find . -type f -name '*.wav' | xargs -t -I % sh -c 'sox "%" -b 16 outfile.wav; mv outfile.wav "%"'
+}
+
+function clean-known-hosts() {
+  sed -i '' -e '"$@"d' ~/.ssh/known_hosts
+}
 
 setopt auto_pushd
 

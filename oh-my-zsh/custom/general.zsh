@@ -11,6 +11,7 @@ function append_alias_to_file {
   source $cmd
 }
 
+# Usage add-alias <alias name> <command>
 function add-alias {
   read -A strarr <<< $2
 
