@@ -46,13 +46,17 @@
 (use-package magit
   :straight t)
 
+;; set default frame size
+(add-to-list 'default-frame-alist '(height . 74))
+(add-to-list 'default-frame-alist '(width . 120))
+
 (global-linum-mode t)
 ;; Show line number in the mode line.
 (line-number-mode 1)
 ;; Show column number in the mode line.
 (column-number-mode 1)
 
-(load-theme 'vs-light t)
+(load-theme 'material t)
 
 
 ;; ===============================================================================
@@ -73,7 +77,7 @@
 (use-package py-autopep8
   :straight t
   :config
-  (require 'py-autopep8)
+  ;;(require 'py-autopep8)
   (add-hook 'python-mode-hook 'py-autopep8-mode))
 (use-package blacken
   :straight t)
@@ -82,8 +86,13 @@
 ;; Configure Ido https://www.emacswiki.org/emacs/InteractivelyDoThings
 ;; ===============================================================================
 
-(require 'ido)
-(ido-mode 0)
+(use-package ido-vertical-mode
+  :straight t
+  :config
+  (require 'ido)
+  (ido-mode t)
+  (ido-vertical-mode t)
+  (setq ido-vertical-define-keys 'C-n-and-C-p-only))
 
 ;; ===============================================================================
 ;; Configs from pragmaticemacs.wordpress.com Org-Mode TODO
