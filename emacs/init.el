@@ -2,12 +2,12 @@
 ;; configure MELPA
 ;; ===============================================================================
 
-(require 'package)
-(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
+;(require 'package)
+;(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 ;; Comment/uncomment this line to enable MELPA Stable if desired.  See `package-archive-priorities`
 ;; and `package-pinned-packages`. Most users will not need or want to do this.
 ;;(add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/") t)
-(package-initialize)
+;(package-initialize)
 
 ;; ===============================================================================
 ;; configure straight.el
@@ -26,34 +26,25 @@
       (eval-print-last-sexp)))
   (load bootstrap-file nil 'nomessage))
 
-;; ===============================================================================
-;; Install Packages https://wikemacs.org/wiki/Package.el
-;; ===============================================================================
+(setq package-enable-at-startup nil)
 
-(require 'cl-lib)
-
-(defvar my-packages
-  '(better-defaults
-    elpy
-    flycheck
-    py-autopep8
-    blacken
-    magit
-    monokai-theme
-    vs-light-theme
-    material-theme
-    org-roam
-    )
-  "A list of packages to ensure are installed at launch")
-
-(mapc #'(lambda (package)
-	  (unless (package-installed-p package)
-	    (package-install package)))
-      my-packages)
+;; install use-package
+(straight-use-package 'use-package)
 
 ;; ===============================================================================
 ;; Basic Configuration
 ;; ===============================================================================
+
+(use-package better-defaults
+  :straight t)
+(use-package monokai-theme
+  :straight t)
+(use-package material-theme
+  :straight t)
+(use-package vs-light-theme
+  :straight t)
+(use-package magit
+  :straight t)
 
 (global-linum-mode t)
 ;; Show line number in the mode line.
@@ -68,27 +59,31 @@
 ;; python development config
 ;; ===============================================================================
 
-;; enable elpy
-(elpy-enable)
-
-;; disable indentation highlights
-(setq elpy-modules (delq 'elpy-module-highlight-indentation elpy-modules))
-
-;; Enable flycheck
-(when (require 'flycheck nil t)
-  (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
-  (add-hook 'elpy-mode-hook 'flycheck-mode))
-
-;; Enable autopep8
-(require 'py-autopep8)
-(add-hook 'python-mode-hook 'py-autopep8-mode)
+(use-package elpy
+  :straight t
+  :config
+  (elpy-enable)
+  (setq elpy-modules (delq 'elpy-module-highlight-indentation elpy-modules)))
+(use-package flycheck
+  :straight t
+  :config
+  (when (require 'flycheck nil t)
+    (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
+    (add-hook 'elpy-mode-hook 'flycheck-mode)))
+(use-package py-autopep8
+  :straight t
+  :config
+  (require 'py-autopep8)
+  (add-hook 'python-mode-hook 'py-autopep8-mode))
+(use-package blacken
+  :straight t)
 
 ;; ===============================================================================
 ;; Configure Ido https://www.emacswiki.org/emacs/InteractivelyDoThings
 ;; ===============================================================================
 
 (require 'ido)
-(ido-mode t)
+(ido-mode 0)
 
 ;; ===============================================================================
 ;; Configs from pragmaticemacs.wordpress.com Org-Mode TODO
