@@ -77,7 +77,6 @@
 (use-package py-autopep8
   :straight t
   :config
-  ;;(require 'py-autopep8)
   (add-hook 'python-mode-hook 'py-autopep8-mode))
 (use-package blacken
   :straight t)
@@ -92,7 +91,18 @@
   (require 'ido)
   (ido-mode t)
   (ido-vertical-mode t)
-  (setq ido-vertical-define-keys 'C-n-and-C-p-only))
+  (setq ido-vertical-define-keys 'C-n-and-C-p-only)
+  (use-package flx-ido
+    :straight t)
+  (ido-everywhere 1)
+  (flx-ido-mode 1)
+  (setq ido-enable-flex-matching t)
+  (setq ido-use-faces nil)
+  (use-package smex
+    :straight t)
+  (global-set-key (kbd "M-x") 'smex)
+  (global-set-key (kbd "M-X") 'smex-major-mode-commands)
+  (global-set-key (kbd "C-c C-c M-x") 'execute-extended-command))
 
 ;; ===============================================================================
 ;; Configs from pragmaticemacs.wordpress.com Org-Mode TODO
