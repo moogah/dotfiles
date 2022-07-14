@@ -105,6 +105,17 @@
   (global-set-key (kbd "C-c C-c M-x") 'execute-extended-command))
 
 ;; ===============================================================================
+;; configure evil mode
+;; ===============================================================================
+
+(use-package evil
+  :straight t
+  :config
+  (evil-mode 1)
+  (use-package goto-chg
+    :straight t))
+
+;; ===============================================================================
 ;; Configs from pragmaticemacs.wordpress.com Org-Mode TODO
 ;; ===============================================================================
 
