@@ -50,13 +50,17 @@
 (add-to-list 'default-frame-alist '(height . 74))
 (add-to-list 'default-frame-alist '(width . 120))
 
-(global-linum-mode t)
 ;; Show line number in the mode line.
 (line-number-mode 1)
 ;; Show column number in the mode line.
 (column-number-mode 1)
 
 (load-theme 'material t)
+
+;; there's a bunch of options for this and I don't understand them all
+;; https://stackoverflow.com/questions/6874516/relative-line-numbers-in-emas
+(global-display-line-numbers-mode)
+(setq display-line-numbers-type 'relative)
 
 
 ;; ===============================================================================
@@ -79,6 +83,18 @@
   :config
   (add-hook 'python-mode-hook 'py-autopep8-mode))
 (use-package blacken
+  :straight t)
+
+;; ===============================================================================
+;; configure Docker
+;; ===============================================================================
+
+;; https://github.com/Silex/docker.el
+(use-package docker
+  :straight t
+  :bind ("C-c d" . docker))
+
+(use-package dockerfile-mode
   :straight t)
 
 ;; ===============================================================================
