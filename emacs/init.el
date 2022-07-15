@@ -159,6 +159,8 @@
   :straight t
   :config
   (evil-mode 1)
+  (add-hook 'org-capture-mode-hook 'evil-insert-state) ;; use insert by default for org todos
+  (add-hook 'git-commit-mode-hook 'evil-insert-state) ;; use insert mode by default for magit commits
   (use-package goto-chg
     :straight t))
 
