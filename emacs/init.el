@@ -52,15 +52,14 @@
 (add-to-list 'default-frame-alist '(height . 74))
 (add-to-list 'default-frame-alist '(width . 120))
 
-;; Show line number in the mode line.
-(line-number-mode 1)
-;; Show column number in the mode line.
-(column-number-mode 1)
-
+;; set default theme
 (load-theme 'material t)
 
-;; there's a bunch of options for this and I don't understand them all
-;; https://stackoverflow.com/questions/6874516/relative-line-numbers-in-emas
+;; Show line and column number in the mode line.
+(line-number-mode 1)
+(column-number-mode 1)
+
+;; set relative line number
 (global-display-line-numbers-mode)
 (setq display-line-numbers-type 'relative)
 
@@ -159,7 +158,7 @@
   :straight t
   :config
   (evil-mode 1)
-  (add-hook 'org-capture-mode-hook 'evil-insert-state) ;; use insert by default for org todos
+  (add-hook 'org-capture-mode-hook 'evil-insert-state) ;; use insert by default for org capture
   (add-hook 'git-commit-mode-hook 'evil-insert-state) ;; use insert mode by default for magit commits
   (use-package goto-chg
     :straight t))
