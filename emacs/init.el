@@ -48,7 +48,7 @@
   :config
   (setq magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1))
 
-;; set default frame size
+; set default frame size
 (add-to-list 'default-frame-alist '(height . 74))
 (add-to-list 'default-frame-alist '(width . 120))
 
@@ -70,6 +70,19 @@
 ;; Configure common modes like yaml, json etc
 (use-package yaml-mode
   :straight t)
+
+;; ===============================================================================
+;; configure dired
+;; ===============================================================================
+
+(use-package dired-subtree
+  :straight t
+  :config
+  (when (string= system-type "darwin")
+    (setq dired-use-ls-dired nil))
+  (bind-keys :map dired-mode-map
+             ("i" . dired-subtree-insert)
+             (";" . dired-subtree-remove)))
 
 ;; ===============================================================================
 ;; python development config
@@ -162,6 +175,19 @@
   (add-hook 'git-commit-mode-hook 'evil-insert-state) ;; use insert mode by default for magit commits
   (use-package goto-chg
     :straight t))
+
+;; ===============================================================================
+;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+;; Org Mode Configuration
+;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+;; ===============================================================================
+
+;; ===============================================================================
+;; Configure Org-Roam
+;; ===============================================================================
+
+(use-package org-roam
+  :straight t)
 
 ;; ===============================================================================
 ;; Configs from pragmaticemacs.wordpress.com Org-Mode TODO
