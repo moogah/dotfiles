@@ -44,7 +44,9 @@
 (use-package vs-light-theme
   :straight t)
 (use-package magit
-  :straight t)
+  :straight t
+  :config
+  (setq magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1))
 
 ;; set default frame size
 (add-to-list 'default-frame-alist '(height . 74))
@@ -62,6 +64,13 @@
 (global-display-line-numbers-mode)
 (setq display-line-numbers-type 'relative)
 
+;; enable saving state after closing emacs
+(desktop-save-mode)
+(desktop-read)
+
+;; Configure common modes like yaml, json etc
+(use-package yaml-mode
+  :straight t)
 
 ;; ===============================================================================
 ;; python development config
@@ -95,6 +104,28 @@
   :bind ("C-c d" . docker))
 
 (use-package dockerfile-mode
+  :straight t)
+
+;; ===============================================================================
+;; Configure Ansible
+;; ===============================================================================
+
+;; ansible uses the yaml-mode configured in the general section
+
+;; ===============================================================================
+;; Configure Terraform
+;; ===============================================================================
+
+(use-package terraform-mode
+  :straight t
+  :config
+  (add-hook 'terraform-mode-hook #'terraform-format-on-save-mode))
+
+;; ===============================================================================
+;; Configure Language Server Protocol (LSP)
+;; ===============================================================================
+
+(use-package lsp-mode
   :straight t)
 
 ;; ===============================================================================
