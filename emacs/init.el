@@ -39,23 +39,39 @@
 
 (use-package better-defaults
   :straight t)
+
+;; ===============================================================================
+;; install themes
+;; ===============================================================================
+
 (use-package monokai-theme
   :straight t)
 (use-package material-theme
   :straight t)
 (use-package vs-light-theme
   :straight t)
+(use-package color-theme-sanityinc-tomorrow
+  :straight t)
+
+;; set default theme
+(load-theme 'sanityinc-tomorrow-bright t)
+
+;; set font size to 14pt for my aging eyes
+(setq default-frame-alist '((font . "Menlo-14")))
+
+;; ===============================================================================
+;; install magit
+;; ===============================================================================
+
 (use-package magit
   :straight t
   :config
   (setq magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1))
 
 ; set default frame size
-(add-to-list 'default-frame-alist '(height . 74))
-(add-to-list 'default-frame-alist '(width . 120))
+(add-to-list 'default-frame-alist '(height . 65))
+(add-to-list 'default-frame-alist '(width . 106))
 
-;; set default theme
-(load-theme 'material t)
 
 ;; Show line and column number in the mode line.
 (line-number-mode 1)
@@ -87,6 +103,14 @@
              (";" . dired-subtree-remove))) ;; @TODO this doesn't work?
 
 ;; ===============================================================================
+;; Window and Frame manager configs
+;; ===============================================================================
+
+(use-package eyebrowse
+  :straight t)
+;; (eyebrowse-mode t)
+
+;; ===============================================================================
 ;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ;; Org Mode Configuration
 ;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -98,6 +122,10 @@
 
 (use-package org-roam
   :straight t
+  :custom
+  :bind (("C-c n f" . org-roam-node-find)
+         ("C-c n i" . org-roam-node-insert)
+         ("C-c n c" . org-roam-capture))
   :config
   (setq org-roam-directory (file-truename "~/org-roam"))
   (setq find-file-visit-truename t)
