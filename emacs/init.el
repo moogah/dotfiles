@@ -40,6 +40,9 @@
 (use-package better-defaults
   :straight t)
 
+;; automatically update buffers when their state-on-disk changes
+(global-auto-revert-mode 1)
+
 ;; ===============================================================================
 ;; install themes
 ;; ===============================================================================
@@ -102,6 +105,10 @@
              ("i" . dired-subtree-insert)
              (";" . dired-subtree-remove))) ;; @TODO this doesn't work?
 
+
+;; automatically update dired buffers when state-on-disk changes
+(add-hook 'dired-mode-hook 'auto-revert-mode)
+
 ;; ===============================================================================
 ;; Window and Frame manager configs
 ;; ===============================================================================
@@ -109,6 +116,19 @@
 (use-package eyebrowse
   :straight t)
 ;; (eyebrowse-mode t)
+
+;; ===============================================================================
+;; Shell Configurations
+;; ===============================================================================
+
+;;https://pragmaticemacs.wordpress.com/2017/11/20/pop-up-a-quick-shell-with-shell-pop/
+(use-package shell-pop
+  :straight t
+  :config
+  (setq shell-pop-shell-type (quote ("ansi-term" "*ansi-term*" (lambda nil (ansi-term shell-pop-term-shell)))))
+  (setq shell-pop-term-shell "/bin/zsh")
+  ;; need to do this manually or not picked up by `shell-pop'
+  (shell-pop--set-shell-type 'shell-pop-shell-type shell-pop-shell-type))
 
 ;; ===============================================================================
 ;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -122,7 +142,6 @@
 
 (use-package org-roam
   :straight t
-  :custom
   :bind (("C-c n f" . org-roam-node-find)
          ("C-c n i" . org-roam-node-insert)
          ("C-c n c" . org-roam-capture))
