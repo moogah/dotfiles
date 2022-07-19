@@ -120,27 +120,13 @@
 ;;(eyebrowse-mode)
 
 ;; ===============================================================================
-;; Shell Configurations
-;; ===============================================================================
-
-;;https://pragmaticemacs.wordpress.com/2017/11/20/pop-up-a-quick-shell-with-shell-pop/
-(use-package shell-pop
-  :straight t
-  :config
-  (setq shell-pop-shell-type (quote ("ansi-term" "*ansi-term*" (lambda nil (ansi-term shell-pop-term-shell)))))
-  (setq shell-pop-term-shell "/bin/zsh")
-  ;; need to do this manually or not picked up by `shell-pop'
-  (shell-pop--set-shell-type 'shell-pop-shell-type shell-pop-shell-type))
-
-
-;; ===============================================================================
 ;; Configure Company Auto-Completion
 ;; ===============================================================================
 
 (use-package company
-  :straight t)
-
-;; TODO this doesn't enable on load..
+  :straight t
+  :config
+  (company-mode))
 
 ;; I had to run M-x company-files once and give emacs permission to access files before completion for filenames work
 
