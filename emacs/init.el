@@ -245,24 +245,41 @@
 ;; Configure Ido https://www.emacswiki.org/emacs/InteractivelyDoThings
 ;; ===============================================================================
 
-(use-package ido-vertical-mode
-  :straight t
-  :config
-  (require 'ido)
-  (ido-mode t)
-  (ido-vertical-mode t)
-  (setq ido-vertical-define-keys 'C-n-and-C-p-only)
-  (use-package flx-ido
-    :straight t)
-  (ido-everywhere 1)
-  (flx-ido-mode 1)
-  (setq ido-enable-flex-matching t)
-  (setq ido-use-faces nil)
-  (use-package smex
-    :straight t)
-  (global-set-key (kbd "M-x") 'smex)
-  (global-set-key (kbd "M-X") 'smex-major-mode-commands)
-  (global-set-key (kbd "C-c C-c M-x") 'execute-extended-command))
+(defun enable-ido ()
+  (use-package ido-vertical-mode
+    :straight t
+    :config
+    (require 'ido)
+    (ido-mode t)
+    (ido-vertical-mode t)
+    (setq ido-vertical-define-keys 'C-n-and-C-p-only)
+    (use-package flx-ido
+      :straight t)
+    (ido-everywhere 1)
+    (flx-ido-mode 1)
+    (setq ido-enable-flex-matching t)
+    (setq ido-use-faces nil)
+    (use-package smex
+      :straight t)
+    (global-set-key (kbd "M-x") 'smex)
+    (global-set-key (kbd "M-X") 'smex-major-mode-commands)
+    (global-set-key (kbd "C-c C-c M-x") 'execute-extended-command))
+)
+
+
+;; ===============================================================================
+;; Configure counsel, ivy, swiper
+;; ===============================================================================
+
+(defun enable-ivy ()
+  (use-package counsel
+    :straight t
+    :config
+    (ido-mode 0)
+    (ivy-mode 1)
+    (setq ivy-use-virtual-buffers t)
+    (setq ivy-count-format "(%d/%d) ")))
+(enable-ivy)
 
 ;; ===============================================================================
 ;; configure evil mode
