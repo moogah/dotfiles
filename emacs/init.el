@@ -55,9 +55,11 @@
   :straight t)
 (use-package color-theme-sanityinc-tomorrow
   :straight t)
+(use-package cyberpunk-theme
+  :straight t)
 
 ;; set default theme
-(load-theme 'sanityinc-tomorrow-bright t)
+(load-theme 'cyberpunk t)
 
 ;; set font size to 14pt for my aging eyes
 (setq default-frame-alist '((font . "Menlo-14")))
@@ -86,7 +88,7 @@
 
 ;; enable saving state after closing emacs
 (desktop-save-mode)
-(desktop-read)
+;;(desktop-read)
 
 ;; Configure common modes like yaml, json etc
 (use-package yaml-mode
@@ -113,9 +115,9 @@
 ;; Window and Frame manager configs
 ;; ===============================================================================
 
-(use-package eyebrowse
-  :straight t)
-;; (eyebrowse-mode t)
+;;(use-package eyebrowse
+;;  :straight t)
+;;(eyebrowse-mode)
 
 ;; ===============================================================================
 ;; Shell Configurations
@@ -130,23 +132,15 @@
   ;; need to do this manually or not picked up by `shell-pop'
   (shell-pop--set-shell-type 'shell-pop-shell-type shell-pop-shell-type))
 
-;; ===============================================================================
-;; Configure Hyperbole
-;; ===============================================================================
-
-(use-package hyperbole
-  :straight t
-  :config
-  (hyperbole-mode t))
 
 ;; ===============================================================================
 ;; Configure Company Auto-Completion
 ;; ===============================================================================
 
 (use-package company
-  :straight t
-  :config
-  (company-mode t))
+  :straight t)
+
+;; TODO this doesn't enable on load..
 
 ;; I had to run M-x company-files once and give emacs permission to access files before completion for filenames work
 
@@ -198,6 +192,15 @@
 (setq org-capture-templates
       '(("t" "todo" entry (file+headline "~/todo.org" "Tasks")
 	 "* TODO [#A] %?" :empty-lines-before 1)))
+
+;; ===============================================================================
+;; Configure Hyperbole
+;; ===============================================================================
+
+(use-package hyperbole
+  :straight t
+  :config
+  (hyperbole-mode 1))
 
 ;; ===============================================================================
 ;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -258,8 +261,8 @@
 ;; Configure Language Server Protocol (LSP)
 ;; ===============================================================================
 
-(use-package lsp-mode
-  :straight t)
+;;(use-package lsp-mode
+;;  :straight t)
 
 ;; ===============================================================================
 ;; Configure Ido https://www.emacswiki.org/emacs/InteractivelyDoThings
@@ -308,6 +311,10 @@
 (use-package evil
   :straight t
   :config
+  (use-package evil-surround
+    :straight t
+    :config
+    (global-evil-surround-mode 1))
   (evil-mode 1)
   (add-hook 'org-capture-mode-hook 'evil-insert-state) ;; use insert by default for org capture
   (add-hook 'git-commit-mode-hook 'evil-insert-state) ;; use insert mode by default for magit commits
