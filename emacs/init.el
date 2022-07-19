@@ -131,6 +131,26 @@
   (shell-pop--set-shell-type 'shell-pop-shell-type shell-pop-shell-type))
 
 ;; ===============================================================================
+;; Configure Hyperbole
+;; ===============================================================================
+
+(use-package hyperbole
+  :straight t
+  :config
+  (hyperbole-mode t))
+
+;; ===============================================================================
+;; Configure Company Auto-Completion
+;; ===============================================================================
+
+(use-package company
+  :straight t
+  :config
+  (company-mode t))
+
+;; I had to run M-x company-files once and give emacs permission to access files before completion for filenames work
+
+;; ===============================================================================
 ;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ;; Org Mode Configuration
 ;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -177,7 +197,7 @@
 (define-key global-map (kbd "C-c c") 'org-capture)
 (setq org-capture-templates
       '(("t" "todo" entry (file+headline "~/todo.org" "Tasks")
-	 "* TODO [#A] %?")))
+	 "* TODO [#A] %?" :empty-lines-before 1)))
 
 ;; ===============================================================================
 ;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
