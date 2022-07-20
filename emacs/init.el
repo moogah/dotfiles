@@ -126,9 +126,11 @@
    '(:left (sort file-time " " file-size symlink) :right (omit yank index)))
   (dirvish-attributes '(all-the-icons file-size collapse subtree-state vc-state git-msg))
   :config
+  (when (string= system-type "darwin")
+    (setq dired-use-ls-dired nil))
   (use-package all-the-icons
     :straight t) ;; vs-code icons is an alternative
-  (dirvish-peek-mode)
+  ;;(dirvish-peek-mode)
   (setq dired-dwim-target t)
   (setq delete-by-moving-to-trash t)
   ;;(setq dired-mouse-drag-files t)                   ; added in emacs 29
@@ -136,7 +138,7 @@
   (setq dired-listed-switches
         "-l --almost-all --human-readable --time-style=long-iso --group-directories-first --no-group")
   :bind
-  (("C-x d" . dirvish)
+  (("C-x d" . dired-jump)
    ("C-c f" . dirvish-fd)
    :map dirvish-mode-map
    ("b" . dirvish-bookmark-jump)))
