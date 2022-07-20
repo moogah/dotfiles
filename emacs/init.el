@@ -186,6 +186,17 @@
   (org-roam-db-autosync-mode))
 
 ;; ===============================================================================
+;; Org Export Engine Config
+;; ===============================================================================
+
+;; Jira Export
+(use-package ox-jira
+  :straight t
+  :config
+  (setq org-export-copy-to-kill-ring 'if-interactive))
+
+
+;; ===============================================================================
 ;; Configs from pragmaticemacs.wordpress.com Org-Mode TODO
 ;; ===============================================================================
 
