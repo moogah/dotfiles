@@ -124,11 +124,11 @@
      ("s" "~/src/"    "Source Code")))
   (dirvish-mode-line-format
    '(:left (sort file-time " " file-size symlink) :right (omit yank index)))
-  (dirvish-attributes '(all-the-icons file-size collapse subtree-state vc-state git-msg))
+  (dirvish-attributes '(vscode-icon file-size collapse subtree-state vc-state))
   :config
   (when (string= system-type "darwin")
     (setq dired-use-ls-dired nil))
-  (use-package all-the-icons
+  (use-package vscode-icon
     :straight t) ;; vs-code icons is an alternative
   ;;(dirvish-peek-mode)
   (setq dired-dwim-target t)
