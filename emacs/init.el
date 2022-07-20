@@ -44,6 +44,26 @@
 (global-auto-revert-mode 1)
 
 ;; ===============================================================================
+;; Configure default frame size, line num display, desktop mode
+;; ===============================================================================
+
+; set default frame size
+(add-to-list 'default-frame-alist '(height . 65))
+(add-to-list 'default-frame-alist '(width . 106))
+
+;; Show line and column number in the mode line.
+(line-number-mode 1)
+(column-number-mode 1)
+
+;; set relative line number
+(global-display-line-numbers-mode)
+(setq display-line-numbers-type 'relative)
+
+;; enable saving state after closing emacs
+(desktop-save-mode)
+;;(desktop-read) ;; this breaks org-capture
+
+;; ===============================================================================
 ;; install themes
 ;; ===============================================================================
 
@@ -57,9 +77,12 @@
   :straight t)
 (use-package cyberpunk-theme
   :straight t)
+(use-package afternoon-theme
+  :straight t)
 
 ;; set default theme
-(load-theme 'cyberpunk t)
+(load-theme 'afternoon t)
+(set-background-color "black")
 
 ;; set font size to 14pt for my aging eyes
 (setq default-frame-alist '((font . "Menlo-14")))
@@ -73,22 +96,6 @@
   :config
   (setq magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1))
 
-; set default frame size
-(add-to-list 'default-frame-alist '(height . 65))
-(add-to-list 'default-frame-alist '(width . 106))
-
-
-;; Show line and column number in the mode line.
-(line-number-mode 1)
-(column-number-mode 1)
-
-;; set relative line number
-(global-display-line-numbers-mode)
-(setq display-line-numbers-type 'relative)
-
-;; enable saving state after closing emacs
-(desktop-save-mode)
-;;(desktop-read)
 
 ;; Configure common modes like yaml, json etc
 (use-package yaml-mode
@@ -98,15 +105,41 @@
 ;; configure dired
 ;; ===============================================================================
 
-(use-package dired-subtree
-  :straight t
-  :config
-  (when (string= system-type "darwin")
-    (setq dired-use-ls-dired nil))
-  (bind-keys :map dired-mode-map
-             ("i" . dired-subtree-insert)
-             (";" . dired-subtree-remove))) ;; @TODO this doesn't work?
+;; (use-package dired-subtree
+;;   :straight t
+;;   :config
+;;   (when (string= system-type "darwin")
+;;     (setq dired-use-ls-dired nil))
+;;   (bind-keys :map dired-mode-map
+;;              ("i" . dired-subtree-insert)
+;;              (";" . dired-subtree-remove))) ;; @TODO this doesn't work?
 
+(use-package dirvish
+  :straight t
+  :init
+  (dirvish-override-dired-mode)
+  :custom
+  (dirvish-bookmark-entries
+   '(("h" "~/"        "Home")
+     ("s" "~/src/"    "Source Code")))
+  (dirvish-mode-line-format
+   '(:left (sort file-time " " file-size symlink) :right (omit yank index)))
+  (dirvish-attributes '(all-the-icons file-size collapse subtree-state vc-state git-msg))
+  :config
+  (use-package all-the-icons
+    :straight t) ;; vs-code icons is an alternative
+  (dirvish-peek-mode)
+  (setq dired-dwim-target t)
+  (setq delete-by-moving-to-trash t)
+  ;;(setq dired-mouse-drag-files t)                   ; added in emacs 29
+  ;;(setq mouse-drag-and-drop-region-cross-program t) ; added in emacs 29
+  (setq dired-listed-switches
+        "-l --almost-all --human-readable --time-style=long-iso --group-directories-first --no-group")
+  :bind
+  (("C-x d" . dirvish)
+   ("C-c f" . dirvish-fd)
+   :map dirvish-mode-map
+   ("b" . dirvish-bookmark-jump)))
 
 ;; automatically update dired buffers when state-on-disk changes
 (add-hook 'dired-mode-hook 'auto-revert-mode)
@@ -182,6 +215,8 @@
 ;; ===============================================================================
 ;; Configure Hyperbole
 ;; ===============================================================================
+
+;; Running this before configuring capture templates would break the capture
 
 (use-package hyperbole
   :straight t
@@ -275,7 +310,6 @@
     (global-set-key (kbd "C-c C-c M-x") 'execute-extended-command))
 )
 
-
 ;; ===============================================================================
 ;; Configure counsel, ivy, swiper
 ;; ===============================================================================
@@ -286,6 +320,8 @@
     :config
     (ido-mode 0)
     (ivy-mode 1)
+    (setq ivy-wrap t)
+    (global-set-key (kbd "C-s") 'swiper-isearch)
     (setq ivy-use-virtual-buffers t)
     (setq ivy-count-format "(%d/%d) ")))
 (enable-ivy)
