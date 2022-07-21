@@ -131,6 +131,7 @@
   (use-package vscode-icon
     :straight t) ;; vs-code icons is an alternative
   ;;(dirvish-peek-mode)
+  (setq dirvish-vscode-icon-size 18)
   (setq dired-dwim-target t)
   (setq delete-by-moving-to-trash t)
   ;;(setq dired-mouse-drag-files t)                   ; added in emacs 29
@@ -161,7 +162,8 @@
 (use-package company
   :straight t
   :config
-  (company-mode))
+  (company-mode)
+  (add-hook 'after-init-hook 'global-company-mode))
 
 ;; I had to run M-x company-files once and give emacs permission to access files before completion for filenames work
 
