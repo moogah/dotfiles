@@ -145,11 +145,11 @@
   (("C-x d" . dired-jump)
    ("C-c f" . dirvish-fd)
    :map dirvish-mode-map
-   ;;("h"   . dired-up-directory)
-   ("h"   . (lambda () (interactive) (find-alternate-file "..")))
+   ("h"   . dired-up-directory)
+   ;;("h"   . (lambda () (interactive) (find-alternate-file "..")))
    ("j"   . dired-next-line)
    ("k"   . dired-previous-line)
-   ("l"   . dired-find-alternate-file)
+   ("l"   . dired-find-file)
    ("i"   . wdired-change-to-wdired-mode)
    ("."   . dired-omit-mode)
    ("b"   . dirvish-bookmark-jump)
@@ -253,6 +253,15 @@
 (setq org-capture-templates
       '(("t" "todo" entry (file+headline "~/todo.org" "Tasks")
 	 "* TODO [#A] %?" :empty-lines-before 1)))
+
+
+
+;; ===============================================================================
+;; Configure PDF Tools
+;; ===============================================================================
+;; this seems complicated... https://pdftools.wiki/f10e9d94
+;; https://emacs.stackexchange.com/questions/13314/install-pdf-tools-on-emacs-macosx
+
 
 ;; ===============================================================================
 ;; Configure Hyperbole
