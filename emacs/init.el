@@ -386,10 +386,16 @@
   (use-package counsel
     :straight t
     :config
+    (use-package ivy-rich
+      :straight t
+      :config
+      (ivy-rich-mode 1)
+      (setcdr (assq t ivy-format-functions-alist) #'ivy-format-function-line))
     (ido-mode 0)
     (ivy-mode 1)
     (setq ivy-wrap t)
     (global-set-key (kbd "C-s") 'swiper-isearch)
+    (global-set-key (kbd "C-x C-f") 'counsel-find-file)
     (setq ivy-use-virtual-buffers t)
     (setq ivy-count-format "(%d/%d) ")))
 (enable-ivy)
