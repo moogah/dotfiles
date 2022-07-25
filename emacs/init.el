@@ -79,6 +79,8 @@
   :straight t)
 (use-package afternoon-theme
   :straight t)
+(use-package nano-theme
+  :straight (nano-theme :type git :host github :repo "rougier/nano-theme"))
 
 ;; set default theme
 (load-theme 'afternoon t)
@@ -133,17 +135,43 @@
     :config
     (setq dirvish-vscode-icon-size 18)) ;; vs-code icons is an alternative
   ;;(dirvish-peek-mode)
+  (setq dirvish-vscode-icon-size 18)
   (setq dired-dwim-target t)
   (setq delete-by-moving-to-trash t)
   ;;(setq dired-mouse-drag-files t)                   ; added in emacs 29
   ;;(setq mouse-drag-and-drop-region-cross-program t) ; added in emacs 29
   (setq dired-listed-switches
         "-l --almost-all --human-readable --time-style=long-iso --group-directories-first --no-group")
+  (setf dired-kill-when-opening-new-dired-buffer t) ;; https://stackoverflow.com/questions/1839313/how-do-i-stop-emacs-dired-mode-from-opening-so-many-buffers
   :bind
   (("C-x d" . dired-jump)
    ("C-c f" . dirvish-fd)
    :map dirvish-mode-map
-   ("b" . dirvish-bookmark-jump)))
+   ("h"   . dired-up-directory)
+   ;;("h"   . (lambda () (interactive) (find-alternate-file "..")))
+   ("j"   . dired-next-line)
+   ("k"   . dired-previous-line)
+   ("l"   . dired-find-file)
+   ("i"   . wdired-change-to-wdired-mode)
+   ("."   . dired-omit-mode)
+   ("b"   . dirvish-bookmark-jump)
+   ("f"   . dirvish-file-info-menu)
+   ("y"   . dirvish-yank-menu)
+   ("N"   . dirvish-narrow)
+   ("^"   . dirvish-history-last)
+   ("H"   . dirvish-history-jump) ; remapped `describe-mode'
+   ("s"   . dirvish-quicksort)    ; remapped `dired-sort-toggle-or-edit'
+   ("TAB" . dirvish-subtree-toggle)
+   ("M-n" . dirvish-history-go-forward)
+   ("M-p" . dirvish-history-go-backward)
+   ("M-l" . dirvish-ls-switches-menu)
+   ("M-m" . dirvish-mark-menu)
+   ("M-f" . dirvish-toggle-fullscreen)
+   ("M-s" . dirvish-setup-menu)
+   ("M-e" . dirvish-emerge-menu)
+   ("M-j" . dirvish-fd-jump)))
+
+(put 'dired-find-alternate-file 'disabled nil)
 
 ;; automatically update dired buffers when state-on-disk changes
 (add-hook 'dired-mode-hook 'auto-revert-mode)
@@ -163,9 +191,23 @@
 (use-package company
   :straight t
   :config
-  (company-mode))
+  (company-mode)
+  (add-hook 'after-init-hook 'global-company-mode))
 
 ;; I had to run M-x company-files once and give emacs permission to access files before completion for filenames work
+
+;; ===============================================================================
+;; Configure Hydra
+;; ===============================================================================
+
+(use-package hydra
+  :straight t)
+
+;; Minibuffer display doesn't appear until pressing g or l once
+(defhydra hydra-zoom (global-map "<f2>")
+  "zoom"
+  ("g" text-scale-increase "in")
+  ("l" text-scale-decrease "out"))
 
 ;; ===============================================================================
 ;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -228,6 +270,13 @@
 	 "* TODO [#A] %?" :empty-lines-before 1)))
 
 ;; ===============================================================================
+;; Configure PDF Tools
+;; ===============================================================================
+;; this seems complicated... https://pdftools.wiki/f10e9d94
+;; https://emacs.stackexchange.com/questions/13314/install-pdf-tools-on-emacs-macosx
+
+
+;; ===============================================================================
 ;; Configure Hyperbole
 ;; ===============================================================================
 
@@ -235,8 +284,12 @@
 
 (use-package hyperbole
   :straight t
+  :bind
+  ("C-c j" . hycontrol-frame-resize-to-left)
+  ("C-c k" . hycontrol-frame-resize-to-right)
   :config
   (hyperbole-mode 1))
+  ;;(global-set-key (kbd "C-j") 'hycontrol-frame-resize-to-left))
 
 ;; ===============================================================================
 ;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -346,10 +399,17 @@
   (use-package counsel
     :straight t
     :config
+    (use-package ivy-rich
+      :straight t
+      :config
+      (ivy-rich-mode 1)
+      (setcdr (assq t ivy-format-functions-alist) #'ivy-format-function-line))
     (ido-mode 0)
     (ivy-mode 1)
     (setq ivy-wrap t)
     (global-set-key (kbd "C-s") 'swiper-isearch)
+    (global-set-key (kbd "C-x C-f") 'counsel-find-file)
+    (global-set-key (kbd "M-x") 'counsel-M-x)
     (setq ivy-use-virtual-buffers t)
     (setq ivy-count-format "(%d/%d) ")))
 (enable-ivy)
@@ -368,6 +428,8 @@
   (evil-mode 1)
   (add-hook 'org-capture-mode-hook 'evil-insert-state) ;; use insert by default for org capture
   (add-hook 'git-commit-mode-hook 'evil-insert-state) ;; use insert mode by default for magit commits
+  (when (dirvish-override-dired-mode))
+    (evil-set-initial-state 'dired-mode 'emacs)
   (use-package goto-chg
     :straight t))
 
