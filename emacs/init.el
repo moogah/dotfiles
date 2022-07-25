@@ -195,6 +195,19 @@
 ;; I had to run M-x company-files once and give emacs permission to access files before completion for filenames work
 
 ;; ===============================================================================
+;; Configure Hydra
+;; ===============================================================================
+
+(use-package hydra
+  :straight t)
+
+;; Minibuffer display doesn't appear until pressing g or l once
+(defhydra hydra-zoom (global-map "<f2>")
+  "zoom"
+  ("g" text-scale-increase "in")
+  ("l" text-scale-decrease "out"))
+
+;; ===============================================================================
 ;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ;; Org Mode Configuration
 ;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -254,8 +267,6 @@
       '(("t" "todo" entry (file+headline "~/todo.org" "Tasks")
 	 "* TODO [#A] %?" :empty-lines-before 1)))
 
-
-
 ;; ===============================================================================
 ;; Configure PDF Tools
 ;; ===============================================================================
@@ -272,8 +283,8 @@
 (use-package hyperbole
   :straight t
   :bind
-  ("C-j" . hycontrol-frame-resize-to-left)
-  ("C-k" . hycontrol-frame-resize-to-right)
+  ("C-c j" . hycontrol-frame-resize-to-left)
+  ("C-c k" . hycontrol-frame-resize-to-right)
   :config
   (hyperbole-mode 1))
   ;;(global-set-key (kbd "C-j") 'hycontrol-frame-resize-to-left))
@@ -396,6 +407,7 @@
     (setq ivy-wrap t)
     (global-set-key (kbd "C-s") 'swiper-isearch)
     (global-set-key (kbd "C-x C-f") 'counsel-find-file)
+    (global-set-key (kbd "M-x") 'counsel-M-x)
     (setq ivy-use-virtual-buffers t)
     (setq ivy-count-format "(%d/%d) ")))
 (enable-ivy)
@@ -414,7 +426,8 @@
   (evil-mode 1)
   (add-hook 'org-capture-mode-hook 'evil-insert-state) ;; use insert by default for org capture
   (add-hook 'git-commit-mode-hook 'evil-insert-state) ;; use insert mode by default for magit commits
-  (evil-set-initial-state 'dired-mode 'emacs) ;; @TODO make this conditional on dirvish being installed
+  (when (dirvish-override-dired-mode))
+    (evil-set-initial-state 'dired-mode 'emacs)
   (use-package goto-chg
     :straight t))
 
