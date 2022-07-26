@@ -90,6 +90,19 @@
 (setq default-frame-alist '((font . "Menlo-14")))
 
 ;; ===============================================================================
+;; Configure terminal/shell emulations
+;; ===============================================================================
+
+; Configure compilation output to handle color terminal output
+(use-package xterm-color
+  :straight t
+  :config
+  (setq compilation-environment '("TERM=xterm-256color"))
+  (defun my/advice-compilation-filter (f proc string)
+    (funcall f proc (xterm-color-filter string)))
+  (advice-add 'compilation-filter :around #'my/advice-compilation-filter))
+
+;; ===============================================================================
 ;; install magit
 ;; ===============================================================================
 
@@ -329,6 +342,9 @@
   (add-hook 'python-mode-hook 'py-autopep8-mode))
 (use-package blacken
   :straight t)
+
+;; (use-package python-pytest
+;;  :straight t)
 
 ;; ===============================================================================
 ;; configure Docker
