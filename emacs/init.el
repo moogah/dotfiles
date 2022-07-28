@@ -238,6 +238,7 @@
   :config
   (setq org-roam-directory (file-truename "~/org-roam"))
   (setq find-file-visit-truename t)
+  (setq org-roam-completion-everywhere t)
   (org-roam-db-autosync-mode))
 
 ;; ===============================================================================
@@ -445,6 +446,10 @@
     :straight t
     :config
     (global-evil-surround-mode 1))
+  (use-package evil-matchit
+    :straight t
+    :config
+    (global-evil-matchit-mode 1))
   (evil-mode 1)
   (add-hook 'org-capture-mode-hook 'evil-insert-state) ;; use insert by default for org capture
   (add-hook 'git-commit-mode-hook 'evil-insert-state) ;; use insert mode by default for magit commits
