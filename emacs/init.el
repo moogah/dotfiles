@@ -60,7 +60,7 @@
 (setq display-line-numbers-type 'relative)
 
 ;; enable saving state after closing emacs
-(desktop-save-mode)
+;;(desktop-save-mode)
 ;;(desktop-read) ;; this breaks org-capture
 
 ;; ===============================================================================
@@ -292,7 +292,6 @@
   :config
   (setenv "PKG_CONFIG_PATH" "${PKG_CONFIG_PATH}:/opt/homebrew/bin/pkg-config:/usr/local/lib/pkgconfig:/opt/X11/lib/pkgconfig")
   (pdf-loader-install))
-  ;;(setenv "PATH" "/opt/homebrew/opt/make/libexec/gnubin:$PATH")) ; this should be needed to run the compilation via M-x pdf-tools-install so that we use the gmake instead of the old make included with OSX.. but it causes some annoying popups to appear whenever I use dirvish.
 
 ;; ===============================================================================
 ;; Configure Hyperbole
@@ -307,13 +306,26 @@
   ("C-c k" . hycontrol-frame-resize-to-right)
   :config
   (hyperbole-mode 1))
-  ;;(global-set-key (kbd "C-j") 'hycontrol-frame-resize-to-left))
 
 ;; ===============================================================================
 ;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ;; Development Configuration
 ;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ;; ===============================================================================
+
+;; ===============================================================================
+;; Configure Yasnippet
+;; ===============================================================================
+
+(use-package yasnippet
+  :straight t
+  :config
+  (use-package yasnippet-snippets
+    :straight t)
+  (setq yas-snippet-dirs
+        '("~/.emacs.d/snippets"                                       ;; personal snippets
+          "~/.emacs.d/straight/repos/yasnippet-snippets/snippets"))   ;; yasnippet snippets
+  (yas-global-mode 1))
 
 ;; ===============================================================================
 ;; Configure Projectile
