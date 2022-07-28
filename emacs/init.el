@@ -240,6 +240,7 @@
   :config
   (setq org-roam-directory (file-truename "~/org-roam"))
   (setq find-file-visit-truename t)
+  (setq org-roam-completion-everywhere t)
   (org-roam-db-autosync-mode))
 
 ;; ===============================================================================
@@ -288,6 +289,12 @@
 ;; this seems complicated... https://pdftools.wiki/f10e9d94
 ;; https://emacs.stackexchange.com/questions/13314/install-pdf-tools-on-emacs-macosx
 
+(use-package pdf-tools
+  :straight t; (pdf-tools :type git :host github :repo "vedang/pdf-tools")
+  :config
+  (setenv "PKG_CONFIG_PATH" "${PKG_CONFIG_PATH}:/opt/homebrew/bin/pkg-config:/usr/local/lib/pkgconfig:/opt/X11/lib/pkgconfig")
+  (pdf-loader-install))
+  ;;(setenv "PATH" "/opt/homebrew/opt/make/libexec/gnubin:$PATH")) ; this should be needed to run the compilation via M-x pdf-tools-install so that we use the gmake instead of the old make included with OSX.. but it causes some annoying popups to appear whenever I use dirvish.
 
 ;; ===============================================================================
 ;; Configure Hyperbole
@@ -441,6 +448,10 @@
     :straight t
     :config
     (global-evil-surround-mode 1))
+  (use-package evil-matchit
+    :straight t
+    :config
+    (global-evil-matchit-mode 1))
   (evil-mode 1)
   (add-hook 'org-capture-mode-hook 'evil-insert-state) ;; use insert by default for org capture
   (add-hook 'git-commit-mode-hook 'evil-insert-state) ;; use insert mode by default for magit commits
