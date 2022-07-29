@@ -79,11 +79,15 @@
   :straight t)
 (use-package afternoon-theme
   :straight t)
+(use-package darkburn-theme
+  :straight t)
+(use-package distinguished-theme
+  :straight t)
 (use-package nano-theme
   :straight (nano-theme :type git :host github :repo "rougier/nano-theme"))
 
 ;; set default theme
-(load-theme 'afternoon t)
+(load-theme 'distinguished t)
 (set-background-color "black")
 
 ;; set font size to 14pt for my aging eyes
@@ -111,8 +115,8 @@
   :config
   (setq magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1))
 
-(use-package orgit
-  :straight (orgit :type git :host github :repo "magit/orgit"))
+;;(use-package orgit
+;;  :straight (orgit :type git :host github :repo "magit/orgit"))
 
 ;; Configure common modes like yaml, json etc
 (use-package yaml-mode
@@ -285,6 +289,9 @@
 (setq org-capture-templates
       '(("t" "todo" entry (file+headline "~/todo.org" "Tasks")
 	 "* TODO [#A] %?" :empty-lines-before 1)))
+
+(use-package orgit
+  :straight (orgit :type git :host github :repo "magit/orgit"))
 
 ;; ===============================================================================
 ;; Configure PDF Tools
