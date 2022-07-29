@@ -214,11 +214,14 @@
 (use-package hydra
   :straight t)
 
-;; Minibuffer display doesn't appear until pressing g or l once
-(defhydra hydra-zoom (global-map "<f2>")
-  "zoom"
+(defhydra hydra-main (:exit t)
+  "Global Mode Launcher"
   ("g" text-scale-increase "in")
-  ("l" text-scale-decrease "out"))
+  ("l" text-scale-decrease "out")
+  ("q" nil "cancel"))
+
+;; This was needed to get the hydra body to appear before g or l was pressed
+(define-key global-map (kbd "C-c h") 'hydra-main/body)
 
 ;; ===============================================================================
 ;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -314,6 +317,15 @@
 ;; ===============================================================================
 
 ;; ===============================================================================
+;; Configure markdown mode
+;; ===============================================================================
+
+(use-package markdown-mode
+  :straight t
+  :mode ("README\\.md\\'" . gfm-mode)
+  :init (setq markdown-command "multimarkdown"))
+
+;; ===============================================================================
 ;; Configure Yasnippet
 ;; ===============================================================================
 
@@ -322,7 +334,7 @@
   :config
   (use-package yasnippet-snippets
     :straight t)
-  (setq yas-snippet-dirs
+    (setq yas-snippet-dirs
         '("~/.emacs.d/snippets"                                       ;; personal snippets
           "~/.emacs.d/straight/repos/yasnippet-snippets/snippets"))   ;; yasnippet snippets
   (yas-global-mode 1))
