@@ -31,9 +31,15 @@
 ;; install use-package
 (straight-use-package 'use-package)
 
+;; make sure we have access to the same PATH as in our zsh
+(use-package exec-path-from-shell
+  :straight t
+  :init
+  (exec-path-from-shell-initialize))
+
 ;; ===============================================================================
 ;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-;; General Configuration
+;; Look and Feel
 ;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ;; ===============================================================================
 
@@ -62,6 +68,15 @@
 ;; enable saving state after closing emacs
 ;;(desktop-save-mode)
 ;;(desktop-read) ;; this breaks org-capture
+
+;; ===============================================================================
+;; Install Powerline
+;; ===============================================================================
+
+;;(use-package powerline
+;;  :straight (powerline :type git :host github :repo "milkypostman/powerline")
+;;  :config
+;;  (powerline-default-theme))
 
 ;; ===============================================================================
 ;; install themes
@@ -358,7 +373,16 @@
   (projectile-mode +1)
   :bind (:map projectile-mode-map
               ("s-p" . projectile-command-map) ;; map to "super" (command) key
-              ("C-c p" . projectile-command-map)))
+              ("C-c p" . projectile-command-map))
+  :config
+  (setq projectile-completion-system 'ivy))
+
+;; configure python custom project type for testing with docker-compose
+
+(projectile-register-project-type 'python '("pytest.ini" "docker-compose.yaml")
+                                  :project-file "pytest.ini"
+                                  :test "docker-compose run test-watch"
+                                  :test-prefix "test")
 
 
 ;; ===============================================================================
@@ -370,16 +394,20 @@
   :config
   (elpy-enable)
   (setq elpy-modules (delq 'elpy-module-highlight-indentation elpy-modules)))
+
 (use-package flycheck
   :straight t
+  :init (global-flycheck-mode)
   :config
   (when (require 'flycheck nil t)
     (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
     (add-hook 'elpy-mode-hook 'flycheck-mode)))
+
 (use-package py-autopep8
   :straight t
   :config
   (add-hook 'python-mode-hook 'py-autopep8-mode))
+
 (use-package blacken
   :straight t)
 
