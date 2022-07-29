@@ -111,6 +111,8 @@
   :config
   (setq magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1))
 
+(use-package orgit
+  :straight (orgit :type git :host github :repo "magit/orgit"))
 
 ;; Configure common modes like yaml, json etc
 (use-package yaml-mode
