@@ -60,7 +60,7 @@
 (setq display-line-numbers-type 'relative)
 
 ;; enable saving state after closing emacs
-(desktop-save-mode)
+;;(desktop-save-mode)
 ;;(desktop-read) ;; this breaks org-capture
 
 ;; ===============================================================================
@@ -79,11 +79,15 @@
   :straight t)
 (use-package afternoon-theme
   :straight t)
+(use-package darkburn-theme
+  :straight t)
+(use-package distinguished-theme
+  :straight t)
 (use-package nano-theme
   :straight (nano-theme :type git :host github :repo "rougier/nano-theme"))
 
 ;; set default theme
-(load-theme 'afternoon t)
+(load-theme 'distinguished t)
 (set-background-color "black")
 
 ;; set font size to 14pt for my aging eyes
@@ -111,6 +115,8 @@
   :config
   (setq magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1))
 
+;;(use-package orgit
+;;  :straight (orgit :type git :host github :repo "magit/orgit"))
 
 ;; Configure common modes like yaml, json etc
 (use-package yaml-mode
@@ -216,11 +222,14 @@
 (use-package hydra
   :straight t)
 
-;; Minibuffer display doesn't appear until pressing g or l once
-(defhydra hydra-zoom (global-map "<f2>")
-  "zoom"
+(defhydra hydra-main (:exit t)
+  "Global Mode Launcher"
   ("g" text-scale-increase "in")
-  ("l" text-scale-decrease "out"))
+  ("l" text-scale-decrease "out")
+  ("q" nil "cancel"))
+
+;; This was needed to get the hydra body to appear before g or l was pressed
+(define-key global-map (kbd "C-c h") 'hydra-main/body)
 
 ;; ===============================================================================
 ;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -283,6 +292,9 @@
       '(("t" "todo" entry (file+headline "~/todo.org" "Tasks")
 	 "* TODO [#A] %?" :empty-lines-before 1)))
 
+(use-package orgit
+  :straight (orgit :type git :host github :repo "magit/orgit"))
+
 ;; ===============================================================================
 ;; Configure PDF Tools
 ;; ===============================================================================
@@ -294,7 +306,6 @@
   :config
   (setenv "PKG_CONFIG_PATH" "${PKG_CONFIG_PATH}:/opt/homebrew/bin/pkg-config:/usr/local/lib/pkgconfig:/opt/X11/lib/pkgconfig")
   (pdf-loader-install))
-  ;;(setenv "PATH" "/opt/homebrew/opt/make/libexec/gnubin:$PATH")) ; this should be needed to run the compilation via M-x pdf-tools-install so that we use the gmake instead of the old make included with OSX.. but it causes some annoying popups to appear whenever I use dirvish.
 
 ;; ===============================================================================
 ;; Configure Hyperbole
@@ -309,13 +320,35 @@
   ("C-c k" . hycontrol-frame-resize-to-right)
   :config
   (hyperbole-mode 1))
-  ;;(global-set-key (kbd "C-j") 'hycontrol-frame-resize-to-left))
 
 ;; ===============================================================================
 ;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ;; Development Configuration
 ;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ;; ===============================================================================
+
+;; ===============================================================================
+;; Configure markdown mode
+;; ===============================================================================
+
+(use-package markdown-mode
+  :straight t
+  :mode ("README\\.md\\'" . gfm-mode)
+  :init (setq markdown-command "multimarkdown"))
+
+;; ===============================================================================
+;; Configure Yasnippet
+;; ===============================================================================
+
+(use-package yasnippet
+  :straight t
+  :config
+  (use-package yasnippet-snippets
+    :straight t)
+    (setq yas-snippet-dirs
+        '("~/.emacs.d/snippets"                                       ;; personal snippets
+          "~/.emacs.d/straight/repos/yasnippet-snippets/snippets"))   ;; yasnippet snippets
+  (yas-global-mode 1))
 
 ;; ===============================================================================
 ;; Configure Projectile
