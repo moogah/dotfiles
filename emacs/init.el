@@ -31,6 +31,10 @@
 ;; install use-package
 (straight-use-package 'use-package)
 
+;; ===============================================================================
+;; OSX Specific Configs
+;; ===============================================================================
+
 ;; make sure we have access to the same PATH as in our zsh
 (use-package exec-path-from-shell
   :straight t
@@ -48,6 +52,13 @@
 
 ;; automatically update buffers when their state-on-disk changes
 (global-auto-revert-mode 1)
+
+;; Add sidebar via imenu
+(use-package imenu-list
+  :straight t
+  :config
+  (setq imenu-list-focus-after-activation t)
+  (setq imenu-list-auto-resize t))
 
 ;; ===============================================================================
 ;; Configure default frame size, line num display, desktop mode
@@ -122,6 +133,12 @@
   (advice-add 'compilation-filter :around #'my/advice-compilation-filter))
 
 ;; ===============================================================================
+;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+;; Major Modes, Global Behaviors Etc..
+;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+;; ===============================================================================
+
+;; ===============================================================================
 ;; install magit
 ;; ===============================================================================
 
@@ -135,6 +152,9 @@
 
 ;; Configure common modes like yaml, json etc
 (use-package yaml-mode
+  :straight t)
+
+(use-package wgrep
   :straight t)
 
 ;; ===============================================================================
@@ -227,6 +247,17 @@
   (add-hook 'after-init-hook 'global-company-mode))
 
 ;; I had to run M-x company-files once and give emacs permission to access files before completion for filenames work
+
+(use-package orderless
+  :straight t
+  :custom
+  (completion-styles '(orderless-basic))
+  (completion-category-overrides '((file (styles basic partial-completion))))
+  :config
+  (setq ivy-re-builders-alist '((t . orderless-ivy-re-builder)))
+  (add-to-list 'ivy-highlight-functions-alist '(orderless-ivy-re-builder . orderless-ivy-highlight))) ;; @TODO: organize this ivy config better
+
+
 
 ;; ===============================================================================
 ;; Configure Hydra
