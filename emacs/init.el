@@ -185,7 +185,9 @@
   (when (string= system-type "darwin")
     (setq dired-use-ls-dired nil))
   (use-package vscode-icon
-    :straight t) ;; vs-code icons is an alternative
+    :straight t
+    :config
+    (setq dirvish-vscode-icon-size 18)) ;; vs-code icons is an alternative
   ;;(dirvish-peek-mode)
   (setq dirvish-vscode-icon-size 18)
   (setq dired-dwim-target t)
