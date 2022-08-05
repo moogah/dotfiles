@@ -1,17 +1,6 @@
 (toggle-debug-on-error)
 
 ;; ===============================================================================
-;; configure MELPA
-;; ===============================================================================
-
-;(require 'package)
-;(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
-;; Comment/uncomment this line to enable MELPA Stable if desired.  See `package-archive-priorities`
-;; and `package-pinned-packages`. Most users will not need or want to do this.
-;;(add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/") t)
-;(package-initialize)
-
-;; ===============================================================================
 ;; configure straight.el
 ;; ===============================================================================
 
@@ -49,11 +38,6 @@
 ;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ;; ===============================================================================
 
-;; Move the minibuffer to the top
-
-;;(use-package mini-frame
-;;  :straight t)
-
 (unless (memq window-system '(mac ns))
   (menu-bar-mode -1))
 (when (fboundp 'tool-bar-mode)
@@ -69,9 +53,39 @@
 ;;  :config
 ;;  (global-org-modern-mode))
 
+;; Typed text replaces the selection if the selection is active,
+;; pressing delete or backspace deletes the selection.
+(delete-selection-mode)
 
+;; Use spaces instead of tabs
+(setq-default indent-tabs-mode nil)
+
+;; use short answers ie y, n instead of yes, no
+(if (boundp 'use-short-answers)
+    (setq use-short-answers t))
+  
 ;; automatically update buffers when their state-on-disk changes
 (global-auto-revert-mode 1)
+;; Revert Dired and other buffers
+(customize-set-variable 'global-auto-revert-non-file-buffers t)
+
+;; Do not saves duplicates in kill-ring
+(customize-set-variable 'kill-do-not-save-duplicates t)
+
+;; Make scrolling less stuttered
+(setq auto-window-vscroll nil)
+(customize-set-variable 'fast-but-imprecise-scrolling t)
+(customize-set-variable 'scroll-conservatively 101)
+(customize-set-variable 'scroll-margin 0)
+(customize-set-variable 'scroll-preserve-screen-position t)
+
+;; Better support for files with long lines
+(setq-default bidi-paragraph-direction 'left-to-right)
+(setq-default bidi-inhibit-bpa t)
+(global-so-long-mode 1)
+
+;; Make shebang (#!) file executable when saved
+(add-hook 'after-save-hook #'executable-make-buffer-file-executable-if-script-p)
 
 ;; Add sidebar via imenu
 (use-package imenu-list
@@ -96,13 +110,19 @@
 (global-display-line-numbers-mode)
 (setq display-line-numbers-type 'relative)
 
-;; enable saving state after closing emacs
-;;(desktop-save-mode)
-;;(desktop-read) ;; this breaks org-capture
+;; ===============================================================================
+;; Customize Modeline
+;; ===============================================================================
 
-;; ===============================================================================
-;; Install Powerline
-;; ===============================================================================
+;; (use-package telephone-line
+;;   :straight t
+;;   :config
+;;  (telephone-line-mode 1))
+
+(use-package doom-modeline
+  :straight t
+  :config
+  (doom-modeline-mode 1))
 
 ;;(use-package powerline
 ;;  :straight (powerline :type git :host github :repo "milkypostman/powerline")
@@ -138,6 +158,18 @@
 
 ;; set font size to 14pt for my aging eyes
 (setq default-frame-alist '((font . "Menlo-14")))
+
+
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(org-level-1 ((t (:inherit outline-1 :height 3.0))))
+ '(org-level-2 ((t (:inherit outline-2 :height 2.0))))
+ '(org-level-3 ((t (:inherit outline-3 :height 1.0))))
+ '(org-level-4 ((t (:inherit outline-4 :height 1.0))))
+ '(org-level-5 ((t (:inherit outline-5 :height 1.0)))))
 
 ;; ===============================================================================
 ;; Configure terminal/shell emulations
@@ -249,6 +281,13 @@
 ;;  :straight t)
 ;;(eyebrowse-mode)
 
+(use-package perspective
+  :straight t
+  :custom
+  (persp-mode-prefix-key (kbd "C-c M-p"))
+  :config
+  (persp-mode))
+
 ;; ===============================================================================
 ;; Configure Company Auto-Completion
 ;; ===============================================================================
@@ -270,7 +309,14 @@
   "Global Mode Launcher"
   ("g" text-scale-increase "in")
   ("l" text-scale-decrease "out")
+  ("p" hydra-perspective/body "persp")
   ("q" nil "cancel"))
+
+(defhydra hydra-perspective (:exit t)
+  "Perspective Mode"
+  ("s" persp-switch "switch")
+  ("q" nil "cancel"))
+
 
 ;; This was needed to get the hydra body to appear before g or l was pressed
 (define-key global-map (kbd "C-c h") 'hydra-main/body)
@@ -338,6 +384,11 @@
 
 (use-package orgit
   :straight (orgit :type git :host github :repo "magit/orgit"))
+
+(use-package org-modern
+  :straight t
+  :config
+  (global-org-modern-mode))
 
 ;; ===============================================================================
 ;; Configure PDF Tools
@@ -512,9 +563,10 @@
     :straight t
     :bind (
 	   ("C-x b" . consult-buffer)
-	   ("C-s" . consult-line)
-
-    ))
+	   ("C-s" . consult-line))
+    :config
+    (consult-customize consult--source-buffer :hidden t :default nil)
+    (add-to-list 'consult-buffer-sources persp-consult-source))
 
   (use-package consult-projectile
     :straight (consult-projectile :type git :host gitlab :repo "OlMon/consult-projectile" :branch "master"))
@@ -592,12 +644,7 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(custom-safe-themes
-   '("90a6f96a4665a6a56e36dec873a15cbedf761c51ec08dd993d6604e32dd45940" "f149d9986497e8877e0bd1981d1bef8c8a6d35be7d82cba193ad7e46f0989f6a" "a9318f38c2d39f717d61aa0c155f579fc3a369c4a0d01f4848de0dee85fbd831" "78e6be576f4a526d212d5f9a8798e5706990216e9be10174e3f3b015b8662e27" "fee7287586b17efbfda432f05539b58e86e059e78006ce9237b8732fde991b4c" "4c56af497ddf0e30f65a7232a8ee21b3d62a8c332c6b268c81e9ea99b11da0d3" default))
+   '("3ee898efcd3fa5b63c4f15e225f3616497010f2347a514490be8b563edbd39d9" "1b8d67b43ff1723960eb5e0cba512a2c7a2ad544ddb2533a90101fd1852b426e" "e9d47d6d41e42a8313c81995a60b2af6588e9f01a1cf19ca42669a7ffd5c2fde" "c335adbb7d7cb79bc34de77a16e12d28e6b927115b992bccc109fb752a365c72" "90a6f96a4665a6a56e36dec873a15cbedf761c51ec08dd993d6604e32dd45940" "f149d9986497e8877e0bd1981d1bef8c8a6d35be7d82cba193ad7e46f0989f6a" "a9318f38c2d39f717d61aa0c155f579fc3a369c4a0d01f4848de0dee85fbd831" "78e6be576f4a526d212d5f9a8798e5706990216e9be10174e3f3b015b8662e27" "fee7287586b17efbfda432f05539b58e86e059e78006ce9237b8732fde991b4c" "4c56af497ddf0e30f65a7232a8ee21b3d62a8c332c6b268c81e9ea99b11da0d3" default))
  '(package-selected-packages
    '(blacken py-autopep8 flycheck elpy better-defaults material-theme vs-light-theme monokai-theme solarized-theme magit)))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
+
