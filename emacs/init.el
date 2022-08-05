@@ -54,8 +54,6 @@
 ;;(use-package mini-frame
 ;;  :straight t)
 
-;;(use-package better-defaults
-;;  :straight t)
 (unless (memq window-system '(mac ns))
   (menu-bar-mode -1))
 (when (fboundp 'tool-bar-mode)
@@ -183,15 +181,6 @@
 ;; configure dired
 ;; ===============================================================================
 
-;; (use-package dired-subtree
-;;   :straight t
-;;   :config
-;;   (when (string= system-type "darwin")
-;;     (setq dired-use-ls-dired nil))
-;;   (bind-keys :map dired-mode-map
-;;              ("i" . dired-subtree-insert)
-;;              (";" . dired-subtree-remove))) ;; @TODO this doesn't work?
-
 (use-package dirvish
   :straight t
   :init
@@ -269,18 +258,6 @@
   :config
   (company-mode)
   (add-hook 'after-init-hook 'global-company-mode))
-
-;; I had to run M-x company-files once and give emacs permission to access files before completion for filenames work
-
-;;;(use-package orderless
-;;;  :straight t
-;;;  :custom
-;;;  (completion-styles '(orderless-basic))
-;;;  (completion-category-overrides '((file (styles basic partial-completion))))
-;;;  :config
-;;;  (setq ivy-re-builders-alist '((t . orderless-ivy-re-builder))))
-
-
 
 ;; ===============================================================================
 ;; Configure Hydra
@@ -365,8 +342,6 @@
 ;; ===============================================================================
 ;; Configure PDF Tools
 ;; ===============================================================================
-;; this seems complicated... https://pdftools.wiki/f10e9d94
-;; https://emacs.stackexchange.com/questions/13314/install-pdf-tools-on-emacs-macosx
 
 (use-package pdf-tools
   :straight t; (pdf-tools :type git :host github :repo "vedang/pdf-tools")
@@ -436,7 +411,6 @@
                                   :test "docker-compose run test-watch"
                                   :test-prefix "test")
 
-
 ;; ===============================================================================
 ;; python development config
 ;; ===============================================================================
@@ -470,7 +444,6 @@
 ;; configure Docker
 ;; ===============================================================================
 
-;; https://github.com/Silex/docker.el
 (use-package docker
   :straight t
   :bind ("C-c d" . docker))
@@ -499,31 +472,6 @@
 
 ;;(use-package lsp-mode
 ;;  :straight t)
-
-;; ===============================================================================
-;; Configure Ido https://www.emacswiki.org/emacs/InteractivelyDoThings
-;; ===============================================================================
-
-(defun enable-ido ()
-  (use-package ido-vertical-mode
-    :straight t
-    :config
-    (require 'ido)
-    (ido-mode t)
-    (ido-vertical-mode t)
-    (setq ido-vertical-define-keys 'C-n-and-C-p-only)
-    (use-package flx-ido
-      :straight t)
-    (ido-everywhere 1)
-    (flx-ido-mode 1)
-    (setq ido-enable-flex-matching t)
-    (setq ido-use-faces nil)
-    (use-package smex
-      :straight t)
-    (global-set-key (kbd "M-x") 'smex)
-    (global-set-key (kbd "M-X") 'smex-major-mode-commands)
-    (global-set-key (kbd "C-c C-c M-x") 'execute-extended-command))
-)
 
 ;; ===============================================================================
 ;; Configure counsel, ivy, swiper
