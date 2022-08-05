@@ -1,3 +1,5 @@
+(toggle-debug-on-error)
+
 ;; ===============================================================================
 ;; configure MELPA
 ;; ===============================================================================
@@ -47,8 +49,28 @@
 ;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ;; ===============================================================================
 
-(use-package better-defaults
-  :straight t)
+;; Move the minibuffer to the top
+
+;;(use-package mini-frame
+;;  :straight t)
+
+;;(use-package better-defaults
+;;  :straight t)
+(unless (memq window-system '(mac ns))
+  (menu-bar-mode -1))
+(when (fboundp 'tool-bar-mode)
+  (tool-bar-mode -1))
+(when (fboundp 'scroll-bar-mode)
+  (scroll-bar-mode -1))
+(when (fboundp 'horizontal-scroll-bar-mode)
+  (horizontal-scroll-bar-mode -1))
+
+
+;;(use-package org-modern
+;;  :straight t
+;;  :config
+;;  (global-org-modern-mode))
+
 
 ;; automatically update buffers when their state-on-disk changes
 (global-auto-revert-mode 1)
@@ -250,14 +272,13 @@
 
 ;; I had to run M-x company-files once and give emacs permission to access files before completion for filenames work
 
-(use-package orderless
-  :straight t
-  :custom
-  (completion-styles '(orderless-basic))
-  (completion-category-overrides '((file (styles basic partial-completion))))
-  :config
-  (setq ivy-re-builders-alist '((t . orderless-ivy-re-builder)))
-  (add-to-list 'ivy-highlight-functions-alist '(orderless-ivy-re-builder . orderless-ivy-highlight))) ;; @TODO: organize this ivy config better
+;;;(use-package orderless
+;;;  :straight t
+;;;  :custom
+;;;  (completion-styles '(orderless-basic))
+;;;  (completion-category-overrides '((file (styles basic partial-completion))))
+;;;  :config
+;;;  (setq ivy-re-builders-alist '((t . orderless-ivy-re-builder))))
 
 
 
@@ -406,9 +427,7 @@
   (projectile-mode +1)
   :bind (:map projectile-mode-map
               ("s-p" . projectile-command-map) ;; map to "super" (command) key
-              ("C-c p" . projectile-command-map))
-  :config
-  (setq projectile-completion-system 'ivy))
+              ("C-c p" . projectile-command-map)))
 
 ;; configure python custom project type for testing with docker-compose
 
@@ -526,8 +545,73 @@
     (global-set-key (kbd "C-x C-f") 'counsel-find-file)
     (global-set-key (kbd "M-x") 'counsel-M-x)
     (setq ivy-use-virtual-buffers t)
-    (setq ivy-count-format "(%d/%d) ")))
-(enable-ivy)
+    (setq ivy-count-format "(%d/%d) ")
+    (add-to-list 'ivy-highlight-functions-alist '(orderless-ivy-re-builder . orderless-ivy-highlight))))
+;;(enable-ivy)
+
+;; ===============================================================================
+;; Configure Vertico and Orderless
+;; ===============================================================================
+
+(defun enable-vertico ()
+  (use-package vertico
+    :straight t
+    :init
+    (vertico-mode)
+    (setq vertico-cycle t))
+
+  (use-package consult
+    :straight t
+    :bind (
+	   ("C-x b" . consult-buffer)
+	   ("C-s" . consult-line)
+
+    ))
+
+  (use-package consult-projectile
+    :straight (consult-projectile :type git :host gitlab :repo "OlMon/consult-projectile" :branch "master"))
+
+  (use-package marginalia
+    :straight t
+    :bind (
+	   :map minibuffer-local-map
+		("M-A" . marginalia-cycle))
+    :init
+    (marginalia-mode))
+
+  (recentf-mode 1)
+
+  (use-package embark
+    :straight t
+    :bind
+    (("C-." . embark-act)) ;; @TODO this is overwritten by evil mode
+    :init
+    (setq prefix-help-command #'embark-prefix-help-command)
+    :config
+    (add-to-list 'display-buffer-alist
+		 '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+		   nill
+		   (window-parameters (mode-line-format . none)))))
+
+  (use-package embark-consult
+    :straight t
+    :after (embark consult)
+    :demand t
+    :hook
+    (embark-collect-mode . consult-preview-at-point-mode))
+  
+  (use-package savehist
+    :straight t
+    :init
+    (savehist-mode))
+  
+  (use-package orderless
+    :straight t
+    :init
+    (setq completion-styles '(orderless basic)
+          comletion-category-defaults nil
+          completion-category-overrides '((file (styles partial-completion))))))
+(enable-vertico)
 
 ;; ===============================================================================
 ;; configure evil mode
