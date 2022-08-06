@@ -47,12 +47,6 @@
 (when (fboundp 'horizontal-scroll-bar-mode)
   (horizontal-scroll-bar-mode -1))
 
-
-;;(use-package org-modern
-;;  :straight t
-;;  :config
-;;  (global-org-modern-mode))
-
 ;; Typed text replaces the selection if the selection is active,
 ;; pressing delete or backspace deletes the selection.
 (delete-selection-mode)
@@ -114,15 +108,15 @@
 ;; Customize Modeline
 ;; ===============================================================================
 
-;; (use-package telephone-line
-;;   :straight t
-;;   :config
-;;  (telephone-line-mode 1))
-
-(use-package doom-modeline
+(use-package telephone-line
   :straight t
   :config
-  (doom-modeline-mode 1))
+ (telephone-line-mode 1))
+
+;;(use-package doom-modeline
+;;  :straight t
+;;  :config
+;;  (doom-modeline-mode 1))
 
 ;;(use-package powerline
 ;;  :straight (powerline :type git :host github :repo "milkypostman/powerline")
@@ -165,9 +159,9 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(org-level-1 ((t (:inherit outline-1 :height 3.0))))
- '(org-level-2 ((t (:inherit outline-2 :height 2.0))))
- '(org-level-3 ((t (:inherit outline-3 :height 1.0))))
+ '(org-level-1 ((t (:inherit outline-1 :height 1.5))))
+ '(org-level-2 ((t (:inherit outline-2 :height 1.5))))
+ '(org-level-3 ((t (:inherit outline-3 :height 1.2))))
  '(org-level-4 ((t (:inherit outline-4 :height 1.0))))
  '(org-level-5 ((t (:inherit outline-5 :height 1.0)))))
 
@@ -198,9 +192,6 @@
   :straight t
   :config
   (setq magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1))
-
-;;(use-package orgit
-;;  :straight (orgit :type git :host github :repo "magit/orgit"))
 
 ;; Configure common modes like yaml, json etc
 (use-package yaml-mode
@@ -306,20 +297,94 @@
   :straight t)
 
 (defhydra hydra-main (:exit t)
-  "Global Mode Launcher"
-  ("g" text-scale-increase "in")
-  ("l" text-scale-decrease "out")
-  ("p" hydra-perspective/body "persp")
+  "
+Global Mode Launcher
+
+_p_: Perspective     _R_: rgrep
+_P_: Projectile
+_r_: Org-Roam
+_a_: Org-Agenda
+_c_: Consult
+"
+  ("p" hydra-perspective/body nil)
+  ("P" hydra-projectile/body nil)
+  ("r" hydra-roam/body nil)
+  ("a" hydra-agenda/body nil)
+  ("c" hydra-consult/body nil)
+  ("R" rgrep nil)
   ("q" nil "cancel"))
 
 (defhydra hydra-perspective (:exit t)
-  "Perspective Mode"
-  ("s" persp-switch "switch")
+  "
+Perspective Mode
+
+_s_: switch perspective    _S_: save
+_k_: kill perspective      _L_: load
+"
+  ("s" persp-switch nil)
+  ("S" persp-state-save nil)
+  ("k" persp-kill nil)
+  ("L" persp-state-load nil)
+  ("H" hydra-main/body "Home")
   ("q" nil "cancel"))
 
+(defhydra hydra-projectile (:exit t)
+  "
+Projectile Mode
 
-;; This was needed to get the hydra body to appear before g or l was pressed
+_t_: run tests
+_k_: kill proj buffers
+"
+  ("t" projectile-test-project nil)
+  ("k" projectile-kill-buffers nil)
+  ("H" hydra-main/body "Home")
+  ("q" nil "cancel"))
+
+(defhydra hydra-roam (:exit t)
+  "
+Org-Roam
+"
+  ("H" hydra-main/body "Home")
+  ("q" nil "cancel"))
+
+(defhydra hydra-agenda (:exit t)
+  "
+Org-Agenda
+"
+  ("H" hydra-main/body "Home")
+  ("q" nil "cancel"))
+
+(defhydra hydra-consult (:exit t)
+  "
+Consult
+
+_r_: ripgrep       _w_: open buffer in another window
+_i_: imenu         _f_: open buffer in another frame
+_b_: bookmark
+_y_: yank
+"
+  ("r" consult-ripgrep nil)
+  ("i" consult-imenu-multi nil)
+  ("b" consult-bookmark nil)
+  ("y" consult-yank-from-kill-ring nil)
+  ("w" consult-buffer-other-window nil)
+  ("f" consult-buffer-other-frame nil)
+  ("H" hydra-main/body "Home")
+  ("q" nil "cancel"))
+
 (define-key global-map (kbd "C-c h") 'hydra-main/body)
+
+(defhydra hydra-dired (:exit t)
+  "
+Dired Mode
+
+_b_: bookmarks
+"
+  ("b" dirvish-bookmark-jump nil)
+  ("H" hydra-main/body "Home")
+  ("q" nil "cancel"))
+
+(define-key dired-mode-map (kbd "C-c h") 'hydra-dired/body)
 
 ;; ===============================================================================
 ;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -385,10 +450,10 @@
 (use-package orgit
   :straight (orgit :type git :host github :repo "magit/orgit"))
 
-(use-package org-modern
-  :straight t
-  :config
-  (global-org-modern-mode))
+;;(use-package org-modern
+;;  :straight t
+;;  :config
+;;  (global-org-modern-mode))
 
 ;; ===============================================================================
 ;; Configure PDF Tools
