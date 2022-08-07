@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 (toggle-debug-on-error)
 
 ;; ===============================================================================
@@ -143,11 +145,13 @@
   :straight t)
 (use-package distinguished-theme
   :straight t)
+(use-package doom-themes
+  :straight t)
 (use-package nano-theme
   :straight (nano-theme :type git :host github :repo "rougier/nano-theme"))
 
 ;; set default theme
-(load-theme 'distinguished t)
+(load-theme 'doom-vibrant t)
 (set-background-color "black")
 
 ;; set font size to 14pt for my aging eyes
@@ -268,10 +272,6 @@
 ;; Window and Frame manager configs
 ;; ===============================================================================
 
-;;(use-package eyebrowse
-;;  :straight t)
-;;(eyebrowse-mode)
-
 (use-package perspective
   :straight t
   :custom
@@ -343,8 +343,13 @@ _k_: kill proj buffers
 (defhydra hydra-roam (:exit t)
   "
 Org-Roam
+
+_r_: add ref
+_t_: toggle buffer
 "
-  ("H" hydra-main/body "Home")
+  ("r" org-roam-ref-add nil)
+  ("t" org-roam-buffer-toggle nil)
+  ("H" hydra-main/body nil)
   ("q" nil "cancel"))
 
 (defhydra hydra-agenda (:exit t)
@@ -385,6 +390,8 @@ _b_: bookmarks
   ("q" nil "cancel"))
 
 (define-key dired-mode-map (kbd "C-c h") 'hydra-dired/body)
+;;(define-key org-mode-map (kbd "C-c h") 'hydra-roam/body) ;;
+
 
 ;; ===============================================================================
 ;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -486,6 +493,39 @@ _b_: bookmarks
 ;; ===============================================================================
 
 ;; ===============================================================================
+;; Configure Tree Sitter
+;; ===============================================================================
+
+(use-package tree-sitter
+  :straight t
+  :hook ((python-mode . tree-sitter-mode)
+         (python-mode . tree-sitter-hl-mode)
+         (js-mode . tree-sitter-mode)
+         (js-mode . tree-sitter-hl-mode)
+         (javascript-mode . tree-sitter-mode)
+         (javascript-mode . tree-sitter-hl-mode)
+         (sh-mode . tree-sitter-mode)
+         (sh-mode . tree-sitter-hl-mode)
+         (php-mode . tree-sitter-mode)
+         (php-mode . tree-sitter-hl-mode)
+         (hcl-mode . tree-sitter-mode)
+         (hcl-mode . tree-sitter-hl-mode)
+         (terraform-mode . tree-sitter-mode)
+         (terraform-mode . tree-sitter-hl-mode)))
+
+(use-package tree-sitter-langs
+  :straight t)
+
+(use-package evil-textobj-tree-sitter
+  :straight t)
+
+(use-package combobulate
+  :straight (combobulate :type git :host github :repo "mickeynp/combobulate")
+  :hook ((python-mode . combobulate-mode)
+         (js-mode . combobulate-mode)
+         (typescript-mode . combobulate-mode)))
+
+;; ===============================================================================
 ;; Configure markdown mode
 ;; ===============================================================================
 
@@ -507,6 +547,11 @@ _b_: bookmarks
         '("~/.emacs.d/snippets"                                       ;; personal snippets
           "~/.emacs.d/straight/repos/yasnippet-snippets/snippets"))   ;; yasnippet snippets
   (yas-global-mode 1))
+
+(use-package auto-yasnippet
+  :straight t)
+;; @TODO
+;; bind aya-create and aya-expand
 
 ;; ===============================================================================
 ;; Configure Projectile
@@ -709,7 +754,7 @@ _b_: bookmarks
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(custom-safe-themes
-   '("3ee898efcd3fa5b63c4f15e225f3616497010f2347a514490be8b563edbd39d9" "1b8d67b43ff1723960eb5e0cba512a2c7a2ad544ddb2533a90101fd1852b426e" "e9d47d6d41e42a8313c81995a60b2af6588e9f01a1cf19ca42669a7ffd5c2fde" "c335adbb7d7cb79bc34de77a16e12d28e6b927115b992bccc109fb752a365c72" "90a6f96a4665a6a56e36dec873a15cbedf761c51ec08dd993d6604e32dd45940" "f149d9986497e8877e0bd1981d1bef8c8a6d35be7d82cba193ad7e46f0989f6a" "a9318f38c2d39f717d61aa0c155f579fc3a369c4a0d01f4848de0dee85fbd831" "78e6be576f4a526d212d5f9a8798e5706990216e9be10174e3f3b015b8662e27" "fee7287586b17efbfda432f05539b58e86e059e78006ce9237b8732fde991b4c" "4c56af497ddf0e30f65a7232a8ee21b3d62a8c332c6b268c81e9ea99b11da0d3" default))
+   '("a3010c151dc4f42d56dec26a85ae5640afc227bece71d058e394667718b66a49" "545ab1a535c913c9214fe5b883046f02982c508815612234140240c129682a68" "1cae4424345f7fe5225724301ef1a793e610ae5a4e23c023076dc334a9eb940a" "991ca4dbb23cab4f45c1463c187ac80de9e6a718edc8640003892a2523cb6259" "e3daa8f18440301f3e54f2093fe15f4fe951986a8628e98dcd781efbec7a46f2" "be84a2e5c70f991051d4aaf0f049fa11c172e5d784727e0b525565bb1533ec78" "aec7b55f2a13307a55517fdf08438863d694550565dee23181d2ebd973ebd6b8" "1a1ac598737d0fcdc4dfab3af3d6f46ab2d5048b8e72bc22f50271fd6d393a00" "7a424478cb77a96af2c0f50cfb4e2a88647b3ccca225f8c650ed45b7f50d9525" "3ee898efcd3fa5b63c4f15e225f3616497010f2347a514490be8b563edbd39d9" "1b8d67b43ff1723960eb5e0cba512a2c7a2ad544ddb2533a90101fd1852b426e" "e9d47d6d41e42a8313c81995a60b2af6588e9f01a1cf19ca42669a7ffd5c2fde" "c335adbb7d7cb79bc34de77a16e12d28e6b927115b992bccc109fb752a365c72" "90a6f96a4665a6a56e36dec873a15cbedf761c51ec08dd993d6604e32dd45940" "f149d9986497e8877e0bd1981d1bef8c8a6d35be7d82cba193ad7e46f0989f6a" "a9318f38c2d39f717d61aa0c155f579fc3a369c4a0d01f4848de0dee85fbd831" "78e6be576f4a526d212d5f9a8798e5706990216e9be10174e3f3b015b8662e27" "fee7287586b17efbfda432f05539b58e86e059e78006ce9237b8732fde991b4c" "4c56af497ddf0e30f65a7232a8ee21b3d62a8c332c6b268c81e9ea99b11da0d3" default))
  '(package-selected-packages
    '(blacken py-autopep8 flycheck elpy better-defaults material-theme vs-light-theme monokai-theme solarized-theme magit)))
 
