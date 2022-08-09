@@ -177,6 +177,13 @@
  '(magit-diff-removed ((t (:background "#292D3E" :foreground "#cc4259"))))
  '(magit-diff-added-highlight ((t (:background "black" :foreground "green"))))
  '(magit-diff-added ((t (:background "#292D3E" :foreground "#9cb970"))))
+ '(org-table ((t (:background "#292D3E" :foreground "#9cb970"))))
+ '(org-link ((t (:foreground "blue"))))
+ '(org-level-1 ((t (:foreground "wheat1"))))
+ '(org-level-2 ((t (:foreground "wheat1"))))
+ '(org-level-3 ((t (:foreground "wheat1"))))
+ '(org-level-4 ((t (:foreground "wheat1"))))
+ '(org-level-5 ((t (:foreground "wheat1"))))
  '(font-lock-string-face ((t (:foreground "wheat1")))))
 
 (enable-theme 'doom-palenight)
@@ -776,6 +783,11 @@ _b_: bookmarks
   (use-package goto-chg
     :straight t))
 
+;; add visual indicators for common vim commands
+(use-package evil-goggles
+  :straight t
+  :config
+  (evil-goggles-mode))
 
 			      
 (custom-set-variables
