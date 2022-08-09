@@ -161,7 +161,18 @@
 ;; doom-moonlight
 ;; doom-palenight
 (load-theme 'doom-palenight t)
-(set-background-color "black")
+;;(set-background-color "black")
+
+;; https://emacs.stackexchange.com/questions/48365/custom-theme-set-faces-does-not-work-in-emacs-27
+(custom-theme-set-faces
+ 'doom-palenight
+ '(default ((t (:background "black"))))
+ '(font-lock-comment-face ((t (:foreground "dark gray"))))
+ '(tree-sitter-hl-face:method.call ((t (:foreground "light blue"))))
+ '(tree-sitter-hl-face:type ((t (:foreground "DodgerBlue1"))))
+ '(font-lock-string-face ((t (:foreground "wheat1")))))
+
+(enable-theme 'doom-palenight)
 
 ;; set font size to 14pt for my aging eyes
 (setq default-frame-alist '((font . "Menlo-14")))
@@ -579,6 +590,10 @@ _b_: bookmarks
                                   :project-file "pytest.ini"
                                   :test "docker-compose run test-watch"
                                   :test-prefix "test")
+
+(defvar docker-compose-cli-path
+  "/usr/local/bin/docker-compose"
+  "Path to the docker compose executable.")
 
 ;; ===============================================================================
 ;; python development config
