@@ -169,6 +169,7 @@
  '(default ((t (:background "black"))))
  '(font-lock-comment-face ((t (:foreground "dark gray"))))
  '(tree-sitter-hl-face:method.call ((t (:foreground "light blue"))))
+ '(tree-sitter-hl-face:function.call ((t (:foreground "light blue"))))
  '(tree-sitter-hl-face:type ((t (:foreground "DodgerBlue1"))))
  '(magit-diff-hunk-heading ((t (:background "black" :foreground "dark gray"))))
  '(magit-diff-hunk-heading-highlight ((t (:background "black" :foreground "wheat1"))))
@@ -428,6 +429,13 @@ _b_: bookmarks
 
 
 ;; ===============================================================================
+;; Install dogears
+;; ===============================================================================
+
+(use-package dogears
+  :straight t)
+
+;; ===============================================================================
 ;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ;; Org Mode Configuration
 ;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -490,11 +498,6 @@ _b_: bookmarks
 
 (use-package orgit
   :straight (orgit :type git :host github :repo "magit/orgit"))
-
-;;(use-package org-modern
-;;  :straight t
-;;  :config
-;;  (global-org-modern-mode))
 
 ;; ===============================================================================
 ;; Configure PDF Tools
@@ -790,6 +793,16 @@ _b_: bookmarks
   :config
   (evil-goggles-mode))
 
+(use-package evil-args
+  :straight t
+  :config
+  (define-key evil-inner-text-objects-map "a" 'evil-inner-arg)
+  (define-key evil-outer-text-objects-map "a" 'evil-inner-arg)
+  (define-key evil-normal-state-map "L" 'evil-forward-arg)
+  (define-key evil-normal-state-map "H" 'evil-backward-arg)
+  (define-key evil-motion-state-map "L" 'evil-forward-arg)
+  (define-key evil-motion-state-map "H" 'evil-backward-arg)
+  (define-key evil-normal-state-map "K" 'evil-jump-out-args))
 			      
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
