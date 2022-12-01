@@ -233,6 +233,10 @@
   :config
   (setq magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1))
 
+(use-package forge
+  :straight t
+  :after magit)
+
 ;; Configure common modes like yaml, json etc
 (use-package yaml-mode
   :straight t)
@@ -475,7 +479,7 @@ _b_: bookmarks
 (global-set-key (kbd "C-c a") 'org-agenda)
 
 ;; file to save todo items in
-(setq org-agenda-files (quote ("~/todo.org")))
+(setq org-agenda-files '("~/org/" "~/org/agenda" "~/org/roam/" "~/org/roam/inbox/"))
 
 ;; set priority range from A to C with default A
 (setq org-highest-priority ?A)
@@ -498,6 +502,20 @@ _b_: bookmarks
 
 (use-package orgit
   :straight (orgit :type git :host github :repo "magit/orgit"))
+
+;; ===============================================================================
+;; Configure Org Agenda
+;; ===============================================================================
+
+;; lifted from https://blog.aaronbieber.com/2016/09/24/an-agenda-for-life-with-org-mode.html
+
+(setq org-agenda-custom-commands
+      '(("c" "Simple agenda view"
+         ((tags "PRIORITY=\"A\""
+                ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
+                 (org-agenda-overriding-header "High Priority Tasks:")))
+          (agenda "")
+          (alltodo "")))))
 
 ;; ===============================================================================
 ;; Configure PDF Tools
@@ -780,6 +798,7 @@ _b_: bookmarks
     :config
     (global-evil-matchit-mode 1))
   (evil-mode 1)
+  (setq evil-want-fine-undo t)
   (add-hook 'org-capture-mode-hook 'evil-insert-state) ;; use insert by default for org capture
   (add-hook 'git-commit-mode-hook 'evil-insert-state) ;; use insert mode by default for magit commits
   (when (dirvish-override-dired-mode))
@@ -804,6 +823,17 @@ _b_: bookmarks
   (define-key evil-motion-state-map "H" 'evil-backward-arg)
   (define-key evil-normal-state-map "K" 'evil-jump-out-args))
 			      
+;; ===============================================================================
+;; Experimental Packages
+;; ===============================================================================
+
+;; (use-package browser-hist
+;;   :straight (browser-hist :type git :host github :repo "agzam/browser-hist")
+;;   :config
+;;   (setq browser-hist-db-paths
+;;         '(chrome . "$HOME/Library/Application Support/Google/Chrome/Default/History"))
+;;  (setq browser-hist-default-browser 'chrome))
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
