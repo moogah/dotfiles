@@ -235,7 +235,25 @@
 
 (use-package forge
   :straight t
-  :after magit)
+  :after magit
+  :config
+  (setq auth-sources '("~/.authinfo.gpg")))
+
+
+;; ===============================================================================
+;; configure EasyPG
+;; ===============================================================================
+
+(setq epa-file-select-keys nil)
+(setq epa-file-encrypt-to '("moogah@gmail.com"))
+
+;; Fix EasyPG error.
+;; From https://colinxy.github.io/software-installation/2016/09/24/emacs25-easypg-issue.html.
+;; .. from https://www.bytedude.com/gpg-in-emacs/
+(defvar epa-pinentry-mode)
+(setq epa-pinentry-mode 'loopback)
+
+
 
 ;; Configure common modes like yaml, json etc
 (use-package yaml-mode
