@@ -178,15 +178,26 @@
  '(magit-diff-removed ((t (:background "#292D3E" :foreground "#cc4259"))))
  '(magit-diff-added-highlight ((t (:background "black" :foreground "green"))))
  '(magit-diff-added ((t (:background "#292D3E" :foreground "#9cb970"))))
- '(org-table ((t (:background "#292D3E" :foreground "#9cb970"))))
+ '(org-table ((t (:foreground "wheat1"))))
  '(org-default ((t (:foreground "wheat1"))))
  '(org-link ((t (:foreground "DodgerBlue1"))))
- '(org-level-1 ((t (:foreground "#f78c6c"))))
- '(org-level-2 ((t (:foreground "#f78c6c"))))
- '(org-level-3 ((t (:foreground "#e37959"))))
- '(org-level-4 ((t (:foreground "#377959"))))
- '(org-level-5 ((t (:foreground "#377959"))))
+ '(org-level-1 ((t (:foreground "white"))))
+ '(org-level-2 ((t (:foreground "white"))))
+ '(org-level-3 ((t (:foreground "white"))))
+ '(org-level-4 ((t (:foreground "white"))))
+ '(org-level-5 ((t (:foreground "white"))))
  '(font-lock-string-face ((t (:foreground "wheat1")))))
+
+(setq org-hide-emphasis-markers t)
+(setq org-hide-leading-stars t)
+(setq org-startup-indented t)
+(setq org-blank-before-new-entry t)
+(add-hook 'org-mode-hook 'visual-line-mode)
+
+;;(use-package org-bullets
+;;  :straight t
+;;  :config
+;;  (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
 
 (enable-theme 'doom-palenight)
 
@@ -199,10 +210,10 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(org-level-1 ((t (:inherit outline-1 :height 1.5))))
+ '(org-level-1 ((t (:inherit outline-1 :height 2.0))))
  '(org-level-2 ((t (:inherit outline-2 :height 1.5))))
- '(org-level-3 ((t (:inherit outline-3 :height 1.2))))
- '(org-level-4 ((t (:inherit outline-4 :height 1.0))))
+ '(org-level-3 ((t (:inherit outline-3 :height 1.25))))
+ '(org-level-4 ((t (:inherit outline-4 :height 1.1))))
  '(org-level-5 ((t (:inherit outline-5 :height 1.0)))))
 
 ;; ===============================================================================
@@ -235,15 +246,14 @@
 
 (use-package forge
   :straight t
-  :after magit
-  :config
-  (setq auth-sources '("~/.authinfo.gpg")))
+  :after magit)
 
 
 ;; ===============================================================================
 ;; configure EasyPG
 ;; ===============================================================================
 
+(setq auth-sources '("~/.authinfo.gpg"))
 (setq epa-file-select-keys nil)
 (setq epa-file-encrypt-to '("moogah@gmail.com"))
 
@@ -252,8 +262,6 @@
 ;; .. from https://www.bytedude.com/gpg-in-emacs/
 (defvar epa-pinentry-mode)
 (setq epa-pinentry-mode 'loopback)
-
-
 
 ;; Configure common modes like yaml, json etc
 (use-package yaml-mode
