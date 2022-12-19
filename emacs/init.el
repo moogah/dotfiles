@@ -237,13 +237,15 @@
   :straight t
   :after magit
   :config
-  (setq auth-sources '("~/.authinfo.gpg")))
+  (push '("github.csnzoo.com" "github.csnzoo.com/api/v3"
+          "github.csnzoo.com" forge-github-repository)
+        forge-alist))
 
 
 ;; ===============================================================================
 ;; configure EasyPG
 ;; ===============================================================================
-
+(setq auth-sources '("./authinfo.gpg"))
 (setq epa-file-select-keys nil)
 (setq epa-file-encrypt-to '("moogah@gmail.com"))
 
