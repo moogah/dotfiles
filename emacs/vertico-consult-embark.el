@@ -6,6 +6,16 @@
   (persp-mode))
 
 
+;; ===============================================================================
+;; Configure Company Auto-Completion
+;; ===============================================================================
+
+(use-package company
+  :straight t
+  :config
+  (company-mode)
+  (add-hook 'after-init-hook 'global-company-mode))
+
 
 ;; ===============================================================================
 ;; Configure Vertico and Orderless
