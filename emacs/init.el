@@ -52,7 +52,9 @@
 ;; ===============================================================================
 
 (use-package dogears
-  :straight t)
+  :straight t
+  :config
+  (dogears-mode t))
 
 ;; Jira Export
 (use-package ox-jira
@@ -70,13 +72,14 @@
   (setenv "PKG_CONFIG_PATH" "${PKG_CONFIG_PATH}:/opt/homebrew/bin/pkg-config:/usr/local/lib/pkgconfig:/opt/X11/lib/pkgconfig")
   (pdf-loader-install))
 
-
 (load "~/src/dotfiles/emacs/look-and-feel/look-and-feel.el")
 (load "~/src/dotfiles/emacs/major-modes/dired.el")
 (load "~/src/dotfiles/emacs/major-modes/magit.el")
 (load "~/src/dotfiles/emacs/major-modes/org.el")
 (load "~/src/dotfiles/emacs/language-modes/ide-features.el")
 (load "~/src/dotfiles/emacs/evil.el")
+(load "~/src/dotfiles/emacs/hydra.el")
+(load "~/src/dotfiles/emacs/elfeed.el")
 (load "~/src/dotfiles/emacs/vertico-consult-embark.el")
 ;; @TODO some packages have config lines which depend on prior install ie: dired and evil
 ;; to load an entire directory
@@ -89,11 +92,14 @@
 ;; Experimental Packages
 ;; ===============================================================================
 
+;; (use-package sqlite
+;;   :straight t)
+
 ;; (use-package browser-hist
-;;   :straight (browser-hist :type git :host github :repo "agzam/browser-hist")
+;;   :straight (browser-hist :type git :host github :repo "agzam/browser-hist.el")
 ;;   :config
 ;;   (setq browser-hist-db-paths
-;;         '(chrome . "$HOME/Library/Application Support/Google/Chrome/Default/History"))
+;;         '(chrome . "$HOME/Library/Application\ Support/Google/Chrome/Default/History"))
 ;;  (setq browser-hist-default-browser 'chrome))
 
 (custom-set-variables
