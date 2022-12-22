@@ -1,0 +1,39 @@
+* Configure YAML Editing
+#+auto_tangle: y
+
+#+begin_src elisp :tangle yes
+  (use-package yaml-mode
+    :straight t)
+#+end_src
+
+#+begin_src elisp :tangle yes
+  (use-package yaml
+    :straight t)
+#+end_src
+
+* Using tree-sitter
+https://github.com/zkry/yaml-pro
+
+Enabling tree-sitter for yaml requires [[https://github.com/ikatyang/tree-sitter-yaml][tree-sitter-yaml library installed]]
+
+[[https://docs.npmjs.com/resolving-eacces-permissions-errors-when-installing-packages-globally][this page]] for info on EACCESS errors I encountered.
+
+`Error: EACCES: permission denied, rename '/usr/local/lib/node_modules/npm' -> '/usr/local/lib/node_modules/.npm-i9nnxROI'",`
+
+Validate tree-sitter-yaml is installed
+#+begin_src sh :results output
+npm list -g --depth 0
+#+end_src
+
+#+RESULTS:
+: /Users/jefarr/.nvm/versions/node/v19.3.0/lib
+: ├── corepack@0.15.2
+: └── npm@9.2.0
+: 
+
+
+#+begin_src elisp :tangle yes
+      (use-package yaml-pro
+        :straight t
+        :hook (yaml-mode . yaml-pro-mode))
+#+end_src
