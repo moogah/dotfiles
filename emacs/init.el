@@ -23,7 +23,7 @@
 
 ;; install use-package
 (straight-use-package 'use-package)
-
+(straight-use-package 'org)
 ;; ===============================================================================
 ;; OSX Specific Configs
 ;; ===============================================================================
@@ -263,6 +263,21 @@
   :straight t)
 
 ;; ===============================================================================
+;; configure emacs ipython notebook (jupyter interface)
+;; ===============================================================================
+
+(use-package ein
+  :straight t
+  :config
+  (org-babel-do-load-languages 'org-babel-load-languages
+                               (append org-babel-load-languages
+                                       '((python . t)
+                                         (ein . t)))))
+
+(use-package jupyter
+  :straight t)
+
+;; ===============================================================================
 ;; configure dired
 ;; ===============================================================================
 
@@ -455,13 +470,23 @@ _b_: bookmarks
 ;; ===============================================================================
 
 (use-package dogears
-  :straight t)
+  :straight t
+  :config
+  (setq ob-async-no-async-languages-alist '("ipython")))
 
 ;; ===============================================================================
 ;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ;; Org Mode Configuration
 ;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ;; ===============================================================================
+
+(use-package ob-async
+  :straight t)
+
+(org-babel-do-load-languages 'org-babel-load-languages
+                             (append org-babel-load-languages
+                                     '((python . t)
+                                       (shell . t))))
 
 ;; ===============================================================================
 ;; Configure Org-Roam
@@ -483,10 +508,10 @@ _b_: bookmarks
 ;; ===============================================================================
 
 ;; Jira Export
-(use-package ox-jira
-  :straight t
-  :config
-  (setq org-export-copy-to-kill-ring 'if-interactive))
+;;(use-package ox-jira
+;;  :straight t
+;;  :config
+;;  (setq org-export-copy-to-kill-ring 'if-interactive))
 
 
 ;; ===============================================================================
