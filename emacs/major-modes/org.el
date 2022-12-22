@@ -5,6 +5,11 @@
 ;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ;; ===============================================================================
 
+(org-babel-do-load-languages 'org-babel-load-languages
+                             (append org-babel-load-languages
+                                     '((python . t)
+                                       (shell . t))))
+
 ;; ===============================================================================
 ;; Configure Org-Roam
 ;; ===============================================================================
@@ -76,3 +81,14 @@
                  (org-agenda-overriding-header "High Priority Tasks:")))
           (agenda "")
           (alltodo "")))))
+
+
+;; ===============================================================================
+;; Setup auto-tangle for org files
+;; ===============================================================================
+
+(use-package org-auto-tangle
+  :straight t
+  :hook (org-mode . org-auto-tangle-mode))
+;; enable in a doc with #+auto_tangle: t
+;; enable in all buffers with org-auto-tangle-default

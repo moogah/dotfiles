@@ -6,8 +6,7 @@
 ;; ===============================================================================
 
 ;; Configure common modes like yaml, json etc
-(use-package yaml-mode
-  :straight t)
+(load "~/src/dotfiles/emacs/language-modes/yaml.el")
 
 (use-package wgrep
   :straight t)
