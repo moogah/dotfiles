@@ -1,0 +1,10 @@
+#+auto_tangle: yes
+
+#+begin_src emacs-lisp :tangle yes
+  (use-package json-mode
+    :straight t)
+#+end_src
+
+*** Possible Improvements
+
+https://stackoverflow.com/questions/435847/emacs-mode-to-edit-json

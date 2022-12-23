@@ -7,6 +7,8 @@
 
 ;; Configure common modes like yaml, json etc
 (load "~/src/dotfiles/emacs/language-modes/yaml.el")
+(load "~/src/dotfiles/emacs/language-modes/json.el")
+
 
 (use-package wgrep
   :straight t)
@@ -71,6 +73,21 @@
   :straight t)
 ;; @TODO
 ;; bind aya-create and aya-expand
+
+(use-package autoinsert
+  :straight t
+  :init
+  (setq auto-insert-query nil)
+  (setq auto-insert-directory (locate-user-emacs-file "templates"))
+  (add-hook 'file-file-hook 'auto-insert)
+  (auto-insert-mode 1))
+
+(defun jf/autoinsert-yas-expand()
+  "Replace text in yasnippet template."
+  (interactive)
+  (yas-expand-snippet (buffer-string) (point-min) (point-max)))
+
+(define-auto-insert "\\.pp$" ["default-puppet.pp" jf/autoinsert-yas-expand])
 
 ;; ===============================================================================
 ;; Configure Projectile
@@ -149,3 +166,10 @@
   :straight t
   :config
   (add-hook 'terraform-mode-hook #'terraform-format-on-save-mode))
+
+;; ===============================================================================
+;; Configure Puppet
+;; ===============================================================================
+
+(use-package puppet-mode
+  :straight t)
