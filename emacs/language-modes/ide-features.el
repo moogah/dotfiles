@@ -88,6 +88,7 @@
   (yas-expand-snippet (buffer-string) (point-min) (point-max)))
 
 (define-auto-insert "\\.pp$" ["default-puppet.pp" jf/autoinsert-yas-expand])
+(define-auto-insert "dotfiles\/emacs.*\.org" "emacs-config-org-tangle.org")
 
 ;; ===============================================================================
 ;; Configure Projectile
