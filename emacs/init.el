@@ -112,6 +112,8 @@
 (load "~/src/dotfiles/emacs/hydra.el")
 (load "~/src/dotfiles/emacs/elfeed.el")
 (load "~/src/dotfiles/emacs/vertico-consult-embark.el")
+(if (string-equal system-name "ALT02886")
+    (load "~/src/dotfiles/emacs/wayfair.el"))
 ;; @TODO some packages have config lines which depend on prior install ie: dired and evil
 ;; to load an entire directory
 ;; (setq load-path (cons "~/emacs" load-path))
