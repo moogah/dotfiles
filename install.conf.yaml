@@ -62,3 +62,6 @@
 
 - link:
     ~/.oh-my-zsh/custom/ansible.zsh: oh-my-zsh/custom/ansible.zsh
+
+- link:
+    ~/.oh-my-zsh/custom/bat.zsh: oh-my-zsh/custom/bat.zsh
