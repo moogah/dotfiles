@@ -4,7 +4,8 @@
 ;; Org Mode Configuration
 ;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ;; ===============================================================================
-
+(setq org-src-tab-acts-natively t)
+(setq org-src-fontify-natively t)
 (org-babel-do-load-languages 'org-babel-load-languages
                              (append org-babel-load-languages
                                      '((python . t)
