@@ -16,11 +16,17 @@
 
 (use-package org-roam
   :straight t
+  :custom
+  (org-roam-capture-templates
+   '(("d" "default" plain
+      "%?"
+      :if-new (file+head "inbox/%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
+      :unnarrowed t)))
   :bind (("C-c n f" . org-roam-node-find)
          ("C-c n i" . org-roam-node-insert)
          ("C-c n c" . org-roam-capture))
   :config
-  (setq org-roam-directory (file-truename "~/org-roam"))
+  (setq org-roam-directory (file-truename "~/org/roam"))
   (setq find-file-visit-truename t)
   (setq org-roam-completion-everywhere t)
   (org-roam-db-autosync-mode))
