@@ -12,6 +12,9 @@
 
 (use-package company
   :straight t
+  :bind(:map company-active-map
+             ([return] . nil)
+             ("RET" . nil))
   :config
   (company-mode)
   (add-hook 'after-init-hook 'global-company-mode))

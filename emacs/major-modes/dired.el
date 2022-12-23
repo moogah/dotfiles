@@ -9,7 +9,10 @@
   :custom
   (dirvish-bookmark-entries
    '(("h" "~/"        "Home")
-     ("s" "~/src/"    "Source Code")))
+     ("s" "~/src/"    "Source Code")
+     ("e" "~/.emacs.d/"    "Emacs Config")
+     ("o" "~/org/"    "Org")
+     ("l" "~/src/homelab/"    "Homelab")))
   (dirvish-mode-line-format
    '(:left (sort file-time " " file-size symlink) :right (omit yank index)))
   (dirvish-attributes '(vscode-icon file-size collapse subtree-state vc-state))
