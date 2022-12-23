@@ -10,7 +10,7 @@
 Global Mode Launcher
 
 _p_: Perspective     _R_: rgrep
-_P_: Projectile
+_P_: Projectile      _d_: dogears
 _r_: Org-Roam
 _a_: Org-Agenda
 _c_: Consult
@@ -21,6 +21,7 @@ _c_: Consult
   ("a" hydra-agenda/body nil)
   ("c" hydra-consult/body nil)
   ("R" rgrep nil)
+  ("d" hydra-dogears/body nil)
   ("q" nil "cancel"))
 
 (defhydra hydra-perspective (:exit t)
@@ -96,6 +97,18 @@ _b_: bookmarks
 "
   ("b" dirvish-bookmark-jump nil)
   ("H" hydra-main/body "Home")
+  ("q" nil "cancel"))
+
+(defhydra hydra-dogears (:exit nil)
+  "
+Dogears
+
+_f_: forward
+_b_: back
+"
+  ("f" dogears-forward nil)
+  ("b" dogears-back nil)
+  ("H" hydra-main/body nil)
   ("q" nil "cancel"))
 
 (define-key dired-mode-map (kbd "C-c h") 'hydra-dired/body)
