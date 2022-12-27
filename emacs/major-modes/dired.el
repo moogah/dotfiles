@@ -10,6 +10,7 @@
   (dirvish-bookmark-entries
    '(("h" "~/"        "Home")
      ("s" "~/src/"    "Source Code")
+     ("d" "~/src/dotfiles"    "Dotfiles")
      ("e" "~/.emacs.d/"    "Emacs Config")
      ("o" "~/org/"    "Org")
      ("l" "~/src/homelab/"    "Homelab")))
