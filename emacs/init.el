@@ -25,7 +25,10 @@
 
 ;; install use-package
 (straight-use-package 'use-package)
+
+;; attempt to force using straight for org
 (straight-use-package 'org)
+
 ;; ===============================================================================
 ;; OSX Specific Configs
 ;; ===============================================================================
@@ -37,8 +40,17 @@
   (exec-path-from-shell-initialize))
 
 ;; ===============================================================================
+;; Global Dependencies
+;; ===============================================================================
+
+;; needed for projectile-ripgrep
+(use-package ripgrep
+  :straight t)
+
+;; ===============================================================================
 ;; configure EasyPG
 ;; ===============================================================================
+
 (setq auth-sources '("~/.authinfo.gpg"))
 (setq epa-file-select-keys nil)
 (setq epa-file-encrypt-to '("moogah@gmail.com"))
@@ -99,11 +111,11 @@
 ;; Configure PDF Tools
 ;; ===============================================================================
 
-(use-package pdf-tools
-  :straight t; (pdf-tools :type git :host github :repo "vedang/pdf-tools")
-  :config
-  (setenv "PKG_CONFIG_PATH" "${PKG_CONFIG_PATH}:/opt/homebrew/bin/pkg-config:/usr/local/lib/pkgconfig:/opt/X11/lib/pkgconfig")
-  (pdf-loader-install))
+;; (use-package pdf-tools
+;;   :straight t; (pdf-tools :type git :host github :repo "vedang/pdf-tools")
+;;   :config
+;;   (setenv "PKG_CONFIG_PATH" "${PKG_CONFIG_PATH}:/opt/homebrew/bin/pkg-config:/usr/local/lib/pkgconfig:/opt/X11/lib/pkgconfig")
+;;   (pdf-loader-install))
 
 (load "~/src/dotfiles/emacs/look-and-feel/look-and-feel.el")
 (load "~/src/dotfiles/emacs/major-modes/dired.el")

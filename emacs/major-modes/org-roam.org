@@ -8,3 +8,6 @@ Also follow [[https://www.orgroam.com/manual.html#org_002droam_002dprotocol][doc
 (require 'org-roam-protocol) 
 #+end_src
 
+#+begin_src emacs-lisp :tangle yes
+  (server-start)
+#+end_src

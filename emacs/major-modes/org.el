@@ -30,6 +30,10 @@
    '(("d" "default" plain
       "%?"
       :if-new (file+head "inbox/%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
+      :unnarrowed t)
+     ("f" "foo" plain
+      (file "~/.emacs.d/templates/org-roam-default.org")
+      :if-new (file+head "inbox/%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
       :unnarrowed t)))
   :bind (("C-c n f" . org-roam-node-find)
          ("C-c n i" . org-roam-node-insert)
