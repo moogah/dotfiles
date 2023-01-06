@@ -9,7 +9,7 @@
 ;; ===============================================================================
 ;; Configure Company Auto-Completion
 ;; ===============================================================================
-
+;; also try out https://github.com/minad/corfu
 (use-package company
   :straight t
   :bind(:map company-active-map
