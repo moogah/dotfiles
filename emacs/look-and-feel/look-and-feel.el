@@ -156,8 +156,13 @@
 (setq org-hide-emphasis-markers t)
 (setq org-hide-leading-stars t)
 (setq org-startup-indented t)
-(setq org-blank-before-new-entry t)
+
+;; this setting will break capture templates 
+;;(setq org-blank-before-new-entry nil)
+;;
+
 (enable-theme 'doom-palenight)
+
 ;;(add-hook 'org-mode-hook 'visual-line-mode)
 
 ;; set font size to 14pt for my aging eyes

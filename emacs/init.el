@@ -107,6 +107,7 @@
 (load "~/src/dotfiles/emacs/major-modes/dired.el")
 (load "~/src/dotfiles/emacs/major-modes/magit.el")
 (load "~/src/dotfiles/emacs/major-modes/org.el")
+(load "~/src/dotfiles/emacs/major-modes/org-roam.el")
 (load "~/src/dotfiles/emacs/language-modes/ide-features.el")
 (load "~/src/dotfiles/emacs/evil.el")
 (load "~/src/dotfiles/emacs/hydra.el")

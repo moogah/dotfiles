@@ -1,0 +1,10 @@
+#+auto_tangle: y
+
+** Configure org-roam-protocol
+
+Also follow [[https://www.orgroam.com/manual.html#org_002droam_002dprotocol][docs]] to setup org-protocol
+
+#+begin_src emacs-lisp :tangle yes
+(require 'org-roam-protocol) 
+#+end_src
+
