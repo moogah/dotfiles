@@ -1,4 +1,4 @@
-export CDPATH=.:~:~/src:~/src/norns_apps:~/src/homelab
+export CDPATH=.:~:~/src:~/src/norns_apps:~/src/homelab:~/src/dotfiles
 
 # https://www.commandlinefu.com/commands/view/8990/generate-an-xkcd-936-style-4-word-password
 # create a 4 word password ie: soviethamsterpastaberry 
