@@ -1,6 +1,8 @@
 ;; -*- lexical-binding: t; -*-
 
 (toggle-debug-on-error)
+;; use C-x r j i to quick jump to this file
+(set-register ?i (cons 'file "~/src/dotfiles/emacs/init.el"))
 
 ;; ===============================================================================
 ;; configure straight.el
