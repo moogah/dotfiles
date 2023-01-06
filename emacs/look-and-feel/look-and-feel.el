@@ -158,6 +158,7 @@
 (setq org-startup-indented t)
 (setq org-blank-before-new-entry t)
 (enable-theme 'doom-palenight)
+;;(add-hook 'org-mode-hook 'visual-line-mode)
 
 ;; set font size to 14pt for my aging eyes
 (setq default-frame-alist '((font . "Menlo-14")))

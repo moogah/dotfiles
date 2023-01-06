@@ -10,6 +10,14 @@
                              (append org-babel-load-languages
                                      '((python . t)
                                        (shell . t))))
+;; ===============================================================================
+;; Configure Org Crypt
+;; ===============================================================================
+
+(require 'org-crypt)
+(org-crypt-use-before-save-magic)
+(setq org-tags-exclude-from-inheritance (quote ("crypt")))
+(setq org-crypt-key nil)
 
 ;; ===============================================================================
 ;; Configure Org-Roam
