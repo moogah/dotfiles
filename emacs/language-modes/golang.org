@@ -1,0 +1,11 @@
+#+auto_tangle: y
+
+#+begin_src emacs-lisp :tangle yes
+  (use-package go-mode
+    :straight t)
+#+end_src
+
+#+begin_src emacs-lisp :tangle yes
+  (use-package ob-go
+    :straight t)
+#+end_src

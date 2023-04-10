@@ -9,7 +9,24 @@
 (org-babel-do-load-languages 'org-babel-load-languages
                              (append org-babel-load-languages
                                      '((python . t)
+                                       (js . t)
                                        (shell . t))))
+(setq org-babel-python-command "python3 2>&1")
+
+
+;; Enable word wrapping in Org mode
+(add-hook 'org-mode-hook 'visual-line-mode)
+
+(use-package org-phscroll
+  :straight '(org-phscroll :type git :host github :repo "misohena/phscroll")
+  )
+
+(setq org-startup-truncated nil)
+(with-eval-after-load "org"
+  (require 'org-phscroll))
+
+;; TODO add adaptive-wrap-prefix-mode
+
 ;; ===============================================================================
 ;; Configure Org Crypt
 ;; ===============================================================================
@@ -25,16 +42,6 @@
 
 (use-package org-roam
   :straight t
-  :custom
-  (org-roam-capture-templates
-   '(("d" "default" plain
-      "%?"
-      :if-new (file+head "inbox/%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
-      :unnarrowed t)
-     ("f" "foo" plain
-      (file "~/.emacs.d/templates/org-roam-default.org")
-      :if-new (file+head "inbox/%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
-      :unnarrowed t)))
   :bind (("C-c n f" . org-roam-node-find)
          ("C-c n i" . org-roam-node-insert)
          ("C-c n c" . org-roam-capture))
@@ -111,3 +118,11 @@
   :hook (org-mode . org-auto-tangle-mode))
 ;; enable in a doc with #+auto_tangle: t
 ;; enable in all buffers with org-auto-tangle-default
+
+;; ===============================================================================
+;; Setup Org Transclude
+;; ===============================================================================
+
+(use-package org-transclusion
+  :straight t
+  :after org)

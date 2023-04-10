@@ -87,10 +87,15 @@
   :config
   (setq ob-async-no-async-languages-alist '("ipython")))
 
+(use-package ob-ipython
+  :straight t)
+
 (org-babel-do-load-languages 'org-babel-load-languages
                              (append org-babel-load-languages
                                      '((python . t)
-                                       (shell . t))))
+                                       (shell . t)
+                                       (ipython . t))))
+;; todo: define custom behavior when editing src blocks to automatically save the parent buffer and execute the block https://emacs.stackexchange.com/questions/45182/exit-hook-for-org-src-mode
 
 ;; ===============================================================================
 ;; Install dogears
