@@ -38,3 +38,67 @@
   (define-key evil-motion-state-map "L" 'evil-forward-arg)
   (define-key evil-motion-state-map "H" 'evil-backward-arg)
   (define-key evil-normal-state-map "K" 'evil-jump-out-args))
+
+(defun my-split-or-switch-window-left ()
+  "Create a new window on the left and open dired, if a window already exists move there"
+  (interactive)
+  (if (= 1 (count-windows))
+      (progn
+        (split-window-horizontally)
+        (dired-jump nil))
+    (progn
+      (evil-window-left 1))))
+
+
+(defun my-split-or-switch-window-right ()
+  "Create a new window on the right and open dired, if a window already exists move there"
+  (interactive)
+  (if (= 1 (count-windows))
+      (progn
+        (split-window-horizontally)
+        (other-window 1)
+        (dired-jump nil))
+    (progn
+      (evil-window-right 1))))
+
+(defun my-find-implementation-or-test-other-window ()
+  "Finds the corresponding test or implementation window and opens it in a new or existing horizontal split"
+  (interactive)
+  (let ((file (projectile-find-implementation-or-test (buffer-file-name))))
+    (if file
+        (progn (my-split-or-switch-window-right) (find-file file)))))
+
+(evil-define-key 'normal 'global
+  ;; Open Main Hydra Menu
+  (kbd "<SPC> h") 'hydra-main/body
+
+  ;; Org Roam
+  (kbd "<SPC> n") 'org-roam-node-find
+  (kbd "<SPC> j") 'org-roam-dailies-goto-today
+
+  ;; Projectile
+  (kbd "<SPC> r") 'projectile-ripgrep
+  (kbd "<SPC> f") 'projectile-find-file
+
+  ;; Magit
+  (kbd "<SPC> g") 'magit
+
+  ;; Dirvish
+  (kbd "<SPC> d") 'dired-jump
+  (kbd "<SPC> b") 'dirvish-side 
+
+  ;; Perspective
+  (kbd "<SPC> p s") 'persp-switch
+
+  ;; Buffers
+  (kbd "<SPC> o") 'consult-buffer
+  (kbd "<SPC> x") 'kill-this-buffer
+
+  ;; Switch between windows
+  (kbd "<SPC> w h") 'my-split-or-switch-window-left
+  (kbd "<SPC> w j") 'evil-window-down
+  (kbd "<SPC> w k") 'evil-window-up
+  (kbd "<SPC> w l") 'my-split-or-switch-window-right)
+
+(evil-define-key 'normal 'python-mode-map
+  (kbd "<SPC> t") 'my-find-implementation-or-test-other-window)

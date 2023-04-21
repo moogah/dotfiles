@@ -1,3 +1,28 @@
+;; ===============================================================================
+;; Configure Org-Roam
+;; ===============================================================================
+
+(use-package org-roam
+  :straight t
+  :bind (("C-c n f" . org-roam-node-find)
+         ("C-c n i" . org-roam-node-insert)
+         ("C-c n c" . org-roam-capture)
+         ("C-c n d" . org-roam-dailies-goto-today))
+  :config
+  (setq org-roam-directory (file-truename "~/org/roam"))
+  (setq find-file-visit-truename t)
+  (setq org-roam-completion-everywhere t)
+  (org-roam-db-autosync-mode))
+
+(setq org-roam-dailies-directory "dailies/")
+
+(setq org-roam-dailies-capture-templates
+      '(("d" "default" plain
+         (file "~/.emacs.d/templates/org-roam-dailies-default.org")
+         :if-new (file+head "%<%Y-%m-%d>.org"
+                            "#+title: %<%Y-%m-%d>\n\n* %<%Y-%m-%d> Meetings\n\n* %<%Y-%m-%d> Worklog\n\n* %<%Y-%m-%d> Tasks")
+         :unnarrowed t)))
+
 (require 'org-roam-protocol)
 
 (server-start)

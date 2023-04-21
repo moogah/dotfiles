@@ -24,3 +24,11 @@
   (use-package blacken
     :straight t)
 #+end_src
+
+If you run into this error:
+Debugger entered--Lisp error: (process-sentinel "exited abnormally with code 1")
+  signal(process-sentinel ("exited abnormally with code 1"))
+
+Run:
+
+M-x elpy-rpc-reinstall-virtualenv

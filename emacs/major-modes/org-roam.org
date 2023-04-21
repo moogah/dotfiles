@@ -1,6 +1,50 @@
 #+auto_tangle: y
 
-** Configure org-roam-protocol
+* Configure Org Roam
+
+
+#+begin_src emacs-lisp :tangle yes
+  ;; ===============================================================================
+  ;; Configure Org-Roam
+  ;; ===============================================================================
+
+  (use-package org-roam
+    :straight t
+    :bind (("C-c n f" . org-roam-node-find)
+           ("C-c n i" . org-roam-node-insert)
+           ("C-c n c" . org-roam-capture)
+           ("C-c n d" . org-roam-dailies-goto-today))
+    :config
+    (setq org-roam-directory (file-truename "~/org/roam"))
+    (setq find-file-visit-truename t)
+    (setq org-roam-completion-everywhere t)
+    (org-roam-db-autosync-mode))
+#+end_src
+
+
+* Configure Org Roam Dailies
+This attempt to use a file template didn't work, the content of the template didn't appear in a new node
+#+begin_src emacs-lisp 
+  (setq org-roam-dailies-capture-templates
+        '(("d" "default" plain
+           (file "~/.emacs.d/templates/org-roam-dailies-default.org")
+           :if-new (file+head "%<%Y-%m-%d>.org"
+                              "#+title: %<%Y-%m-%d>\nddddd")
+           :unnarrowed t)))
+#+end_src
+
+#+begin_src emacs-lisp :tangle yes
+  (setq org-roam-dailies-directory "dailies/")
+
+  (setq org-roam-dailies-capture-templates
+        '(("d" "default" plain
+           (file "~/.emacs.d/templates/org-roam-dailies-default.org")
+           :if-new (file+head "%<%Y-%m-%d>.org"
+                              "#+title: %<%Y-%m-%d>\n\n* %<%Y-%m-%d> Meetings\n\n* %<%Y-%m-%d> Worklog\n\n* %<%Y-%m-%d> Tasks")
+           :unnarrowed t)))
+#+end_src
+
+* Configure org-roam-protocol
 
 Also follow [[https://www.orgroam.com/manual.html#org_002droam_002dprotocol][docs]] to setup org-protocol
 
@@ -26,7 +70,7 @@ Also follow [[https://www.orgroam.com/manual.html#org_002droam_002dprotocol][doc
         :unnarrowed t)))
 #+end_src
 
-** Ref Capture Templates (for org-roam-protocol)
+* Ref Capture Templates (for org-roam-protocol)
 
 #+begin_src emacs-lisp :tangle yes
   (setq org-roam-capture-ref-templates
