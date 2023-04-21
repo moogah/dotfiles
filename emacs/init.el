@@ -123,7 +123,7 @@
 ;;   (pdf-loader-install))
 
 (load "~/src/dotfiles/emacs/look-and-feel/look-and-feel.el")
-(load "~/src/dotfiles/emacs/major-modes/dired.el")
+(load "~/src/dotfiles/emacs/major-modes/dirvish.el")
 (load "~/src/dotfiles/emacs/major-modes/magit.el")
 (load "~/src/dotfiles/emacs/major-modes/org.el")
 (load "~/src/dotfiles/emacs/major-modes/org-roam.el")
