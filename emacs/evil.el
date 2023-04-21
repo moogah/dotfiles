@@ -38,3 +38,24 @@
   (define-key evil-motion-state-map "L" 'evil-forward-arg)
   (define-key evil-motion-state-map "H" 'evil-backward-arg)
   (define-key evil-normal-state-map "K" 'evil-jump-out-args))
+
+(evil-define-key 'normal 'global
+  ;; Open Main Hydra Menu
+  (kbd "<SPC> h") 'hydra-main/body
+
+  ;; Org Roam
+  (kbd "<SPC> n") 'org-roam-node-find
+  (kbd "<SPC> j") 'org-roam-dailies-goto-today
+
+  ;; Projectile
+  (kbd "<SPC> r") 'projectile-ripgrep
+  (kbd "<SPC> f") 'projectile-find-file
+
+  ;; Magit
+  (kbd "<SPC> g") 'magit
+
+  ;; Switch between windows
+  (kbd "<SPC> w h") 'evil-window-left
+  (kbd "<SPC> w j") 'evil-window-down
+  (kbd "<SPC> w k") 'evil-window-up
+  (kbd "<SPC> w l") 'evil-window-right)
