@@ -9,7 +9,7 @@ fi
 # export PATH=$HOME/bin:/usr/local/bin:$PATH
 
 # Path to your oh-my-zsh installation.
-export ZSH="/Users/jefarr/.oh-my-zsh"
+export ZSH="/Users/jefffarr/.oh-my-zsh"
 
 # Set name of the theme to load --- if set to "random", it will
 # load a random theme each time oh-my-zsh is loaded, in which case,
@@ -83,7 +83,6 @@ plugins=(
   git
   macos
   docker
-  zsh-vi-mode
 )
 
 source $ZSH/oh-my-zsh.sh
@@ -148,6 +147,10 @@ function clean-known-hosts() {
 }
 
 setopt auto_pushd
+
+# Enable VI mode
+
+set -o vi
 
 # Power Level 10k Configuration
 source /usr/local/opt/powerlevel10k/powerlevel10k.zsh-theme

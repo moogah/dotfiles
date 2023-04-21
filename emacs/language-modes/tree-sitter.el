@@ -21,8 +21,8 @@
 (use-package evil-textobj-tree-sitter
   :straight t)
 
-(use-package combobulate
-  :straight (combobulate :type git :host github :repo "mickeynp/combobulate")
-  :hook ((python-mode . combobulate-mode)
-         (js-mode . combobulate-mode)
-         (typescript-mode . combobulate-mode)))
+;;(use-package combobulate
+;;  :straight (combobulate :type git :host github :repo "mickeynp/combobulate")
+;;  :hook ((python-mode . combobulate-mode)
+;;         (js-mode . combobulate-mode)
+;;         (typescript-mode . combobulate-mode)))
