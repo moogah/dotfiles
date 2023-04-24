@@ -112,7 +112,7 @@ source $ZSH/oh-my-zsh.sh
 # Example aliases
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
-alias ll="ls -alh"
+alias l="exa -algh --icons"
 alias timemachine-activity="sudo fs_usage -w |grep -i backupd |grep -i fsctl"
 function timemachine-logs() {
     echo teest
