@@ -48,3 +48,16 @@ This won't help organize the layout of the windows, that will need to be done el
       (narrow-to-region start end)))
 
 #+end_src
+
+* Detecting if windows exist relative to the current window:
+
+#+begin_src emacs-lisp :async t :dir ~/ :prologue exec 2>&1 :epilogue "true" :results output
+  ; detecting if a window is in /position/ from the current window
+  (window-in-direction 'above (selected-window))
+  (window-in-direction 'below (selected-window))
+  (window-in-direction 'right (selected-window))
+  (window-in-direction 'left (selected-window))
+
+  ; getting a reference to the detected window
+  (let (window (window-in-direction 'right (selected-window))))
+#+end_src
