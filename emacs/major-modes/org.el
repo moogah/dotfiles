@@ -56,7 +56,7 @@
 (global-set-key (kbd "C-c a") 'org-agenda)
 
 ;; file to save todo items in
-(setq org-agenda-files '("~/org/" "~/org/agenda" "~/org/roam/" "~/org/roam/inbox/"))
+(setq org-agenda-files '("~/org/" "~/org/agenda" "~/org/roam/" "~/org/roam/inbox/" "~/org/roam/dailies"))
 
 ;; set priority range from A to C with default A
 (setq org-highest-priority ?A)

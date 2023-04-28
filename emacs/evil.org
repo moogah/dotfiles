@@ -85,6 +85,9 @@
     ;; Open Main Hydra Menu
     (kbd "<SPC> h") 'hydra-main/body
 
+    ;; Org Babel
+    (kbd "<SPC> e") 'org-babel-execute-src-block
+
     ;; Org Roam
     (kbd "<SPC> n") 'org-roam-node-find
     (kbd "<SPC> j") 'org-roam-dailies-goto-today
@@ -107,6 +110,10 @@
     (kbd "<SPC> o") 'consult-buffer
     (kbd "<SPC> x") 'kill-this-buffer
 
+    ; Links
+    (kbd "<SPC> s l") 'org-store-link
+    (kbd "<SPC> i l") 'org-insert-link
+
     ;; Switch between windows
     (kbd "<SPC> w h") 'my-split-or-switch-window-left
     (kbd "<SPC> w j") 'evil-window-down
@@ -115,4 +122,15 @@
 
   (evil-define-key 'normal 'python-mode-map
     (kbd "<SPC> t") 'my-find-implementation-or-test-other-window)
+
+
+  (evil-define-key 'normal 'org-mode-map
+    ; TODO
+    (kbd "<SPC> t") 'org-insert-todo-heading
+    (kbd "<SPC> T") 'org-insert-todo-subheading
+
+
+    ; Headings
+    (kbd "<SPC> h") 'org-insert-heading
+    (kbd "<SPC> H") 'org-insert-subheading)
 #+end_src 
