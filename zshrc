@@ -150,7 +150,7 @@ setopt auto_pushd
 
 # Enable VI mode
 
-set -o vi
+# set -o vi
 
 # Power Level 10k Configuration
 source /usr/local/opt/powerlevel10k/powerlevel10k.zsh-theme
