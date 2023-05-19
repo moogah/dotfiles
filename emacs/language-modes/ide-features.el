@@ -31,6 +31,39 @@
     "Create a git post-commit hook to update ctags every time a project is opened."
     (create-tags-git-hook))
 
+(use-package ggtags
+    :straight t)
+
+  (add-hook 'python-mode-hook
+          (lambda ()
+            (ggtags-mode 1)))
+
+(add-hook 'js-mode-hook
+          (lambda ()
+            (ggtags-mode 1)))
+
+(setenv "GTAGSLABEL" "pygments")
+
+; this config cargo culted from https://www.emacswiki.org/emacs/GnuGlobal
+
+
+(defun gtags-root-dir ()
+    "Returns GTAGS root directory or nil if doesn't exist."
+    (with-temp-buffer
+      (if (zerop (call-process "global" nil t nil "-pr"))
+          (buffer-substring (point-min) (1- (point-max)))
+        nil)))
+
+  (defun gtags-update ()
+    "Make GTAGS incremental update"
+    (call-process "global" nil nil nil "-u"))
+
+  (defun gtags-update-hook ()
+    (when (gtags-root-dir)
+      (gtags-update)))
+
+  (add-hook 'after-save-hook #'gtags-update-hook)
+
 ;; ===============================================================================
 ;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ;; Development Configuration
