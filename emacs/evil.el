@@ -70,7 +70,7 @@
 
 (evil-define-key 'normal 'global
   ;; Open Main Hydra Menu
-  (kbd "<SPC> h") 'hydra-main/body
+  (kbd "<SPC> <SPC> h") 'hydra-main/body
 
   ;; Org Babel
   (kbd "<SPC> e") 'org-babel-execute-src-block
@@ -81,7 +81,7 @@
 
   ;; Projectile
   (kbd "<SPC> r") 'projectile-ripgrep
-  (kbd "<SPC> f") 'projectile-find-file
+  (kbd "<SPC> f") 'project-find-file
 
   ;; Magit
   (kbd "<SPC> g") 'magit
@@ -105,7 +105,16 @@
   (kbd "<SPC> w h") 'my-split-or-switch-window-left
   (kbd "<SPC> w j") 'evil-window-down
   (kbd "<SPC> w k") 'evil-window-up
-  (kbd "<SPC> w l") 'my-split-or-switch-window-right)
+  (kbd "<SPC> w l") 'my-split-or-switch-window-right
+
+  ;; imenu
+  (kbd "<SPC> m m") 'consult-imenu-multi
+  (kbd "<SPC> m i") 'consult-imenu
+
+  ;; buffer history
+  (kbd "<SPC> <SPC> j") 'previous-buffer
+  (kbd "<SPC> <SPC> k") 'next-buffer
+)
 
 (evil-define-key 'normal 'python-mode-map
   (kbd "<SPC> t") 'my-find-implementation-or-test-other-window)
