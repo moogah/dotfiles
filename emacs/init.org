@@ -79,6 +79,20 @@
   (setq epa-pinentry-mode 'loopback)
 #+end_src
 
+* Global Behaviors
+
+The function er/expand-region will select the nearest semantically defined region of text and allows the expansion of the selected region by futher semantic units ie: word, then sentence then paragraph
+
+#+begin_src emacs-lisp :tangle yes
+  ;; ===============================================================================
+  ;; configure Global Behaviors
+  ;; ===============================================================================
+
+  (use-package expand-region
+    :straight t)
+
+#+end_src
+
 * Everything Else
 
 

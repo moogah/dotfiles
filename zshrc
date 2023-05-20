@@ -126,7 +126,7 @@ function ytdl() {
 }
 
 function syncmpclive() {
-  rsync --verbose --progress --partial --ignore-existing --exclude '*.webp' --exclude '*.description' --exclude '*.alp' --copy-links --recursive Music/Samples/MPCLive /Volumes/MPCLive2
+  rsync --verbose --progress --partial --ignore-existing --exclude '*.webp' --exclude '*.description' --exclude '*.alp'--exclude '*.json' --exclude '*.webp' --exclude '*.description' --exclude '*.jpg' --exclude '*.zip' --copy-links --recursive Music/Samples/MPCLive /Volumes/MPCLive2
 }
 
 function mpclivediff() {
