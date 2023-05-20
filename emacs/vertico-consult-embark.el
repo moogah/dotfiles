@@ -27,13 +27,15 @@
 
 (defun enable-vertico ()
   (use-package vertico
-    :straight t
+    :straight (vertico :host github :repo "minad/vertico" :tag "0.29") ; later versions require emacs 29
     :init
     (vertico-mode)
     (setq vertico-cycle t))
 
   (use-package consult
-    :straight t
+    
+    :straight (consult :host github :repo "minad/consult" :tag "0.30") ; later versions require emacs 29
+
     :bind (
 	   ("C-x b" . consult-buffer)
 	   ("C-s" . consult-line))
@@ -45,7 +47,9 @@
     :straight (consult-projectile :type git :host gitlab :repo "OlMon/consult-projectile" :branch "master"))
 
   (use-package marginalia
-    :straight t
+    
+    :straight (marginalia :host github :repo "minad/consult/marginalia" :tag "1.0") ; later versions require emacs 29
+
     :bind (
 	   :map minibuffer-local-map
 		("M-A" . marginalia-cycle))

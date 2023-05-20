@@ -2,7 +2,7 @@
 
 #+begin_src emacs-lisp :tangle yes
   (use-package dirvish
-    :straight t
+    :straight (dirvish :host github :repo "alexluigit/dirvish" :tag "2.0.53")
     :init
     (dirvish-override-dired-mode)
     :custom
