@@ -25,6 +25,19 @@
 (with-eval-after-load "org"
   (require 'org-phscroll))
 
+
+;; ===============================================================================
+;; Look and Feel
+;; ===============================================================================
+
+(use-package org-modern
+  :straight t)
+
+(use-package org-bullets
+  :straight t
+  :config
+  (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
+
 ;; TODO add adaptive-wrap-prefix-mode
 
 ;; ===============================================================================
