@@ -105,6 +105,12 @@
 
     ;; Perspective
     (kbd "<SPC> p s") 'persp-switch
+    (kbd "<SPC> p S") 'persp-state-save
+    (kbd "<SPC> p L") 'persp-state-load
+
+    ;; Projectile
+    (kbd "<SPC> p p") 'consult-projectile-switch-project
+    
 
     ;; Buffers
     (kbd "<SPC> o") 'consult-buffer

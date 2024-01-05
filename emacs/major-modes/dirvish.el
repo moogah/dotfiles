@@ -1,5 +1,5 @@
 (use-package dirvish
-  :straight t
+  :straight (dirvish :host github :repo "alexluigit/dirvish" :tag "2.0.53")
   :init
   (dirvish-override-dired-mode)
   :custom
@@ -42,8 +42,7 @@
    ("b"   . dirvish-bookmark-jump)
    ("f"   . dirvish-file-info-menu)
    ("y"   . dirvish-yank-menu)
-   ("n"   . dirvish-narrow)
-   ("/"   . dirvish-fd)
+   ("N"   . dirvish-narrow)
    ("^"   . dirvish-history-last)
    ("H"   . dirvish-history-jump) ; remapped `describe-mode'
    ("s"   . dirvish-quicksort)    ; remapped `dired-sort-toggle-or-edit'

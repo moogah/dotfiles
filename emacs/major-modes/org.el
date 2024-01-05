@@ -9,6 +9,7 @@
 (org-babel-do-load-languages 'org-babel-load-languages
                              (append org-babel-load-languages
                                      '((python . t)
+                                       (emacs-lisp . t)
                                        (js . t)
                                        (shell . t))))
 (setq org-babel-python-command "python3 2>&1")
@@ -24,6 +25,19 @@
 (setq org-startup-truncated nil)
 (with-eval-after-load "org"
   (require 'org-phscroll))
+
+
+;; ===============================================================================
+;; Look and Feel
+;; ===============================================================================
+
+(use-package org-modern
+  :straight t)
+
+(use-package org-bullets
+  :straight t
+  :config
+  (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
 
 ;; TODO add adaptive-wrap-prefix-mode
 

@@ -112,7 +112,7 @@ source $ZSH/oh-my-zsh.sh
 # Example aliases
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
-alias ll="ls -alh"
+alias l="exa -algh --icons"
 alias timemachine-activity="sudo fs_usage -w |grep -i backupd |grep -i fsctl"
 function timemachine-logs() {
     echo teest
@@ -126,7 +126,7 @@ function ytdl() {
 }
 
 function syncmpclive() {
-  rsync --verbose --progress --partial --ignore-existing --exclude '*.webp' --exclude '*.description' --exclude '*.alp' --copy-links --recursive Music/Samples/MPCLive /Volumes/MPCLive2
+  rsync --verbose --progress --partial --ignore-existing --exclude '*.webp' --exclude '*.description' --exclude '*.alp'--exclude '*.json' --exclude '*.webp' --exclude '*.description' --exclude '*.jpg' --exclude '*.zip' --copy-links --recursive Music/Samples/MPCLive /Volumes/MPCLive2
 }
 
 function mpclivediff() {
