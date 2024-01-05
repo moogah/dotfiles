@@ -9,6 +9,7 @@
 (org-babel-do-load-languages 'org-babel-load-languages
                              (append org-babel-load-languages
                                      '((python . t)
+                                       (emacs-lisp . t)
                                        (js . t)
                                        (shell . t))))
 (setq org-babel-python-command "python3 2>&1")
