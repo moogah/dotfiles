@@ -165,4 +165,4 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
 # Configure gtags to use pygments backend
-export GTAGSLABEL=pygments
+export GTAGSLABEL=pygmentsexport PATH="/opt/homebrew/opt/libpq/bin:$PATH"

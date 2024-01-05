@@ -101,7 +101,9 @@
   (kbd "<SPC> s l") 'org-store-link
   (kbd "<SPC> i l") 'org-insert-link
 
-  ;; Switch between windows
+  ;; Window Management
+  (kbd "<SPC> w c") 'delete-window
+  (kbd "<SPC> w v") 'split-window-vertically
   (kbd "<SPC> w h") 'my-split-or-switch-window-left
   (kbd "<SPC> w j") 'evil-window-down
   (kbd "<SPC> w k") 'evil-window-up
@@ -114,6 +116,8 @@
   ;; buffer history
   (kbd "<SPC> <SPC> j") 'previous-buffer
   (kbd "<SPC> <SPC> k") 'next-buffer
+
+
 )
 
 (evil-define-key 'normal 'python-mode-map
