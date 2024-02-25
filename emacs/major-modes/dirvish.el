@@ -1,9 +1,9 @@
-(use-package dirvish
+﻿(use-package dirvish
   :straight (dirvish :host github :repo "alexluigit/dirvish" :tag "2.0.53")
   :init
   (dirvish-override-dired-mode)
   :custom
-  (dirvish-bookmark-entries
+  (dirvish-quick-access-entries
    '(("h" "~/"        "Home")
      ("s" "~/src/"    "Source Code")
      ("d" "~/src/dotfiles"    "Dotfiles")
@@ -39,7 +39,7 @@
    ("l"   . dired-find-file)
    ("i"   . wdired-change-to-wdired-mode)
    ("."   . dired-omit-mode)
-   ("b"   . dirvish-bookmark-jump)
+   ("b"   . dirvish-quick-access)
    ("f"   . dirvish-file-info-menu)
    ("y"   . dirvish-yank-menu)
    ("N"   . dirvish-narrow)

@@ -2,23 +2,32 @@
 
 * Configure Org Roam
 
+This is hopefully a temporary shim to get emacsql-sqlite installed correctly, without this the relatively new emacsql-sqlite-common file is not included in the [[https://github.com/melpa/melpa/blob/master/recipes/emacsql-sqlite][melpa recipe]].
+
+A similar issue may occur after updating to v29 as there is a reported [[https://github.com/org-roam/org-roam/issues/2146][github issue]] with emacsql-sqlite-builtin as well 
 
 #+begin_src emacs-lisp :tangle yes
-  ;; ===============================================================================
-  ;; Configure Org-Roam
-  ;; ===============================================================================
+(use-package emacsql-sqlite
+  :straight (emacsql-sqlite :type git :host github :repo "magit/emacsql" :branch main :files ("emacsql-sqlite.el" "emacsql-sqlite-common.el" "sqlite")))
+#+end_src
 
-  (use-package org-roam
-    :straight (org-roam :host github :repo "org-roam/org-roam" :tag "v2.2.2")
-    :bind (("C-c n f" . org-roam-node-find)
-           ("C-c n i" . org-roam-node-insert)
-           ("C-c n c" . org-roam-capture)
-           ("C-c n d" . org-roam-dailies-goto-today))
-    :config
-    (setq org-roam-directory (file-truename "~/org/roam"))
-    (setq find-file-visit-truename t)
-    (setq org-roam-completion-everywhere t)
-    (org-roam-db-autosync-mode))
+
+#+begin_src emacs-lisp :tangle yes
+    ;; ===============================================================================
+    ;; Configure Org-Roam
+    ;; ===============================================================================
+
+    (use-package org-roam
+      :straight (org-roam :host github :repo "org-roam/org-roam" :tag "v2.2.2")
+      :bind (("C-c n f" . org-roam-node-find)
+             ("C-c n i" . org-roam-node-insert)
+             ("C-c n c" . org-roam-capture)
+             ("C-c n d" . org-roam-dailies-goto-today))
+      :config
+      (setq org-roam-directory (file-truename "~/org/roam"))
+      (setq find-file-visit-truename t)
+      (setq org-roam-completion-everywhere t)
+      (org-roam-db-autosync-mode))
 #+end_src
 
 

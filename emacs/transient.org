@@ -1,0 +1,16 @@
+#+auto_tangle: y
+
+* Install Transient and Transient Showcase
+
+Transient appears to be installed already, though I'm not sure if it was included in the distribution or it came with magit.
+
+Transient Showcase comes with a [[file:~/.emacs.d/straight/repos/transient-showcase/transient-showcase.org][literate org]] file for exploring
+
+#+begin_src emacs-lisp :tangle yes
+  (use-package transient-showcase
+    :straight '(transient-showcase :type git :host github :repo "positron-solutions/transient-showcase"))
+#+end_src
+
+* Other Docs
+
+[[id:C0A680FA-A7F2-4FB0-A6D6-7F7DFC7B2155][emacs transient]]

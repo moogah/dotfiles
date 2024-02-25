@@ -1,4 +1,4 @@
-(use-package elpy
+﻿(use-package elpy
   :straight t
   :config
   (elpy-enable)
@@ -15,7 +15,7 @@
 (use-package py-autopep8
   :straight t
   :config
-  (add-hook 'python-mode-hook 'py-autopep8-mode))
+  (add-hook 'python-mode-hook 'py-autopep8-enable-on-save))
 
 (use-package blacken
   :straight t)

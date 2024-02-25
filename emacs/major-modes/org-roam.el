@@ -1,3 +1,6 @@
+(use-package emacsql-sqlite
+  :straight (emacsql-sqlite :type git :host github :repo "magit/emacsql" :branch main :files ("emacsql-sqlite.el" "emacsql-sqlite-common.el" "sqlite")))
+
 ;; ===============================================================================
 ;; Configure Org-Roam
 ;; ===============================================================================
