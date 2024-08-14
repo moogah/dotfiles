@@ -93,6 +93,12 @@ The function er/expand-region will select the nearest semantically defined regio
 
 #+end_src
 
+** Use single escape (ESC) keypress to cancel
+
+#+begin_src emacs-lisp :tangle yes
+  (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
+#+end_src
+
 * Window Management
 
 #+begin_src emacs-lisp :tangle yes
@@ -160,6 +166,7 @@ The function er/expand-region will select the nearest semantically defined regio
   (load "~/src/dotfiles/emacs/hydra.el")
   (load "~/src/dotfiles/emacs/elfeed.el")
   (load "~/src/dotfiles/emacs/vertico-consult-embark.el")
+  (load "~/src/dotfiles/emacs/gpt.el") 
   (if (string-equal system-name "ALT02886")
       (load "~/src/dotfiles/emacs/wayfair.el"))
   ;; @TODO some packages have config lines which depend on prior install ie: dired and evil

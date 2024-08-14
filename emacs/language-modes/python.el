@@ -1,21 +1,10 @@
-﻿(use-package elpy
+﻿(use-package flycheck
   :straight t
-  :config
-  (elpy-enable)
-  (setq elpy-modules (delq 'elpy-module-highlight-indentation elpy-modules)))
-
-(use-package flycheck
-  :straight t
-  :init (global-flycheck-mode)
-  :config
-  (when (require 'flycheck nil t)
-    (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
-    (add-hook 'elpy-mode-hook 'flycheck-mode)))
-
-(use-package py-autopep8
-  :straight t
-  :config
-  (add-hook 'python-mode-hook 'py-autopep8-enable-on-save))
+  :init (global-flycheck-mode))
 
 (use-package blacken
-  :straight t)
+  :straight t
+  :config
+  (add-hook 'python-mode-hook 'blacken-mode))
+
+(add-hook 'python-mode-hook 'tree-sitter-hl-mode)

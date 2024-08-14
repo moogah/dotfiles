@@ -64,6 +64,8 @@
 (use-package expand-region
   :straight t)
 
+(global-set-key (kbd "<escape>") 'keyboard-escape-quit)
+
 ;; ==============================================================================
 ;; configure Window Management
 ;; ===============================================================================
@@ -123,6 +125,7 @@
 (load "~/src/dotfiles/emacs/hydra.el")
 (load "~/src/dotfiles/emacs/elfeed.el")
 (load "~/src/dotfiles/emacs/vertico-consult-embark.el")
+(load "~/src/dotfiles/emacs/gpt.el") 
 (if (string-equal system-name "ALT02886")
     (load "~/src/dotfiles/emacs/wayfair.el"))
 ;; @TODO some packages have config lines which depend on prior install ie: dired and evil
