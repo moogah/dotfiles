@@ -54,7 +54,7 @@ to the current branch. Uses Magit."
           (magit-get-current-branch)))
 
 ;; this works!
-(browse-url (pull-request-url))
+;; (browse-url (pull-request-url))
 
 ;; (use-package forge
 ;;   :straight t

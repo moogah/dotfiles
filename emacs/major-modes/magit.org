@@ -69,7 +69,7 @@ This makes it easy to open a line of code in the GitHub web UI
             (magit-get-current-branch)))
 
   ;; this works!
-  (browse-url (pull-request-url))
+  ;; (browse-url (pull-request-url))
 
   ;; (use-package forge
   ;;   :straight t
