@@ -18,16 +18,3 @@ Debugger entered--Lisp error: (process-sentinel "exited abnormally with code 1")
 Run:
 
 M-x elpy-rpc-reinstall-virtualenv
-
-
-** evil settings for python mode
-
-This will stop `w`, `e`, and `b` from stopping on the `_` character in variable names
-
-#+begin_src emacs-lisp 
-  (defun setup-python-evil-word ()
-    "Configure evil-words in python-mode."
-    (modify-syntax-entry ?_ "w" python-mode-syntax-table))
-
-  (add-hook 'python-mode-hook 'setup-python-evil-word)
-#+end_src
