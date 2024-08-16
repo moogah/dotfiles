@@ -1,23 +1,14 @@
 #+auto_tangle: y
 
 #+begin_src emacs-lisp :tangle yes
-
-  (use-package elpy
-    :straight t
-    :config
-    (elpy-enable)
-    (setq elpy-modules (delq 'elpy-module-highlight-indentation elpy-modules)))
-
   (use-package flycheck
     :straight t
-    :init (global-flycheck-mode)
-    :config
-    (when (require 'flycheck nil t)
-      (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
-      (add-hook 'elpy-mode-hook 'flycheck-mode)))
+    :init (global-flycheck-mode))
 
   (use-package blacken
-    :straight t)
+    :straight t
+    :config
+    (add-hook 'python-mode-hook 'blacken-mode))
 #+end_src
 
 If you run into this error:
@@ -33,7 +24,7 @@ M-x elpy-rpc-reinstall-virtualenv
 
 This will stop `w`, `e`, and `b` from stopping on the `_` character in variable names
 
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp 
   (defun setup-python-evil-word ()
     "Configure evil-words in python-mode."
     (modify-syntax-entry ?_ "w" python-mode-syntax-table))

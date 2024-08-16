@@ -115,6 +115,12 @@
 ;;  :straight t)
 
 ;; ===============================================================================
+;; javascript/typescript development config
+;; ===============================================================================
+
+(load "~/src/dotfiles/emacs/language-modes/typescript.el")
+
+;; ===============================================================================
 ;; configure Docker
 ;; ===============================================================================
 
@@ -159,11 +165,9 @@
 (with-eval-after-load 'company
   ;; disable inline previews
   (delq 'company-preview-if-just-one-frontend company-frontends))
-  
+
 (define-key copilot-completion-map (kbd "<tab>") 'copilot-accept-completion)
 (define-key copilot-completion-map (kbd "TAB") 'copilot-accept-completion)
-(define-key copilot-completion-map (kbd "C-j") 'copilot-accept-completion-by-line)
-(define-key copilot-completion-map (kbd "C-l") 'copilot-accept-completionb-word)
 
 ;; a potentially useful blog with examples of restricting where/when copilot makes suggestions
 ;; https://robert.kra.hn/posts/2023-02-22-copilot-emacs-setup/
