@@ -39,6 +39,11 @@
   :config
   (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
 
+;; https://github.com/rougier/org-margin?tab=readme-ov-file
+(use-package org-margin
+ :straight (org-margin :type git :host github :repo "rougier/org-margin"))
+
+
 ;; TODO add adaptive-wrap-prefix-mode
 
 ;; ===============================================================================

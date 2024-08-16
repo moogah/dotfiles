@@ -67,9 +67,10 @@
 (line-number-mode 1)
 (column-number-mode 1)
 
-;; set relative line number
+;; Display line numbers in the left margin
 (global-display-line-numbers-mode)
-(setq display-line-numbers-type 'relative)
+;; set to 'relative to display the count distance from the current line
+(setq display-line-numbers-type 't)
 
 ;; ===============================================================================
 ;; Customize Modeline
@@ -114,7 +115,8 @@
   :straight t)
 (use-package nano-theme
   :straight (nano-theme :type git :host github :repo "rougier/nano-theme"))
-
+(use-package timu-macos-theme
+  :straight t)
 ;; set default theme
 ;; doom-henna
 ;; doom-peacock

@@ -28,25 +28,13 @@
     ~/.oh-my-zsh/custom/helm.zsh: oh-my-zsh/custom/helm.zsh
     ~/.oh-my-zsh/custom/istio.zsh: oh-my-zsh/custom/istio.zsh
     ~/.emacs.d/init.el: emacs/init.el
-
-
-- link:
-    ~/.oh-my-zsh/custom/docker.zsh: oh-my-zsh/custom/docker.zsh
+    ~/.fzf.zsh: fzf.zsh
 
 - link:
     ~/.oh-my-zsh/custom/docker.zsh: oh-my-zsh/custom/docker.zsh
 
 - link:
     ~/.oh-my-zsh/custom/kubectl.zsh: oh-my-zsh/custom/kubectl.zsh
-
-- link:
-    ~/.oh-my-zsh/custom/python3.zsh: oh-my-zsh/custom/python3.zsh
-
-- link:
-    ~/.oh-my-zsh/custom/p3.zsh: oh-my-zsh/custom/p3.zsh
-
-- link:
-    ~/.oh-my-zsh/custom/python3.zsh: oh-my-zsh/custom/python3.zsh
 
 - link:
     ~/.oh-my-zsh/custom/python3.zsh: oh-my-zsh/custom/python3.zsh

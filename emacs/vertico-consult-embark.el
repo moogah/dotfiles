@@ -1,10 +1,3 @@
-(use-package perspective
-  :straight t
-  :custom
-  (persp-mode-prefix-key (kbd "C-c M-p"))
-  :config
-  (persp-mode))
-
 
 ;; ===============================================================================
 ;; Configure Company Auto-Completion
