@@ -45,21 +45,16 @@
   "Build the URL or the pull requestion on GitHub corresponding
 to the current branch. Uses Magit."
   (interactive)
-  (format "%s/compare/%s"
+  ;; alternately use %s/compare/%s to simply get a comparison
+  (format "%s/pull/new/%s"
            (replace-regexp-in-string
             (rx (and string-start (1+ any) "github.com:" (group (1+ any)) ".git" string-end))
             "https://github.com/\\1"
             (magit-get "remote" (magit-get-current-remote) "url"))
           (magit-get-current-branch)))
 
-(defun endless/visit-pull-request-url ()
-  "Visit the current branch's PR on Github."
-  (interactive)
-  (browse-url (format "https://github.com/%s/pull/new/%s"
-                      (replace-regexp-in-string
-                       "\\`.+github\\.com:\\(.+\\)\\.git\\'" "\\1"
-                       (magit-get "remote" (magit-get-push-remote) "url"))
-                      (magit-get-current-branch))))
+;; this works!
+(browse-url (pull-request-url))
 
 ;; (use-package forge
 ;;   :straight t
