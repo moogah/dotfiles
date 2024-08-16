@@ -166,3 +166,6 @@ export NVM_DIR="$HOME/.nvm"
 
 # Configure gtags to use pygments backend
 export GTAGSLABEL=pygments
+
+# set postgres lib in path
+export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
