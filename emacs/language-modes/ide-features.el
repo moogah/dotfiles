@@ -82,7 +82,7 @@
 ;; Configure Tree Sitter
 ;; ===============================================================================
 
-(load "~/src/dotfiles/emacs/language-modes/tree-sitter.el")
+;; (load "~/src/dotfiles/emacs/language-modes/tree-sitter.el")
 
 ;; ===============================================================================
 ;; Configure markdown mode
