@@ -93,6 +93,17 @@ The function er/expand-region will select the nearest semantically defined regio
 
 #+end_src
 
+** Install avy
+
+avy is a great tool to speed up navigation, try avy-goto-line to move in a buffer or even move between buffers.
+
+#+begin_src emacs-lisp :tangle yes 
+  (use-package avy
+    :straight t)
+#+end_src
+
+
+
 ** Use single escape (ESC) keypress to cancel
 
 #+begin_src emacs-lisp :tangle yes
@@ -114,6 +125,9 @@ The function er/expand-region will select the nearest semantically defined regio
     (persp-mode-prefix-key (kbd "C-c M-p"))
     :config
     (persp-mode))
+
+  (use-package ace-window
+    :straight t)
 #+end_src
 
 * Everything Else

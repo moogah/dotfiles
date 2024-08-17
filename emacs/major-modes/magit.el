@@ -1,10 +1,4 @@
 ﻿;; ===============================================================================
-;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-;; Major Modes, Global Behaviors Etc..
-;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-;; ===============================================================================
-
-;; ===============================================================================
 ;; install magit
 ;; ===============================================================================
 
@@ -41,7 +35,7 @@
 
 ; two different approaches to navigating to the current branches pull request
 ; cargo culted from https://emacs.stackexchange.com/questions/3900/command-to-visit-github-pull-request-of-current-branch-with-magit?newreg=420aae794802477e8d03a30e5af21492
-(defun pull-request-url ()
+(defun new-pull-request-url ()
   "Build the URL or the pull requestion on GitHub corresponding
 to the current branch. Uses Magit."
   (interactive)
@@ -56,10 +50,6 @@ to the current branch. Uses Magit."
 ;; this works!
 ;; (browse-url (pull-request-url))
 
-;; (use-package forge
-;;   :straight t
-;;   :after magit
-;;   :config
-;;   (push '("github.csnzoo.com" "github.csnzoo.com/api/v3"
-;;           "github.csnzoo.com" forge-github-repository)
-;;         forge-alist))
+(use-package forge
+  :straight t
+  :after magit)

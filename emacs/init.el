@@ -64,6 +64,9 @@
 (use-package expand-region
   :straight t)
 
+(use-package avy
+  :straight t)
+
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
 
 ;; ==============================================================================
@@ -78,6 +81,9 @@
   (persp-mode-prefix-key (kbd "C-c M-p"))
   :config
   (persp-mode))
+
+(use-package ace-window
+  :straight t)
 
 ;; ===============================================================================
 ;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
