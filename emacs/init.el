@@ -148,12 +148,12 @@
 (use-package sqlite
   :straight t)
 
-;; (use-package browser-hist
-;;   :straight (browser-hist :type git :host github :repo "agzam/browser-hist.el")
-;;   :config
-;;   (setq browser-hist-db-paths
-;;         '((chrome . "/Users/jefffarr/Library/Application Support/Google/Chrome/Default/History")))
-;;  (setq browser-hist-default-browser 'chrome))
+(use-package browser-hist
+  :straight (browser-hist :type git :host github :repo "agzam/browser-hist.el")
+  :config
+  (setq browser-hist-db-paths
+        '((chrome . "/Users/jefffarr/Library/Application Support/Google/Chrome/Default/History")))
+ (setq browser-hist-default-browser 'chrome))
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.

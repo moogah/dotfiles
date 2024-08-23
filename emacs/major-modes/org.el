@@ -131,3 +131,10 @@
 (use-package org-transclusion
   :straight t
   :after org)
+
+
+;; ===============================================================================
+;; Install corg for org-babel and dynamic block completions
+;; ===============================================================================
+(use-package corg
+  :straight (:host github :repo "isamert/corg.el"))
