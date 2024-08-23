@@ -22,8 +22,8 @@
 (setq org-roam-dailies-capture-templates
       '(("d" "default" plain
          (file "~/.emacs.d/templates/org-roam-dailies-default.org")
-         :if-new (file+head "%<%Y-%m-%d>.org"
-                            "#+title: %<%Y-%m-%d>\n\n* %<%Y-%m-%d> Meetings\n\n* %<%Y-%m-%d> Worklog\n\n* %<%Y-%m-%d> Tasks")
+         :if-new (file+head "apploi-%<%Y-%m-%d>.org"
+                            "#+title: apploi-%<%Y-%m-%d>\n\n* %<%Y-%m-%d> Meetings\n\n* %<%Y-%m-%d> Worklog\n\n* %<%Y-%m-%d> Tasks")
          :unnarrowed t)))
 
 (require 'org-roam-protocol)
