@@ -1,4 +1,4 @@
-(defun create-tags-git-hook ()
+﻿(defun create-tags-git-hook ()
   "Append ctags update command to git post-commit hook."
   (let* ((project-root (projectile-project-root))
          (hook-path (concat project-root ".git/hooks/post-commit"))
@@ -44,6 +44,23 @@
 
 (setenv "GTAGSLABEL" "pygments")
 
+;; Configure how ggtags displays its results
+(setq display-buffer-alist
+      '(("\\*ggtags-global\\*"
+         (display-buffer-reuse-window display-buffer-in-side-window)
+         (side . bottom)
+         (window-height . 0.3)
+         (select-window . t))))
+
+;; (defun my-ggtags-focus-window ()
+;;   "Automatically select the ggtags results window."
+;;   (let ((ggtags-window (get-buffer-window "*ggtags-global*")))
+;;     (when ggtags-window
+;;       (select-window ggtags-window))))
+
+;; ;; Hook to focus the ggtags window after a search
+;; (add-hook 'ggtags-find-tag-hook 'my-ggtags-focus-window)
+
 ; this config cargo culted from https://www.emacswiki.org/emacs/GnuGlobal
 
 
@@ -82,7 +99,7 @@
 ;; Configure Tree Sitter
 ;; ===============================================================================
 
-;; (load "~/src/dotfiles/emacs/language-modes/tree-sitter.el")
+(load "~/src/dotfiles/emacs/language-modes/tree-sitter.el")
 
 ;; ===============================================================================
 ;; Configure markdown mode

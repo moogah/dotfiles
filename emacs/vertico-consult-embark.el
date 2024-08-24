@@ -1,3 +1,11 @@
+;; ===============================================================================
+;; Configure Corfu Auto-Completion
+;; ===============================================================================
+(use-package corfu
+  :straight t
+  :init)
+;;  (global-corfu-mode))
+
 
 ;; ===============================================================================
 ;; Configure Company Auto-Completion
@@ -11,6 +19,8 @@
   :config
   (company-mode)
   (add-hook 'after-init-hook 'global-company-mode))
+
+
 
 ;; use C-RET to cancel comletion
 

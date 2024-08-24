@@ -74,6 +74,35 @@ The following will possibly automatically generate this hook whenever I open a r
 
 #+end_src
 
+** Configure gtags to open a new window at the bottom of the frame
+
+This prevents gtags from messing up my window layout when multiple tag matches are found
+
+#+begin_src emacs-lisp :tangle yes 
+
+  ;; Configure how ggtags displays its results
+  (setq display-buffer-alist
+        '(("\\*ggtags-global\\*"
+           (display-buffer-reuse-window display-buffer-in-side-window)
+           (side . bottom)
+           (window-height . 0.3)
+           (select-window . t))))
+
+  ;; (defun my-ggtags-focus-window ()
+  ;;   "Automatically select the ggtags results window."
+  ;;   (let ((ggtags-window (get-buffer-window "*ggtags-global*")))
+  ;;     (when ggtags-window
+  ;;       (select-window ggtags-window))))
+
+  ;; ;; Hook to focus the ggtags window after a search
+  ;; (add-hook 'ggtags-find-tag-hook 'my-ggtags-focus-window)
+
+#+end_src
+
+#+RESULTS:
+| my-ggtags-focus-window |
+
+
 ** Configure auto incremental updates to tags on each file save
 
 #+begin_src emacs-lisp :tangle yes
