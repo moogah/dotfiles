@@ -85,6 +85,9 @@
 (use-package ace-window
   :straight t)
 
+(use-package tab-bookmark
+  :straight (:host github :repo "minad/tab-bookmark" :branch "main" :files ("*.el")))
+
 ;; ===============================================================================
 ;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ;; Org Mode Configuration
