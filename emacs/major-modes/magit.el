@@ -50,6 +50,6 @@ to the current branch. Uses Magit."
 ;; this works!
 ;; (browse-url (pull-request-url))
 
-(use-package forge
-  :straight t
-  :after magit)
+;; (use-package forge
+;;   :straight t
+;;   :after magit)

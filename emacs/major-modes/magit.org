@@ -65,8 +65,8 @@ This makes it easy to open a line of code in the GitHub web UI
   ;; this works!
   ;; (browse-url (pull-request-url))
 
-  (use-package forge
-    :straight t
-    :after magit)
+  ;; (use-package forge
+  ;;   :straight t
+  ;;   :after magit)
 
 #+end_src
