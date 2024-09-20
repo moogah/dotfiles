@@ -13,7 +13,7 @@ To regenerate tags on each git commit, use a post-commit hook ie:
 #+begin_src sh :async t :dir ~/src/my-repo/.git/hooks :prologue exec 2>&1 :epilogue "true" :results output
   cat << EOF > post-commit
   #!/bin/sh
-  ctags -e -R .
+  global -u
   EOF
 
   chmod +x post-commit
@@ -76,12 +76,39 @@ The following will possibly automatically generate this hook whenever I open a r
 
 #+end_src
 
+** Configure gtags to open a new window at the bottom of the frame
+
+This prevents gtags from messing up my window layout when multiple tag matches are found
+
+#+begin_src emacs-lisp :tangle yes 
+
+  ;; Configure how ggtags displays its results
+  (setq display-buffer-alist
+        '(("\\*ggtags-global\\*"
+           (display-buffer-reuse-window display-buffer-in-side-window)
+           (side . bottom)
+           (window-height . 0.3)
+           (select-window . t))))
+
+  ;; (defun my-ggtags-focus-window ()
+  ;;   "Automatically select the ggtags results window."
+  ;;   (let ((ggtags-window (get-buffer-window "*ggtags-global*")))
+  ;;     (when ggtags-window
+  ;;       (select-window ggtags-window))))
+
+  ;; ;; Hook to focus the ggtags window after a search
+  ;; (add-hook 'ggtags-find-tag-hook 'my-ggtags-focus-window)
+
+#+end_src
+
+#+RESULTS:
+| my-ggtags-focus-window |
+
+
 ** Configure auto incremental updates to tags on each file save
 
 #+begin_src emacs-lisp :tangle yes
   ; this config cargo culted from https://www.emacswiki.org/emacs/GnuGlobal
-
-
   (defun gtags-root-dir ()
       "Returns GTAGS root directory or nil if doesn't exist."
       (with-temp-buffer
@@ -89,17 +116,35 @@ The following will possibly automatically generate this hook whenever I open a r
             (buffer-substring (point-min) (1- (point-max)))
           nil)))
 
-    (defun gtags-update ()
-      "Make GTAGS incremental update"
-      (call-process "global" nil nil nil "-u"))
-
-    (defun gtags-update-hook ()
-      (when (gtags-root-dir)
-        (gtags-update)))
-
-    (add-hook 'after-save-hook #'gtags-update-hook)
-
+  (defun gtags-update ()
+    "Make GTAGS incremental update"
+    (call-process "global" nil nil nil "-u"))
 #+end_src
+
+
+** Configure single file update on save
+
+#+begin_src emacs-lisp :tangle yes 
+  (defun gtags-update-single(filename)  
+    "Update Gtags database for changes in a single file"
+    (interactive)
+    (start-process "update-gtags" "update-gtags" "bash" "-c" (concat "cd " (gtags-root-dir) " ; gtags --single-update " filename )))
+
+  (defun gtags-update-current-file()
+    (interactive)
+    (defvar filename)
+    (setq filename (replace-regexp-in-string (gtags-root-dir) "." (buffer-file-name (current-buffer))))
+    (gtags-update-single filename)
+    (message "Gtags updated for %s" filename))
+
+  (defun gtags-update-hook()
+    "Update GTAGS file incrementally upon saving a file"
+    (when (gtags-root-dir)
+      (gtags-update-current-file)))
+
+  ;(add-hook 'after-save-hook #'gtags-update-hook)
+#+end_src
+
 
 
 * Bulk Config

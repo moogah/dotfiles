@@ -10,3 +10,9 @@
         (auth-source-pick-first-password :host "api.openai.com")))
 
 (setq chatgpt-shell-model-version "gpt-4o")
+
+(use-package gptel
+  :straight t)
+
+(use-package elysium
+  :straight (:host github :repo "lanceberge/elysium" :branch "main" :files ("*.el")))

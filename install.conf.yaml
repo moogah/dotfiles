@@ -6,6 +6,8 @@
 - clean: ['~']
 
 - link:
+    ~/.gitignore_global: gitignore_global
+    ~/.gitconfig: gitconfig
     ~/.ssh/config: ssh/config
     ~/.vimrc: vimrc
     ~/.config/nvim/init.vim: init.vim
@@ -28,6 +30,7 @@
     ~/.oh-my-zsh/custom/helm.zsh: oh-my-zsh/custom/helm.zsh
     ~/.oh-my-zsh/custom/istio.zsh: oh-my-zsh/custom/istio.zsh
     ~/.emacs.d/init.el: emacs/init.el
+    ~/.emacs.d/straight/versions/default.el: emacs-straight-versions.el
     ~/.fzf.zsh: fzf.zsh
 
 - link:

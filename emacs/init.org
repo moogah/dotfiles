@@ -93,6 +93,17 @@ The function er/expand-region will select the nearest semantically defined regio
 
 #+end_src
 
+** Install avy
+
+avy is a great tool to speed up navigation, try avy-goto-line to move in a buffer or even move between buffers.
+
+#+begin_src emacs-lisp :tangle yes 
+  (use-package avy
+    :straight t)
+#+end_src
+
+
+
 ** Use single escape (ESC) keypress to cancel
 
 #+begin_src emacs-lisp :tangle yes
@@ -100,6 +111,7 @@ The function er/expand-region will select the nearest semantically defined regio
 #+end_src
 
 * Window Management
+
 
 #+begin_src emacs-lisp :tangle yes
   ;; ==============================================================================
@@ -114,7 +126,23 @@ The function er/expand-region will select the nearest semantically defined regio
     (persp-mode-prefix-key (kbd "C-c M-p"))
     :config
     (persp-mode))
+
+  (use-package ace-window
+    :straight t)
 #+end_src
+
+
+** TODO Try Minad's tab-bookmark instead of perspective
+
+https://github.com/minad/tab-bookmark
+
+#+begin_src emacs-lisp :tangle yes 
+  (use-package tab-bookmark
+    :straight (:host github :repo "minad/tab-bookmark" :branch "main" :files ("*.el")))
+#+end_src
+
+#+RESULTS:
+
 
 * Everything Else
 
@@ -183,15 +211,14 @@ The function er/expand-region will select the nearest semantically defined regio
   (use-package sqlite
     :straight t)
 
-  ;; (use-package browser-hist
-  ;;   :straight (browser-hist :type git :host github :repo "agzam/browser-hist.el")
-  ;;   :config
-  ;;   (setq browser-hist-db-paths
-  ;;         '((chrome . "/Users/jefffarr/Library/Application Support/Google/Chrome/Default/History")))
-  ;;  (setq browser-hist-default-browser 'chrome))
+  (use-package browser-hist
+    :straight (browser-hist :type git :host github :repo "agzam/browser-hist.el")
+    :config
+    (setq browser-hist-db-paths
+          '((chrome . "/Users/jefffarr/Library/Application Support/Google/Chrome/Default/History")))
+   (setq browser-hist-default-browser 'chrome))
 
-  ;; (custom-set
-   -variables
+  (custom-set-variables
    ;; custom-set-variables was added by Custom.
    ;; If you edit it by hand, you could mess it up, so be careful.
    ;; Your init file should contain only one such instance.

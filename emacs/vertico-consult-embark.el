@@ -1,3 +1,11 @@
+;; ===============================================================================
+;; Configure Corfu Auto-Completion
+;; ===============================================================================
+(use-package corfu
+  :straight t
+  :init)
+;;  (global-corfu-mode))
+
 
 ;; ===============================================================================
 ;; Configure Company Auto-Completion
@@ -12,6 +20,8 @@
   (company-mode)
   (add-hook 'after-init-hook 'global-company-mode))
 
+
+
 ;; use C-RET to cancel comletion
 
 ;; ===============================================================================
@@ -20,14 +30,14 @@
 
 (defun enable-vertico ()
   (use-package vertico
-    :straight (vertico :host github :repo "minad/vertico" :tag "0.29") ; later versions require emacs 29
+    :straight (vertico :host github :repo "minad/vertico") ; later versions require emacs 29
     :init
     (vertico-mode)
     (setq vertico-cycle t))
 
   (use-package consult
     
-    :straight (consult :host github :repo "minad/consult" :tag "0.30") ; later versions require emacs 29
+    :straight (consult :host github :repo "minad/consult") ; later versions require emacs 29
 
     :bind (
 	   ("C-x b" . consult-buffer)
@@ -41,7 +51,7 @@
 
   (use-package marginalia
     
-    :straight (marginalia :host github :repo "minad/consult/marginalia" :tag "1.0") ; later versions require emacs 29
+    :straight (marginalia :host github :repo "minad/consult/marginalia") ; later versions require emacs 29
 
     :bind (
 	   :map minibuffer-local-map

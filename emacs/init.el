@@ -64,6 +64,9 @@
 (use-package expand-region
   :straight t)
 
+(use-package avy
+  :straight t)
+
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
 
 ;; ==============================================================================
@@ -78,6 +81,12 @@
   (persp-mode-prefix-key (kbd "C-c M-p"))
   :config
   (persp-mode))
+
+(use-package ace-window
+  :straight t)
+
+(use-package tab-bookmark
+  :straight (:host github :repo "minad/tab-bookmark" :branch "main" :files ("*.el")))
 
 ;; ===============================================================================
 ;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -142,12 +151,12 @@
 (use-package sqlite
   :straight t)
 
-;; (use-package browser-hist
-;;   :straight (browser-hist :type git :host github :repo "agzam/browser-hist.el")
-;;   :config
-;;   (setq browser-hist-db-paths
-;;         '((chrome . "/Users/jefffarr/Library/Application Support/Google/Chrome/Default/History")))
-;;  (setq browser-hist-default-browser 'chrome))
+(use-package browser-hist
+  :straight (browser-hist :type git :host github :repo "agzam/browser-hist.el")
+  :config
+  (setq browser-hist-db-paths
+        '((chrome . "/Users/jefffarr/Library/Application Support/Google/Chrome/Default/History")))
+ (setq browser-hist-default-browser 'chrome))
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.

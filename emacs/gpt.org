@@ -17,3 +17,19 @@
 
   (setq chatgpt-shell-model-version "gpt-4o")
 #+end_src
+
+* GPTEL
+
+#+begin_src emacs-lisp :tangle yes 
+  (use-package gptel
+    :straight t)
+#+end_src
+
+
+* Elysium
+
+#+begin_src emacs-lisp :tangle yes 
+  (use-package elysium
+    :straight (:host github :repo "lanceberge/elysium" :branch "main" :files ("*.el")))
+#+end_src
+

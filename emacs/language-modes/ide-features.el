@@ -1,4 +1,4 @@
-(defun create-tags-git-hook ()
+﻿(defun create-tags-git-hook ()
   "Append ctags update command to git post-commit hook."
   (let* ((project-root (projectile-project-root))
          (hook-path (concat project-root ".git/hooks/post-commit"))
@@ -44,9 +44,24 @@
 
 (setenv "GTAGSLABEL" "pygments")
 
+;; Configure how ggtags displays its results
+(setq display-buffer-alist
+      '(("\\*ggtags-global\\*"
+         (display-buffer-reuse-window display-buffer-in-side-window)
+         (side . bottom)
+         (window-height . 0.3)
+         (select-window . t))))
+
+;; (defun my-ggtags-focus-window ()
+;;   "Automatically select the ggtags results window."
+;;   (let ((ggtags-window (get-buffer-window "*ggtags-global*")))
+;;     (when ggtags-window
+;;       (select-window ggtags-window))))
+
+;; ;; Hook to focus the ggtags window after a search
+;; (add-hook 'ggtags-find-tag-hook 'my-ggtags-focus-window)
+
 ; this config cargo culted from https://www.emacswiki.org/emacs/GnuGlobal
-
-
 (defun gtags-root-dir ()
     "Returns GTAGS root directory or nil if doesn't exist."
     (with-temp-buffer
@@ -54,15 +69,28 @@
           (buffer-substring (point-min) (1- (point-max)))
         nil)))
 
-  (defun gtags-update ()
-    "Make GTAGS incremental update"
-    (call-process "global" nil nil nil "-u"))
+(defun gtags-update ()
+  "Make GTAGS incremental update"
+  (call-process "global" nil nil nil "-u"))
 
-  (defun gtags-update-hook ()
-    (when (gtags-root-dir)
-      (gtags-update)))
+(defun gtags-update-single(filename)  
+  "Update Gtags database for changes in a single file"
+  (interactive)
+  (start-process "update-gtags" "update-gtags" "bash" "-c" (concat "cd " (gtags-root-dir) " ; gtags --single-update " filename )))
 
-  (add-hook 'after-save-hook #'gtags-update-hook)
+(defun gtags-update-current-file()
+  (interactive)
+  (defvar filename)
+  (setq filename (replace-regexp-in-string (gtags-root-dir) "." (buffer-file-name (current-buffer))))
+  (gtags-update-single filename)
+  (message "Gtags updated for %s" filename))
+
+(defun gtags-update-hook()
+  "Update GTAGS file incrementally upon saving a file"
+  (when (gtags-root-dir)
+    (gtags-update-current-file)))
+
+;(add-hook 'after-save-hook #'gtags-update-hook)
 
 ;; ===============================================================================
 ;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

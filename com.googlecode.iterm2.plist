@@ -3460,6 +3460,7 @@
 	<key>ToolbeltTools</key>
 	<array>
 		<string>Recent Directories</string>
+		<string>Actions</string>
 	</array>
 	<key>UseLionStyleFullscreen</key>
 	<false/>

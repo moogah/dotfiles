@@ -11,6 +11,7 @@
                                      '((python . t)
                                        (emacs-lisp . t)
                                        (js . t)
+                                       (sql . t)
                                        (shell . t))))
 (setq org-babel-python-command "python3 2>&1")
 
@@ -131,3 +132,10 @@
 (use-package org-transclusion
   :straight t
   :after org)
+
+
+;; ===============================================================================
+;; Install corg for org-babel and dynamic block completions
+;; ===============================================================================
+(use-package corg
+  :straight (:host github :repo "isamert/corg.el"))
