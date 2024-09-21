@@ -12,7 +12,9 @@
 (setq chatgpt-shell-model-version "gpt-4o")
 
 (use-package gptel
-  :straight t)
+  :straight t
+  :custom
+  (gptel-model "gpt-4o"))
 
 (use-package elysium
   :straight (:host github :repo "lanceberge/elysium" :branch "main" :files ("*.el")))
