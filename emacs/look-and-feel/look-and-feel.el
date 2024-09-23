@@ -51,7 +51,8 @@
   :straight t
   :config
   (setq adaptive-wrap-extra-indent 2)) ;; set evil respect visual line mode
-  ;;(add-hook 'visual-line-mode-hook (lambda () (setq adaptive-wrap-prefix-mode t))))
+  (add-hook 'visual-line-mode-hook #'adaptive-wrap-prefix-mode);; (lambda () (setq adaptive-wrap-prefix-mode t)))
+(global-visual-line-mode 1)
 
 ;; Better support for files with long lines
 (setq-default bidi-paragraph-direction 'left-to-right)
