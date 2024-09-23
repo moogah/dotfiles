@@ -1,9 +1,9 @@
 ;; ===============================================================================
 ;; Configure Corfu Auto-Completion
 ;; ===============================================================================
-(use-package corfu
-  :straight t
-  :init)
+;;(use-package corfu
+;;  :straight t
+;;  :init)
 ;;  (global-corfu-mode))
 
 
