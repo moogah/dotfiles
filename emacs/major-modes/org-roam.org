@@ -89,3 +89,15 @@ Also follow [[https://www.orgroam.com/manual.html#org_002droam_002dprotocol][doc
           (file+head "${slug}.org" "#+title: ${title}\n${body}")
           :unnarrowed t)))
 #+end_src
+
+* Git Sync Mode
+
+This will automatically add and commit changes to files
+
+#+begin_src emacs-lisp :tangle yes 
+  (use-package git-sync-mode
+    :straight (git-sync-mode :host github :repo "justinbarclay/git-sync-mode")
+    :config
+    (git-sync-global-mode)
+    (add-to-list 'git-sync-allow-list '"~/org/roam"))
+#+end_src

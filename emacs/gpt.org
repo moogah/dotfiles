@@ -21,8 +21,10 @@
 * GPTEL
 
 #+begin_src emacs-lisp :tangle yes 
-  (use-package gptel
-    :straight t)
+      (use-package gptel
+        :straight t
+        :custom
+        (gptel-model "gpt-4o"))
 #+end_src
 
 

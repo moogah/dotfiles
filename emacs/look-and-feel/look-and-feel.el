@@ -40,6 +40,19 @@
 (customize-set-variable 'scroll-margin 0)
 (customize-set-variable 'scroll-preserve-screen-position t)
 
+;; enable mouse horizontal scrolling
+;; use toggle-truncate-lines or visual-line-mode as alternatives
+(setq mouse-wheel-tilt-scroll t)
+(setq mouse-wheel-flip-direction t)
+(set-default 'truncate-lines t) ;; don't wrap lines
+
+;; install adaptive-wrap so that visual-line-mode will respect local indentation levels
+(use-package adaptive-wrap
+  :straight t
+  :config
+  (setq adaptive-wrap-extra-indent 2)) ;; set evil respect visual line mode
+  ;;(add-hook 'visual-line-mode-hook (lambda () (setq adaptive-wrap-prefix-mode t))))
+
 ;; Better support for files with long lines
 (setq-default bidi-paragraph-direction 'left-to-right)
 (setq-default bidi-inhibit-bpa t)
