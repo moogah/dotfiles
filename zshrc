@@ -151,6 +151,11 @@ function clean-known-hosts() {
   sed -i '' -e '"$@"d' ~/.ssh/known_hosts
 }
 
+# command to hopefully unfreeze emacs if it stops responding to user input
+function unfreeze_emacs() {
+  pkill -SIGUSR2 emacs
+}
+
 setopt auto_pushd
 
 # Enable VI mode

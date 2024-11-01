@@ -145,6 +145,15 @@ This prevents gtags from messing up my window layout when multiple tag matches a
   ;(add-hook 'after-save-hook #'gtags-update-hook)
 #+end_src
 
+* Install Flycheck
+
+#+begin_src emacs-lisp :tangle yes
+  (use-package flycheck
+    :straight t
+    :hook ((js2-mode . flycheck-mode)
+           (typescript-mode . flycheck-mode)
+           (rjsx-mode . flycheck-mode)))
+#+end_src
 
 
 * Bulk Config

@@ -92,6 +92,12 @@
 
 ;(add-hook 'after-save-hook #'gtags-update-hook)
 
+(use-package flycheck
+  :straight t
+  :hook ((js2-mode . flycheck-mode)
+         (typescript-mode . flycheck-mode)
+         (rjsx-mode . flycheck-mode)))
+
 ;; ===============================================================================
 ;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ;; Development Configuration
