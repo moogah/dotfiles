@@ -12,7 +12,6 @@
                                        (emacs-lisp . t)
                                        (js . t)
                                        (sql . t)
-                                       (text . t)
                                        (shell . t))))
 (setq org-babel-python-command "python3 2>&1")
 

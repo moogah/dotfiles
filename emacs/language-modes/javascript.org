@@ -57,7 +57,7 @@ if supporting multiple node_modules is needed, try this:
 #+end_src
 
 
-* Use project local prettier install
+* Use project local Prettier install
 
 #+begin_src emacs-lisp :tangle yes
   (defun my/use-prettier-from-node-modules ()
