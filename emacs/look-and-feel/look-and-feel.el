@@ -141,33 +141,35 @@
 ;; doom-laserwave
 ;; doom-moonlight
 ;; doom-palenight
-(load-theme 'doom-palenight t)
+;;(load-theme 'doom-palenight t)
+(load-theme 'distinguished)
+(enable-theme 'distinguished)
 ;;(set-background-color "black")
 
 ;; https://emacs.stackexchange.com/questions/48365/custom-theme-set-faces-does-not-work-in-emacs-27
-(custom-theme-set-faces
- 'doom-palenight
- '(default ((t (:background "black"))))
- '(font-lock-comment-face ((t (:foreground "dark gray"))))
- '(tree-sitter-hl-face:method.call ((t (:foreground "light blue"))))
- '(tree-sitter-hl-face:function.call ((t (:foreground "light blue"))))
- '(tree-sitter-hl-face:type ((t (:foreground "DodgerBlue1"))))
- '(magit-diff-hunk-heading ((t (:background "black" :foreground "dark gray"))))
- '(magit-diff-hunk-heading-highlight ((t (:background "black" :foreground "wheat1"))))
- '(magit-diff-context-highlight ((t (:background "black"))))
- '(magit-diff-removed-highlight ((t (:background "black" :foreground "red"))))
- '(magit-diff-removed ((t (:background "#292D3E" :foreground "#cc4259"))))
- '(magit-diff-added-highlight ((t (:background "black" :foreground "green"))))
- '(magit-diff-added ((t (:background "#292D3E" :foreground "#9cb970"))))
- '(org-table ((t (:background "#292D3E" :foreground "wheat1"))))
- '(org-default ((t (:foreground "wheat1"))))
- '(org-link ((t (:foreground "DodgerBlue1"))))
- '(org-level-1 ((t (:foreground "white"))))
- '(org-level-2 ((t (:foreground "white"))))
- '(org-level-3 ((t (:foreground "white"))))
- '(org-level-4 ((t (:foreground "white"))))
- '(org-level-5 ((t (:foreground "white"))))
- '(font-lock-string-face ((t (:foreground "wheat1")))))
+;; (custom-theme-set-faces
+;;  'doom-palenight
+;;  '(default ((t (:background "black"))))
+;;  '(font-lock-comment-face ((t (:foreground "dark gray"))))
+;;  '(tree-sitter-hl-face:method.call ((t (:foreground "light blue"))))
+;;  '(tree-sitter-hl-face:function.call ((t (:foreground "light blue"))))
+;;  '(tree-sitter-hl-face:type ((t (:foreground "DodgerBlue1"))))
+;;  '(magit-diff-hunk-heading ((t (:background "black" :foreground "dark gray"))))
+;;  '(magit-diff-hunk-heading-highlight ((t (:background "black" :foreground "wheat1"))))
+;;  '(magit-diff-context-highlight ((t (:background "black"))))
+;;  '(magit-diff-removed-highlight ((t (:background "black" :foreground "red"))))
+;;  '(magit-diff-removed ((t (:background "#292D3E" :foreground "#cc4259"))))
+;;  '(magit-diff-added-highlight ((t (:background "black" :foreground "green"))))
+;;  '(magit-diff-added ((t (:background "#292D3E" :foreground "#9cb970"))))
+;;  '(org-table ((t (:background "#292D3E" :foreground "wheat1"))))
+;;  '(org-default ((t (:foreground "wheat1"))))
+;;  '(org-link ((t (:foreground "DodgerBlue1"))))
+;;  '(org-level-1 ((t (:foreground "white"))))
+;;  '(org-level-2 ((t (:foreground "white"))))
+;;  '(org-level-3 ((t (:foreground "white"))))
+;;  '(org-level-4 ((t (:foreground "white"))))
+;;  '(org-level-5 ((t (:foreground "white"))))
+;;  '(font-lock-string-face ((t (:foreground "wheat1")))))
 
 (setq org-hide-emphasis-markers t)
 (setq org-hide-leading-stars t)
@@ -177,7 +179,7 @@
 ;;(setq org-blank-before-new-entry nil)
 ;;
 
-(enable-theme 'doom-palenight)
+;;(enable-theme 'doom-palenight)
 
 ;;(add-hook 'org-mode-hook 'visual-line-mode)
 
