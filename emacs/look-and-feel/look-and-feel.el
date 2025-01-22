@@ -210,3 +210,13 @@
   (defun my/advice-compilation-filter (f proc string)
     (funcall f proc (xterm-color-filter string)))
   (advice-add 'compilation-filter :around #'my/advice-compilation-filter))
+
+;; ===============================================================================
+;; Style tabs for tab-mode
+;; ===============================================================================
+
+(use-package vim-tab-bar
+  :straight (:host github :repo "jamescherti/vim-tab-bar.el")
+  :commands vim-tab-bar-mode
+  :hook
+  (after-init . vim-tab-bar-mode))
