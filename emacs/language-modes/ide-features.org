@@ -6,9 +6,9 @@
 
 This depends on having ctags or gtags installed, should be done via [[file:~/src/osx_ansible/roles/emacs/tasks/main.yml::Install ctags and gtags][ansible]]
 
-To regenerate tags on each git commit, use a post-commit hook ie:
+Once installed, this needs GTAGS, GPATH and GRTAGS files to exist, preferably at the root of the repo.  Generating them the first time can take a while, so for now it's best to manually run `gtags` in the root of a repo after cloning it.
 
-! note this snippet is using ctags, while below I've updated my hook to run gtags instead.  As of this writing I'm not sure which is (more) correct
+To regenerate tags on each git commit, use a post-commit hook ie:
 
 #+begin_src sh :async t :dir ~/src/my-repo/.git/hooks :prologue exec 2>&1 :epilogue "true" :results output
   cat << EOF > post-commit

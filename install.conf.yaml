@@ -32,6 +32,7 @@
     ~/.emacs.d/init.el: emacs/init.el
     ~/.emacs.d/straight/versions/default.el: emacs-straight-versions.el
     ~/.fzf.zsh: fzf.zsh
+    ~/.globalrc: globalrc
 
 - link:
     ~/.oh-my-zsh/custom/docker.zsh: oh-my-zsh/custom/docker.zsh
