@@ -101,7 +101,9 @@
 
     ;; Dirvish
     (kbd "<SPC> d") 'dired-jump
-    (kbd "<SPC> b") 'dirvish-side 
+
+  
+    (kbd "<SPC> b") 'consult-bookmark
 
     ;; Perspective
     (kbd "<SPC> p s") 'persp-switch
@@ -110,7 +112,7 @@
 
     ;; Projectile
     (kbd "<SPC> p p") 'consult-projectile-switch-project
-    
+
 
     ;; Buffers
     (kbd "<SPC> o") 'consult-buffer
@@ -136,7 +138,7 @@
     (kbd "<SPC> <SPC> j") 'previous-buffer
     (kbd "<SPC> <SPC> k") 'next-buffer
 
-  
+
   )
 
   (evil-define-key 'normal 'python-mode-map
