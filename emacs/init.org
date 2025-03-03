@@ -152,11 +152,13 @@ avy is a great tool to speed up navigation, try avy-goto-line to move in a buffe
 #+end_src
 
 
-** TODO Try Minad's tab-bookmark instead of perspective
+** DONE Try Minad's tab-bookmark instead of perspective
+
+This is superceded by alphapapa's activities which uses the same basic concept but is much more developed.
 
 https://github.com/minad/tab-bookmark
 
-#+begin_src emacs-lisp :tangle yes 
+#+begin_src emacs-lisp 
   (use-package tab-bookmark
     :straight (:host github :repo "minad/tab-bookmark" :branch "main" :files ("*.el")))
 #+end_src

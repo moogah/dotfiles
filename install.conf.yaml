@@ -32,6 +32,9 @@
     ~/.emacs.d/init.el: emacs/init.el
     ~/.emacs.d/straight/versions/default.el: emacs-straight-versions.el
     ~/.fzf.zsh: fzf.zsh
+    ~/.config/karabiner/karabiner.json: karabiner/karabiner.json
+    ~/.config/karabiner/assets/complex_modifications/capslock_mods.json: karabiner/1605240912.json
+    ~/.config/karabiner/assets/complex_modifications/return_to_command.json: karabiner/return_to_command.json
 
 - link:
     ~/.oh-my-zsh/custom/docker.zsh: oh-my-zsh/custom/docker.zsh
