@@ -41,3 +41,26 @@
         (setq-local prettier-js-command prettier)
       (setq-local prettier-js-command "prettier"))))
 (add-hook 'prettier-js-mode-hook #'my/use-prettier-from-node-modules)
+
+(use-package turbo-log
+  :straight (:host github :repo "artawower/turbo-log.el")
+  ;; :bind (("C-s-l" . turbo-log-print)
+  ;;        ("C-s-i" . turbo-log-print-immediately)
+  ;;        ("C-s-h" . turbo-log-comment-all-logs)
+  ;;        ("C-s-s" . turbo-log-uncomment-all-logs)
+  ;;        ("C-s-[" . turbo-log-paste-as-logger)
+  ;;        ("C-s-]" . turbo-log-paste-as-logger-immediately)
+  ;;        ("C-s-d" . turbo-log-delete-all-logs))
+  :config
+  (setq turbo-log-msg-format-template "\"🚀: %s\"")
+  (setq turbo-log-allow-insert-without-treesit-p t))
+
+(turbo-log-configure
+ :modes (typescript-mode typescriptreact-mode js2-mode web-mode)
+ :strategy merge
+
+ :loggers ("console.log(%s)" "console.debug(%s)" "console.warn(%s)")
+ :jump-list ((class_declaration (method_definition "constructor")))
+ :identifier-node-types (identifier member_expression)
+ :post-insert-hook (prettier-prettify)
+ :msg-format-template "'🦄: %s'")
