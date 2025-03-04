@@ -105,9 +105,6 @@
    ("C-x C-a g" . activities-revert)
    ("C-x C-a l" . activities-list)))
 
-(use-package tab-bookmark
-  :straight (:host github :repo "minad/tab-bookmark" :branch "main" :files ("*.el")))
-
 ;; ===============================================================================
 ;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ;; Org Mode Configuration

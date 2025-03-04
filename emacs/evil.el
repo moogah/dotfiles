@@ -105,6 +105,9 @@
   (kbd "<SPC> o") 'consult-buffer
   (kbd "<SPC> x") 'kill-this-buffer
 
+  ;; Tabs
+  (kbd "<SPC> t") 'tab-switch
+
   ; Links
   (kbd "<SPC> s l") 'org-store-link
   (kbd "<SPC> i l") 'org-insert-link
@@ -124,18 +127,16 @@
   ;; buffer history
   (kbd "<SPC> <SPC> j") 'previous-buffer
   (kbd "<SPC> <SPC> k") 'next-buffer
-
-
 )
 
 (evil-define-key 'normal 'python-mode-map
-  (kbd "<SPC> t") 'my-find-implementation-or-test-other-window)
+  (kbd "<SPC> T") 'my-find-implementation-or-test-other-window)
 
 
 (evil-define-key 'normal 'org-mode-map
   ; TODO
-  (kbd "<SPC> t") 'org-insert-todo-heading
-  (kbd "<SPC> T") 'org-insert-todo-subheading
+  ;(kbd "<SPC> t") 'org-insert-todo-heading
+  ;(kbd "<SPC> T") 'org-insert-todo-subheading
 
 
   ; Headings
