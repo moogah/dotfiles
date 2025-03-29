@@ -1,0 +1,312 @@
+#+title: Gmail Integration with Offlineimap
+#+auto_tangle: y
+
+* Gmail Integration with Offlineimap and mu4e for Emacs
+
+This document provides a complete guide to setting up Gmail integration with Emacs using:
+- offlineimap (to download and sync emails)
+- mu/mu4e (to index and view emails within Emacs)
+- optional msmtp (for sending emails)
+
+The setup will allow you to:
+- Keep a local copy of your Gmail messages for offline access
+- Read and manage email inside Emacs with mu4e
+- Sync changes bidirectionally (local → Gmail, Gmail → local)
+
+** Prerequisites
+
+Before we begin, make sure you have the following installed:
+
+#+begin_src shell :tangle no
+# Install offlineimap, mu, and msmtp (macOS)
+brew install offlineimap mu msmtp
+
+# For Ubuntu/Debian
+# sudo apt install offlineimap mu4e msmtp
+#+end_src
+
+** Setup App Password for Gmail
+
+For security, Gmail requires an app-specific password for IMAP/SMTP access:
+
+1. Enable 2-factor authentication on your Google account
+2. Visit: https://myaccount.google.com/apppasswords
+3. Create a new app password for "Mail" and "Mac" (or your specific OS)
+4. Save this password securely for configuration files
+
+** Offlineimap Configuration
+
+Create ~/.offlineimaprc:
+
+#+begin_src conf :tangle no
+[general]
+accounts = Gmail
+maxsyncaccounts = 3
+pythonfile = ~/.offlineimap.py
+
+[Account Gmail]
+localrepository = Local
+remoterepository = Remote
+autorefresh = 5
+quick = 10
+postsynchook = mu index --maildir=~/Mail
+
+[Repository Local]
+type = Maildir
+localfolders = ~/Mail/gmail
+nametrans = lambda folder: {'drafts':  '[Gmail]/Drafts',
+                            'sent':    '[Gmail]/Sent Mail',
+                            'flagged': '[Gmail]/Starred',
+                            'trash':   '[Gmail]/Trash',
+                            'archive': '[Gmail]/All Mail',
+                            'inbox':   'INBOX',
+                           }.get(folder, folder)
+
+[Repository Remote]
+type = Gmail
+remoteuser = your.email@gmail.com
+remotepasseval = get_pass()
+realdelete = no
+maxconnections = 3
+sslcacertfile = /opt/homebrew/etc/openssl@1.1/cert.pem
+folderfilter = lambda folder: folder not in ['[Gmail]/Spam', '[Gmail]/Important']
+nametrans = lambda folder: {'[Gmail]/Drafts':    'drafts',
+                            '[Gmail]/Sent Mail': 'sent',
+                            '[Gmail]/Starred':   'flagged',
+                            '[Gmail]/Trash':     'trash',
+                            '[Gmail]/All Mail':  'archive',
+                            'INBOX':             'inbox',
+                           }.get(folder, folder)
+#+end_src
+
+Create ~/.offlineimap.py to securely store your password:
+
+#+begin_src python :tangle no
+#!/usr/bin/env python3
+import os
+import subprocess
+
+def get_pass():
+    # Option 1: macOS Keychain
+    cmd = ["security", "find-generic-password", "-s", "gmail-offlineimap", "-w"]
+    # Option 2: Pass password manager
+    # cmd = ["pass", "show", "email/gmail-offlineimap"]
+    return subprocess.check_output(cmd).strip().decode("utf-8")
+#+end_src
+
+Set up the password in macOS Keychain:
+
+#+begin_src shell :tangle no
+security add-generic-password -s gmail-offlineimap -a your.email@gmail.com -w
+# You'll be prompted to enter your app password
+#+end_src
+
+** Mu and mu4e Configuration
+
+First, create the mail directory:
+
+#+begin_src shell :tangle no
+mkdir -p ~/Mail/gmail
+#+end_src
+
+Configure mu4e in Emacs (this replaces your existing configuration):
+
+#+begin_src emacs-lisp :tangle yes
+;; Basic mu4e setup
+(use-package mu4e
+  :ensure nil  ;; mu4e comes with mu, don't try to install it
+  :config
+  ;; Mail directory
+  (setq mu4e-maildir "~/Mail")
+  
+  ;; Gmail settings
+  (setq mu4e-sent-folder   "/gmail/sent"
+        mu4e-drafts-folder "/gmail/drafts"
+        mu4e-trash-folder  "/gmail/trash"
+        mu4e-refile-folder "/gmail/archive")
+
+  ;; Sync settings
+  (setq mu4e-get-mail-command "offlineimap"
+        mu4e-update-interval 300)  ;; 5 minutes
+
+  ;; Show images
+  (setq mu4e-view-show-images t)
+  
+  ;; Use fancy icons (requires all-the-icons)
+  (setq mu4e-use-fancy-chars t)
+  
+  ;; Save attachments to Downloads folder
+  (setq mu4e-attachment-dir "~/Downloads")
+  
+  ;; Customize headers view
+  (setq mu4e-headers-fields
+        '((:human-date    . 12)
+          (:flags         . 6)
+          (:from-or-to    . 22)
+          (:thread-subject . nil)))
+  
+  ;; Compose settings
+  (setq mu4e-compose-format-flowed t)
+  
+  ;; Sending mail
+  (setq message-send-mail-function 'smtpmail-send-it
+        smtpmail-default-smtp-server "smtp.gmail.com"
+        smtpmail-smtp-server "smtp.gmail.com"
+        smtpmail-smtp-service 587
+        smtpmail-stream-type 'starttls
+        smtpmail-auth-credentials '(("smtp.gmail.com" 587 "your.email@gmail.com" nil)))
+  
+  ;; User information
+  (setq user-mail-address "your.email@gmail.com"
+        user-full-name "Your Name")
+  
+  ;; Shortcuts
+  (setq mu4e-maildir-shortcuts
+        '((:maildir "/gmail/inbox"   :key ?i)
+          (:maildir "/gmail/sent"    :key ?s)
+          (:maildir "/gmail/trash"   :key ?t)
+          (:maildir "/gmail/archive" :key ?a)
+          (:maildir "/gmail/drafts"  :key ?d)))
+  
+  ;; Bookmarks
+  (setq mu4e-bookmarks
+        '((:name "Unread messages"       :query "flag:unread AND NOT flag:trashed" :key ?u)
+          (:name "Today's messages"      :query "date:today..now"                  :key ?t)
+          (:name "Last 7 days"           :query "date:7d..now"                     :key ?w)
+          (:name "Messages with images"  :query "mime:image/*"                     :key ?p)))
+  
+  ;; Don't keep message buffers around
+  (setq message-kill-buffer-on-exit t)
+  
+  ;; Enable evil-collection for mu4e if using Evil Mode
+  (with-eval-after-load 'evil-collection
+    (evil-collection-init '(mu4e))))
+
+;; Optional: use msmtp for sending mail (alternative to smtpmail)
+;; (setq message-send-mail-function 'message-send-mail-with-sendmail
+;;       sendmail-program "/opt/homebrew/bin/msmtp"
+;;       mail-specify-envelope-from t
+;;       message-sendmail-envelope-from 'header
+;;       mail-envelope-from 'header)
+#+end_src
+
+** Optional: MSMTP Configuration (alternative to smtpmail)
+
+Create ~/.msmtprc for sending emails:
+
+#+begin_src conf :tangle no
+# Set default values for all accounts
+defaults
+auth           on
+tls            on
+tls_trust_file /opt/homebrew/etc/openssl@1.1/cert.pem
+logfile        ~/.msmtp.log
+
+# Gmail account
+account        gmail
+host           smtp.gmail.com
+port           587
+from           your.email@gmail.com
+user           your.email@gmail.com
+passwordeval   "security find-generic-password -s gmail-offlineimap -w"
+
+# Set a default account
+account default : gmail
+#+end_src
+
+Set proper permissions:
+
+#+begin_src shell :tangle no
+chmod 600 ~/.msmtprc
+#+end_src
+
+** Initial Sync and Setup
+
+Let's run the initial sync and indexing:
+
+#+begin_src shell :tangle no
+# Run offlineimap for initial sync (this may take a while)
+offlineimap
+
+# Index your emails with mu
+mu index --maildir=~/Mail
+#+end_src
+
+** Configuring Automatic Syncs
+
+You can create a LaunchAgent (macOS) to run offlineimap periodically:
+
+#+begin_src xml :tangle no
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.user.offlineimap</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/opt/homebrew/bin/offlineimap</string>
+        <string>-u</string>
+        <string>basic</string>
+    </array>
+    <key>StartInterval</key>
+    <integer>300</integer>
+    <key>RunAtLoad</key>
+    <true/>
+</dict>
+</plist>
+#+end_src
+
+Save this to ~/Library/LaunchAgents/com.user.offlineimap.plist, then load it:
+
+#+begin_src shell :tangle no
+launchctl load ~/Library/LaunchAgents/com.user.offlineimap.plist
+#+end_src
+
+** Usage in Emacs
+
+Launch mu4e with:
+
+#+begin_src emacs-lisp :tangle no
+M-x mu4e
+#+end_src
+
+Or bind it to a key:
+
+#+begin_src emacs-lisp :tangle yes
+;; Bind mu4e to a global key
+(global-set-key (kbd "C-c m") 'mu4e)
+#+end_src
+
+** Troubleshooting
+
+*** Offlineimap Issues
+
+If offlineimap fails with authentication errors:
+- Verify your app password is correct
+- Check Gmail settings to ensure IMAP is enabled
+- Run with debug: `offlineimap -d` to see detailed logs
+
+*** mu4e Issues
+
+If mu4e doesn't show emails:
+- Verify mu index ran successfully
+- Check folder structure in ~/Mail
+- Run mu with debug: `mu index --maildir=~/Mail --debug`
+
+*** Common Fixes
+
+Reset your setup:
+
+#+begin_src shell :tangle no
+# Remove index and try again
+rm -rf ~/.mu
+mu index --maildir=~/Mail --rebuild
+#+end_src
+
+** References and Further Reading
+
+- [[https://offlineimap.org/documentation.html][Offlineimap Documentation]]
+- [[https://www.djcbsoftware.nl/code/mu/mu4e/index.html][mu4e User Manual]]
+- [[https://www.emacswiki.org/emacs/mu4e][EmacsWiki: mu4e]]
+- [[https://github.com/msmtp/msmtp][msmtp on GitHub]]
