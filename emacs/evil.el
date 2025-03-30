@@ -68,77 +68,75 @@
     (if file
         (progn (my-split-or-switch-window-right) (find-file file)))))
 
-(evil-define-key 'normal 'global
-  ;; Open Main Hydra Menu
-  (kbd "<SPC> <SPC> h") 'hydra-main/body
+;; Create a cleaner, hierarchical keybinding system
+(defvar my/evil-keybindings-map
+  '((core . ((normal . ((global . (("<SPC> w c" . delete-window)
+                                   ("<SPC> w v" . split-window-vertically)
+                                   ("<SPC> w j" . evil-window-down)
+                                   ("<SPC> w k" . evil-window-up)
+                                   ("<SPC> <SPC> j" . previous-buffer)
+                                   ("<SPC> <SPC> k" . next-buffer)
+                                   ("<SPC> x" . kill-this-buffer)))))))
+    (hydra . ((normal . ((global . (("<SPC> <SPC> h" . hydra-main/body)))))))
+    (org . ((normal . ((global . (("<SPC> e" . org-babel-execute-src-block)
+                                 ("<SPC> s l" . org-store-link)
+                                 ("<SPC> i l" . org-insert-link)))
+                      (org-mode-map . (("<SPC> h" . org-insert-heading)
+                                      ("<SPC> H" . org-insert-subheading)))))))
+    (org-roam . ((normal . ((global . (("<SPC> n" . org-roam-node-find)
+                                      ("<SPC> j" . org-roam-dailies-goto-today)))))))
+    (projectile . ((normal . ((global . (("<SPC> r" . projectile-ripgrep)
+                                        ("<SPC> f" . project-find-file)
+                                        ("<SPC> p p" . consult-projectile-switch-project)))
+                            (python-mode-map . (("<SPC> T" . my-find-implementation-or-test-other-window)))))))
+    (magit . ((normal . ((global . (("<SPC> g" . magit)
+                                   ("<SPC> g s" . magit-status)
+                                   ("<SPC> g b" . magit-blame)
+                                   ("<SPC> g l" . magit-log)
+                                   ("<SPC> g f" . magit-file-dispatch)
+                                   ("<SPC> g d" . magit-diff-buffer-file)
+                                   ("<SPC> g c" . magit-commit)
+                                   ("<SPC> g p" . magit-push)))))))
+    (dirvish . ((normal . ((global . (("<SPC> d" . dired-jump)
+                                     ("<SPC> w h" . my-split-or-switch-window-left)
+                                     ("<SPC> w l" . my-split-or-switch-window-right)))))))
+    (consult . ((normal . ((global . (("<SPC> b" . consult-bookmark)
+                                     ("<SPC> o" . consult-buffer)
+                                     ("<SPC> m m" . consult-imenu-multi)
+                                     ("<SPC> m i" . consult-imenu)))))))
+    (perspective . ((normal . ((global . (("<SPC> p s" . persp-switch)
+                                         ("<SPC> p S" . persp-state-save)
+                                         ("<SPC> p L" . persp-state-load)))))))
+    (tab-bar . ((normal . ((global . (("<SPC> t" . tab-switch))))))))
+  "Hierarchical map of evil keybindings organized by feature.
+   Structure: (feature . ((state . ((keymap . ((key . command) ...)) ...)) ...))
+   - feature: symbol for the feature that triggers binding application
+   - state: evil state symbol (normal, insert, etc.)
+   - keymap: keymap to bind in
+   - key: key sequence as string (will be processed with kbd)
+   - command: function to bind to the key")
 
-  ;; Org Babel
-  (kbd "<SPC> e") 'org-babel-execute-src-block
+(defun my/apply-evil-keybindings-for-map (feature states-map)
+  "Apply evil keybindings for FEATURE based on the provided STATES-MAP."
+  (dolist (state-entry states-map)
+    (let ((state (car state-entry))
+          (keymaps-map (cdr state-entry)))
+      (dolist (keymap-entry keymaps-map)
+        (let ((keymap (car keymap-entry))
+              (bindings (cdr keymap-entry)))
+          (dolist (binding bindings)
+            (let ((key (car binding))
+                  (cmd (cdr binding)))
+              (message "Applying evil keybinding for %s: %s in %s" feature key state)
+              (evil-define-key state keymap (kbd key) cmd))))))))
 
-  ;; Org Roam
-  (kbd "<SPC> n") 'org-roam-node-find
-  (kbd "<SPC> j") 'org-roam-dailies-goto-today
+;; Apply core bindings immediately
+(my/apply-evil-keybindings-for-map 'core (cdr (assq 'core my/evil-keybindings-map)))
 
-  ;; Projectile
-  (kbd "<SPC> r") 'projectile-ripgrep
-  (kbd "<SPC> f") 'project-find-file
-
-  ;; Magit
-  (kbd "<SPC> g") 'magit
-
-  ;; Dirvish
-  (kbd "<SPC> d") 'dired-jump
-
-
-  (kbd "<SPC> b") 'consult-bookmark
-
-  ;; Perspective
-  (kbd "<SPC> p s") 'persp-switch
-  (kbd "<SPC> p S") 'persp-state-save
-  (kbd "<SPC> p L") 'persp-state-load
-
-  ;; Projectile
-  (kbd "<SPC> p p") 'consult-projectile-switch-project
-
-
-  ;; Buffers
-  (kbd "<SPC> o") 'consult-buffer
-  (kbd "<SPC> x") 'kill-this-buffer
-
-  ;; Tabs
-  (kbd "<SPC> t") 'tab-switch
-
-  ; Links
-  (kbd "<SPC> s l") 'org-store-link
-  (kbd "<SPC> i l") 'org-insert-link
-
-  ;; Window Management
-  (kbd "<SPC> w c") 'delete-window
-  (kbd "<SPC> w v") 'split-window-vertically
-  (kbd "<SPC> w h") 'my-split-or-switch-window-left
-  (kbd "<SPC> w j") 'evil-window-down
-  (kbd "<SPC> w k") 'evil-window-up
-  (kbd "<SPC> w l") 'my-split-or-switch-window-right
-
-  ;; imenu
-  (kbd "<SPC> m m") 'consult-imenu-multi
-  (kbd "<SPC> m i") 'consult-imenu
-
-  ;; buffer history
-  (kbd "<SPC> <SPC> j") 'previous-buffer
-  (kbd "<SPC> <SPC> k") 'next-buffer
-)
-
-(evil-define-key 'normal 'python-mode-map
-  (kbd "<SPC> T") 'my-find-implementation-or-test-other-window)
-
-
-(evil-define-key 'normal 'org-mode-map
-  ; TODO
-  ;(kbd "<SPC> t") 'org-insert-todo-heading
-  ;(kbd "<SPC> T") 'org-insert-todo-subheading
-
-
-  ; Headings
-  (kbd "<SPC> h") 'org-insert-heading
-  (kbd "<SPC> H") 'org-insert-subheading)
+;; Set up hooks for deferred loading
+(dolist (feature-entry my/evil-keybindings-map)
+  (let ((feature (car feature-entry)))
+    (unless (eq feature 'core)
+      (eval-after-load (symbol-name feature)
+        `(lambda () 
+           (my/apply-evil-keybindings-for-map ',feature ',(cdr feature-entry)))))))
