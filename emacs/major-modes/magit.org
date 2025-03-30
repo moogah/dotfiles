@@ -68,5 +68,131 @@ This makes it easy to open a line of code in the GitHub web UI
   ;; (use-package forge
   ;;   :straight t
   ;;   :after magit)
+#+end_src
+
+** Evil Keybindings
+   
+#+begin_src emacs-lisp :tangle yes
+  ;; ===============================================================================
+  ;; Evil-friendly Magit key bindings
+  ;; ===============================================================================
+
+  ;; Fix evil behavior in magit buffers
+  (use-package evil-collection
+    :straight t
+    :after magit
+    :config
+    ;; Enable full evil integration with magit
+    (evil-collection-init 'magit))
+#+end_src
+
+#+begin_src emacs-lisp
+  ;; Custom Vim-style key bindings for magit
+  (defun my/setup-evil-magit-bindings ()
+    "Set up custom Vim-like key bindings for Magit buffers."
+    
+    ;; Magit status buffer (the main magit view)
+    (evil-define-key 'normal magit-status-mode-map
+      ;; Navigation
+      "j" 'magit-section-forward
+      "k" 'magit-section-backward
+      "gj" 'magit-section-forward-sibling
+      "gk" 'magit-section-backward-sibling
+      "[[" 'magit-section-backward-sibling
+      "]]" 'magit-section-forward-sibling
+      "{" 'magit-section-backward
+      "}" 'magit-section-forward
+      "C-d" 'evil-scroll-down
+      "C-u" 'evil-scroll-up
+      
+      ;; Basic actions 
+      (kbd "RET") 'magit-visit-thing     ;; Visit item at point
+      "o" 'magit-visit-thing              ;; Like vim's 'o'
+      "O" 'magit-diff-visit-file-other-window ;; Open in other window
+      "go" 'magit-diff-visit-file-other-window
+      "gO" 'magit-diff-visit-file-other-frame  ;; Open in other frame
+
+      ;; Staging/unstaging
+      "s" 'magit-stage-file               ;; Stage file or hunk
+      "u" 'magit-unstage-file             ;; Unstage file or hunk
+      "S" 'magit-stage-modified           ;; Stage all modified
+      "U" 'magit-unstage-all              ;; Unstage all
+      
+      ;; Refresh/reload
+      "gr" 'magit-refresh
+      "gR" 'magit-refresh-all
+      
+      ;; Jumping
+      "gs" 'magit-jump-to-staged
+      "gu" 'magit-jump-to-unstaged
+      "gt" 'magit-jump-to-tracked
+      "gn" 'magit-jump-to-untracked
+      
+      ;; Operations
+      "c" 'magit-commit                   ;; Commit
+      "b" 'magit-branch                   ;; Branch operations
+      "B" 'magit-blame                    ;; Git blame
+      "f" 'magit-fetch                    ;; Fetch
+      "F" 'magit-pull                     ;; Pull
+      "m" 'magit-merge                    ;; Merge
+      "p" 'magit-push                     ;; Push
+      "r" 'magit-rebase                   ;; Rebase
+      "t" 'magit-tag                      ;; Tag
+      "l" 'magit-log                      ;; Log
+      "L" 'magit-log-buffer-file          ;; Log for current file
+      "d" 'magit-diff                     ;; Diff menu
+      "D" 'magit-diff-unstaged            ;; Diff unstaged changes
+      
+      ;; Stashing
+      "z" 'magit-stash                    ;; Stash menu
+      "zz" 'magit-stash-both              ;; Stash changes
+      "zp" 'magit-stash-pop               ;; Pop stash
+      
+      ;; Quit
+      "q" 'magit-mode-bury-buffer
+      "ZZ" 'magit-mode-bury-buffer
+      "ZQ" 'evil-quit)
+
+    ;; Magit log buffer
+    (evil-define-key 'normal magit-log-mode-map
+      "j" 'magit-section-forward
+      "k" 'magit-section-backward
+      (kbd "RET") 'magit-visit-thing
+      "o" 'magit-visit-thing
+      "O" 'magit-diff-visit-file-other-window
+      "q" 'magit-mode-bury-buffer)
+
+    ;; Magit diff buffer
+    (evil-define-key 'normal magit-diff-mode-map
+      "j" 'magit-section-forward
+      "k" 'magit-section-backward
+      "gj" 'magit-section-forward-sibling
+      "gk" 'magit-section-backward-sibling
+      (kbd "RET") 'magit-visit-thing
+      "o" 'magit-visit-thing
+      "O" 'magit-diff-visit-file-other-window
+      "q" 'magit-mode-bury-buffer
+      "[c" 'magit-section-backward
+      "]c" 'magit-section-forward)
+
+    ;; Magit revision buffer
+    (evil-define-key 'normal magit-revision-mode-map
+      "j" 'magit-section-forward
+      "k" 'magit-section-backward
+      (kbd "RET") 'magit-visit-thing
+      "o" 'magit-visit-thing
+      "O" 'magit-diff-visit-file-other-window
+      "q" 'magit-mode-bury-buffer)
+
+    ;; Magit blame mode
+    (evil-define-key 'normal magit-blame-mode-map
+      "j" 'evil-next-line
+      "k" 'evil-previous-line
+      (kbd "RET") 'magit-show-commit
+      "q" 'magit-blame-quit))
+
+  ;; Apply the custom key bindings when magit loads
+  (with-eval-after-load 'magit
+    (my/setup-evil-magit-bindings))
 
 #+end_src

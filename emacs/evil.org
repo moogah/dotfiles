@@ -81,78 +81,108 @@
 #+end_src
 
 #+begin_src emacs-lisp :tangle yes
+  ;; Create a deferred keybinding system to avoid loading order issues
+  (defvar my/evil-keybindings-alist '()
+    "Alist of evil keybindings to apply when a feature is loaded.
+     Each item is (FEATURE STATE KEYMAP KEY DEF) where:
+     - FEATURE is the feature symbol that triggers binding application
+     - STATE is the evil state symbol (normal, insert, etc.)
+     - KEYMAP is the keymap to bind in
+     - KEY is the key sequence
+     - DEF is the command to bind to")
+
+  (defun my/add-evil-keybinding (feature state keymap key def)
+    "Add an evil keybinding to be applied when FEATURE is loaded.
+     STATE is the evil state, KEYMAP is the target keymap,
+     KEY is the key sequence, and DEF is the command."
+    (push (list feature state keymap key def) my/evil-keybindings-alist))
+
+  (defun my/apply-evil-keybindings-for-feature (feature)
+    "Apply all registered evil keybindings for the given FEATURE."
+    (dolist (binding my/evil-keybindings-alist)
+      (when (eq (car binding) feature)
+        (let ((state (nth 1 binding))
+              (keymap (nth 2 binding))
+              (key (nth 3 binding))
+              (def (nth 4 binding)))
+          (message "Applying evil keybinding for %s: %s in %s" feature key state)
+          (evil-define-key state keymap key def)))))
+
+  (defun my/setup-evil-keybinding-hooks ()
+    "Setup hooks to apply evil keybindings when features are loaded."
+    (let ((features '()))
+      ;; Collect all unique features
+      (dolist (binding my/evil-keybindings-alist)
+        (add-to-list 'features (car binding)))
+      
+      ;; Setup eval-after-load for each feature
+      (dolist (feature features)
+        (eval-after-load feature
+          `(lambda () (my/apply-evil-keybindings-for-feature ',feature))))))
+
+  ;; Define core evil keybindings that don't depend on external packages
   (evil-define-key 'normal 'global
-    ;; Open Main Hydra Menu
-    (kbd "<SPC> <SPC> h") 'hydra-main/body
-
-    ;; Org Babel
-    (kbd "<SPC> e") 'org-babel-execute-src-block
-
-    ;; Org Roam
-    (kbd "<SPC> n") 'org-roam-node-find
-    (kbd "<SPC> j") 'org-roam-dailies-goto-today
-
-    ;; Projectile
-    (kbd "<SPC> r") 'projectile-ripgrep
-    (kbd "<SPC> f") 'project-find-file
-
-    ;; Magit
-    (kbd "<SPC> g") 'magit
-
-    ;; Dirvish
-    (kbd "<SPC> d") 'dired-jump
-
-
-    (kbd "<SPC> b") 'consult-bookmark
-
-    ;; Perspective
-    (kbd "<SPC> p s") 'persp-switch
-    (kbd "<SPC> p S") 'persp-state-save
-    (kbd "<SPC> p L") 'persp-state-load
-
-    ;; Projectile
-    (kbd "<SPC> p p") 'consult-projectile-switch-project
-
-
-    ;; Buffers
-    (kbd "<SPC> o") 'consult-buffer
-    (kbd "<SPC> x") 'kill-this-buffer
-
-    ;; Tabs
-    (kbd "<SPC> t") 'tab-switch
-
-    ; Links
-    (kbd "<SPC> s l") 'org-store-link
-    (kbd "<SPC> i l") 'org-insert-link
-
-    ;; Window Management
+    ;; Window Management (built-in functions)
     (kbd "<SPC> w c") 'delete-window
     (kbd "<SPC> w v") 'split-window-vertically
-    (kbd "<SPC> w h") 'my-split-or-switch-window-left
     (kbd "<SPC> w j") 'evil-window-down
     (kbd "<SPC> w k") 'evil-window-up
-    (kbd "<SPC> w l") 'my-split-or-switch-window-right
-
-    ;; imenu
-    (kbd "<SPC> m m") 'consult-imenu-multi
-    (kbd "<SPC> m i") 'consult-imenu
-
-    ;; buffer history
+    
+    ;; Buffer management (built-in functions)
     (kbd "<SPC> <SPC> j") 'previous-buffer
     (kbd "<SPC> <SPC> k") 'next-buffer
-  )
+    (kbd "<SPC> x") 'kill-this-buffer)
 
-  (evil-define-key 'normal 'python-mode-map
-    (kbd "<SPC> T") 'my-find-implementation-or-test-other-window)
+  ;; Define package-specific keybindings using the deferred system
+  ;; Hydra keybindings
+  (my/add-evil-keybinding 'hydra 'normal 'global (kbd "<SPC> <SPC> h") 'hydra-main/body)
 
+  ;; Org mode keybindings
+  (my/add-evil-keybinding 'org 'normal 'global (kbd "<SPC> e") 'org-babel-execute-src-block)
+  (my/add-evil-keybinding 'org 'normal 'global (kbd "<SPC> s l") 'org-store-link)
+  (my/add-evil-keybinding 'org 'normal 'global (kbd "<SPC> i l") 'org-insert-link)
+  (my/add-evil-keybinding 'org 'normal 'org-mode-map (kbd "<SPC> h") 'org-insert-heading)
+  (my/add-evil-keybinding 'org 'normal 'org-mode-map (kbd "<SPC> H") 'org-insert-subheading)
 
-  (evil-define-key 'normal 'org-mode-map
-    ; TODO
-    ;(kbd "<SPC> t") 'org-insert-todo-heading
-    ;(kbd "<SPC> T") 'org-insert-todo-subheading
+  ;; Org-roam keybindings
+  (my/add-evil-keybinding 'org-roam 'normal 'global (kbd "<SPC> n") 'org-roam-node-find)
+  (my/add-evil-keybinding 'org-roam 'normal 'global (kbd "<SPC> j") 'org-roam-dailies-goto-today)
 
+  ;; Projectile keybindings
+  (my/add-evil-keybinding 'projectile 'normal 'global (kbd "<SPC> r") 'projectile-ripgrep)
+  (my/add-evil-keybinding 'projectile 'normal 'global (kbd "<SPC> f") 'project-find-file)
+  (my/add-evil-keybinding 'projectile 'normal 'global (kbd "<SPC> p p") 'consult-projectile-switch-project)
+  (my/add-evil-keybinding 'projectile 'normal 'python-mode-map (kbd "<SPC> T") 'my-find-implementation-or-test-other-window)
 
-    ; Headings
-    (kbd "<SPC> h") 'org-insert-heading
-    (kbd "<SPC> H") 'org-insert-subheading)
+  ;; Magit keybindings
+  (my/add-evil-keybinding 'magit 'normal 'global (kbd "<SPC> g") 'magit)
+  (my/add-evil-keybinding 'magit 'normal 'global (kbd "<SPC> g s") 'magit-status)
+  (my/add-evil-keybinding 'magit 'normal 'global (kbd "<SPC> g b") 'magit-blame)
+  (my/add-evil-keybinding 'magit 'normal 'global (kbd "<SPC> g l") 'magit-log)
+  (my/add-evil-keybinding 'magit 'normal 'global (kbd "<SPC> g f") 'magit-file-dispatch)
+  (my/add-evil-keybinding 'magit 'normal 'global (kbd "<SPC> g d") 'magit-diff-buffer-file)
+  (my/add-evil-keybinding 'magit 'normal 'global (kbd "<SPC> g c") 'magit-commit)
+  (my/add-evil-keybinding 'magit 'normal 'global (kbd "<SPC> g p") 'magit-push)
+
+  ;; Dirvish keybindings
+  (my/add-evil-keybinding 'dirvish 'normal 'global (kbd "<SPC> d") 'dired-jump)
+  (my/add-evil-keybinding 'dirvish 'normal 'global (kbd "<SPC> w h") 'my-split-or-switch-window-left)
+  (my/add-evil-keybinding 'dirvish 'normal 'global (kbd "<SPC> w l") 'my-split-or-switch-window-right)
+
+  ;; Consult keybindings
+  (my/add-evil-keybinding 'consult 'normal 'global (kbd "<SPC> b") 'consult-bookmark)
+  (my/add-evil-keybinding 'consult 'normal 'global (kbd "<SPC> o") 'consult-buffer)
+  (my/add-evil-keybinding 'consult 'normal 'global (kbd "<SPC> m m") 'consult-imenu-multi)
+  (my/add-evil-keybinding 'consult 'normal 'global (kbd "<SPC> m i") 'consult-imenu)
+
+  ;; Perspective keybindings
+  (my/add-evil-keybinding 'perspective 'normal 'global (kbd "<SPC> p s") 'persp-switch)
+  (my/add-evil-keybinding 'perspective 'normal 'global (kbd "<SPC> p S") 'persp-state-save)
+  (my/add-evil-keybinding 'perspective 'normal 'global (kbd "<SPC> p L") 'persp-state-load)
+
+  ;; Tab keybindings
+  (my/add-evil-keybinding 'tab-bar 'normal 'global (kbd "<SPC> t") 'tab-switch)
+
+  ;; Set up the hooks to apply keybindings when features load
+  (my/setup-evil-keybinding-hooks)
 #+end_src 
