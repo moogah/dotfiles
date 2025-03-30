@@ -145,6 +145,9 @@
 
   ;; Apply core bindings immediately
   (my/apply-evil-keybindings-for-map 'core (cdr (assq 'core my/evil-keybindings-map)))
+  
+  ;; Apply some critical bindings immediately
+  (evil-define-key 'normal 'global (kbd "<SPC> d") 'dired-jump)
 
   ;; Set up hooks for deferred loading
   (dolist (feature-entry my/evil-keybindings-map)
@@ -152,5 +155,15 @@
       (unless (eq feature 'core)
         (eval-after-load (symbol-name feature)
           `(lambda () 
-             (my/apply-evil-keybindings-for-map ',feature ',(cdr feature-entry)))))))
+             (my/apply-evil-keybindings-for-map ',feature ,(cdr feature-entry)))))))
+             
+  (defun my/apply-all-evil-keybindings ()
+    "Apply all evil keybindings immediately, useful for debugging."
+    (interactive)
+    (dolist (feature-entry my/evil-keybindings-map)
+      (let ((feature (car feature-entry))
+            (states-map (cdr feature-entry)))
+        (message "Applying all keybindings for feature: %s" feature)
+        (my/apply-evil-keybindings-for-map feature states-map))))
 #+end_src 
+
