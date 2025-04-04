@@ -68,87 +68,73 @@
     (if file
         (progn (my-split-or-switch-window-right) (find-file file)))))
 
-;; Create a cleaner, hierarchical keybinding system
-(defvar my/evil-keybindings-map
-  '((core . ((normal . ((global . (("<SPC> w c" . delete-window)
-                                   ("<SPC> w v" . split-window-vertically)
-                                   ("<SPC> w j" . evil-window-down)
-                                   ("<SPC> w k" . evil-window-up)
-                                   ("<SPC> <SPC> j" . previous-buffer)
-                                   ("<SPC> <SPC> k" . next-buffer)
-                                   ("<SPC> x" . kill-this-buffer)))))))
-    (hydra . ((normal . ((global . (("<SPC> <SPC> h" . hydra-main/body)))))))
-    (org . ((normal . ((global . (("<SPC> e" . org-babel-execute-src-block)
-                                 ("<SPC> s l" . org-store-link)
-                                 ("<SPC> i l" . org-insert-link)))
-                      (org-mode-map . (("<SPC> h" . org-insert-heading)
-                                      ("<SPC> H" . org-insert-subheading)))))))
-    (org-roam . ((normal . ((global . (("<SPC> n" . org-roam-node-find)
-                                      ("<SPC> j" . org-roam-dailies-goto-today)))))))
-    (projectile . ((normal . ((global . (("<SPC> r" . projectile-ripgrep)
-                                        ("<SPC> f" . project-find-file)
-                                        ("<SPC> p p" . consult-projectile-switch-project)))
-                            (python-mode-map . (("<SPC> T" . my-find-implementation-or-test-other-window)))))))
-    (magit . ((normal . ((global . (("<SPC> g" . magit)
-                                   ("<SPC> g s" . magit-status)
-                                   ("<SPC> g b" . magit-blame)
-                                   ("<SPC> g l" . magit-log)
-                                   ("<SPC> g f" . magit-file-dispatch)
-                                   ("<SPC> g d" . magit-diff-buffer-file)
-                                   ("<SPC> g c" . magit-commit)
-                                   ("<SPC> g p" . magit-push)))))))
-    (dirvish . ((normal . ((global . (("<SPC> d" . dired-jump)
-                                     ("<SPC> w h" . my-split-or-switch-window-left)
-                                     ("<SPC> w l" . my-split-or-switch-window-right)))))))
-    (consult . ((normal . ((global . (("<SPC> b" . consult-bookmark)
-                                     ("<SPC> o" . consult-buffer)
-                                     ("<SPC> m m" . consult-imenu-multi)
-                                     ("<SPC> m i" . consult-imenu)))))))
-    (perspective . ((normal . ((global . (("<SPC> p s" . persp-switch)
-                                         ("<SPC> p S" . persp-state-save)
-                                         ("<SPC> p L" . persp-state-load)))))))
-    (tab-bar . ((normal . ((global . (("<SPC> t" . tab-switch))))))))
-  "Hierarchical map of evil keybindings organized by feature.
-   Structure: (feature . ((state . ((keymap . ((key . command) ...)) ...)) ...))
-   - feature: symbol for the feature that triggers binding application
-   - state: evil state symbol (normal, insert, etc.)
-   - keymap: keymap to bind in
-   - key: key sequence as string (will be processed with kbd)
-   - command: function to bind to the key")
+;; Core/global bindings (applied immediately)
+(evil-define-key 'normal 'global (kbd "<SPC> w c") 'delete-window)
+(evil-define-key 'normal 'global (kbd "<SPC> w v") 'split-window-vertically)
+(evil-define-key 'normal 'global (kbd "<SPC> w j") 'evil-window-down)
+(evil-define-key 'normal 'global (kbd "<SPC> w k") 'evil-window-up)
+(evil-define-key 'normal 'global (kbd "<SPC> <SPC> j") 'previous-buffer)
+(evil-define-key 'normal 'global (kbd "<SPC> <SPC> k") 'next-buffer)
+(evil-define-key 'normal 'global (kbd "<SPC> x") 'kill-this-buffer)
 
-(defun my/apply-evil-keybindings-for-map (feature states-map)
-  "Apply evil keybindings for FEATURE based on the provided STATES-MAP."
-  (dolist (state-entry states-map)
-    (let ((state (car state-entry))
-          (keymaps-map (cdr state-entry)))
-      (dolist (keymap-entry keymaps-map)
-        (let ((keymap (car keymap-entry))
-              (bindings (cdr keymap-entry)))
-          (dolist (binding bindings)
-            (let ((key (car binding))
-                  (cmd (cdr binding)))
-              (message "Applying evil keybinding for %s: %s in %s" feature key state)
-              (evil-define-key state keymap (kbd key) cmd))))))))
-
-;; Apply core bindings immediately
-(my/apply-evil-keybindings-for-map 'core (cdr (assq 'core my/evil-keybindings-map)))
-
-;; Apply some critical bindings immediately
 (evil-define-key 'normal 'global (kbd "<SPC> d") 'dired-jump)
+(evil-define-key 'normal 'global (kbd "<SPC> w h") 'my-split-or-switch-window-left)
+(evil-define-key 'normal 'global (kbd "<SPC> w l") 'my-split-or-switch-window-right)
 
-;; Set up hooks for deferred loading
-(dolist (feature-entry my/evil-keybindings-map)
-  (let ((feature (car feature-entry)))
-    (unless (eq feature 'core)
-      (eval-after-load (symbol-name feature)
-        `(lambda () 
-           (my/apply-evil-keybindings-for-map ',feature ,(cdr feature-entry)))))))
+;; Hydra bindings
+(with-eval-after-load 'hydra
+  (evil-define-key 'normal 'global (kbd "<SPC> <SPC> h") 'hydra-main/body))
 
-(defun my/apply-all-evil-keybindings ()
-  "Apply all evil keybindings immediately, useful for debugging."
-  (interactive)
-  (dolist (feature-entry my/evil-keybindings-map)
-    (let ((feature (car feature-entry))
-          (states-map (cdr feature-entry)))
-      (message "Applying all keybindings for feature: %s" feature)
-      (my/apply-evil-keybindings-for-map feature states-map))))
+;; Org mode bindings
+(with-eval-after-load 'org
+  ;; Global org bindings
+  (evil-define-key 'normal 'global (kbd "<SPC> e") 'org-babel-execute-src-block)
+  (evil-define-key 'normal 'global (kbd "<SPC> s l") 'org-store-link)
+  (evil-define-key 'normal 'global (kbd "<SPC> i l") 'org-insert-link)
+
+  ;; Org mode map specific bindings
+  (evil-define-key 'normal org-mode-map (kbd "<SPC> h") 'org-insert-heading)
+  (evil-define-key 'normal org-mode-map (kbd "<SPC> H") 'org-insert-subheading))
+
+;; Org-roam bindings
+(with-eval-after-load 'org-roam
+  (evil-define-key 'normal 'global (kbd "<SPC> n") 'org-roam-node-find)
+  (evil-define-key 'normal 'global (kbd "<SPC> j") 'org-roam-dailies-goto-today))
+
+;; Projectile bindings
+(with-eval-after-load 'projectile
+  ;; Global projectile bindings
+  (evil-define-key 'normal 'global (kbd "<SPC> r") 'projectile-ripgrep)
+  (evil-define-key 'normal 'global (kbd "<SPC> f") 'project-find-file)
+  (evil-define-key 'normal 'global (kbd "<SPC> p p") 'consult-projectile-switch-project)
+
+  ;; Python mode specific bindings
+  (evil-define-key 'normal python-mode-map (kbd "<SPC> T") 'my-find-implementation-or-test-other-window))
+
+;; Magit bindings
+(with-eval-after-load 'magit
+  (evil-define-key 'normal 'global (kbd "<SPC> g") 'magit)
+  (evil-define-key 'normal 'global (kbd "<SPC> g s") 'magit-status)
+  (evil-define-key 'normal 'global (kbd "<SPC> g b") 'magit-blame)
+  (evil-define-key 'normal 'global (kbd "<SPC> g l") 'magit-log)
+  (evil-define-key 'normal 'global (kbd "<SPC> g f") 'magit-file-dispatch)
+  (evil-define-key 'normal 'global (kbd "<SPC> g d") 'magit-diff-buffer-file)
+  (evil-define-key 'normal 'global (kbd "<SPC> g c") 'magit-commit)
+  (evil-define-key 'normal 'global (kbd "<SPC> g p") 'magit-push))
+
+;; Consult bindings
+(with-eval-after-load 'consult
+  (evil-define-key 'normal 'global (kbd "<SPC> b") 'consult-bookmark)
+  (evil-define-key 'normal 'global (kbd "<SPC> o") 'consult-buffer)
+  (evil-define-key 'normal 'global (kbd "<SPC> m m") 'consult-imenu-multi)
+  (evil-define-key 'normal 'global (kbd "<SPC> m i") 'consult-imenu))
+
+;; Perspective bindings
+(with-eval-after-load 'perspective
+  (evil-define-key 'normal 'global (kbd "<SPC> p s") 'persp-switch)
+  (evil-define-key 'normal 'global (kbd "<SPC> p S") 'persp-state-save)
+  (evil-define-key 'normal 'global (kbd "<SPC> p L") 'persp-state-load))
+
+;; Tab-bar bindings
+(with-eval-after-load 'tab-bar
+  (evil-define-key 'normal 'global (kbd "<SPC> t") 'tab-switch))
