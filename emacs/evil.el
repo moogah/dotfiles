@@ -1,4 +1,4 @@
-﻿;; ===============================================================================
+;; ===============================================================================
 ;; configure evil mode
 ;; ===============================================================================
 
@@ -69,21 +69,30 @@
         (progn (my-split-or-switch-window-right) (find-file file)))))
 
 ;; Core/global bindings (applied immediately)
-(evil-define-key 'normal 'global (kbd "<SPC> w c") 'delete-window)
-(evil-define-key 'normal 'global (kbd "<SPC> w v") 'split-window-vertically)
-(evil-define-key 'normal 'global (kbd "<SPC> w j") 'evil-window-down)
-(evil-define-key 'normal 'global (kbd "<SPC> w k") 'evil-window-up)
-(evil-define-key 'normal 'global (kbd "<SPC> <SPC> j") 'previous-buffer)
-(evil-define-key 'normal 'global (kbd "<SPC> <SPC> k") 'next-buffer)
-(evil-define-key 'normal 'global (kbd "<SPC> x") 'kill-this-buffer)
 
+;; Basic global commands
+(evil-define-key 'normal 'global (kbd "<SPC> x") 'kill-this-buffer)
 (evil-define-key 'normal 'global (kbd "<SPC> d") 'dired-jump)
-(evil-define-key 'normal 'global (kbd "<SPC> w h") 'my-split-or-switch-window-left)
-(evil-define-key 'normal 'global (kbd "<SPC> w l") 'my-split-or-switch-window-right)
+
+;; Define prefix key for window commands
+(define-prefix-command 'my-window-command-map)
+(evil-define-key 'normal 'global (kbd "<SPC> w") 'my-window-command-map)
+(define-key my-window-command-map (kbd "c") 'delete-window)
+(define-key my-window-command-map (kbd "v") 'split-window-vertically)
+(define-key my-window-command-map (kbd "j") 'evil-window-down)
+(define-key my-window-command-map (kbd "k") 'evil-window-up)
+(define-key my-window-command-map (kbd "h") 'my-split-or-switch-window-left)
+(define-key my-window-command-map (kbd "l") 'my-split-or-switch-window-right)
+
+;; Define prefix key for space prefix commands
+(define-prefix-command 'my-space-command-map)
+(evil-define-key 'normal 'global (kbd "<SPC> <SPC>") 'my-space-command-map)
+(define-key my-space-command-map (kbd "j") 'previous-buffer)
+(define-key my-space-command-map (kbd "k") 'next-buffer)
 
 ;; Hydra bindings
 (with-eval-after-load 'hydra
-  (evil-define-key 'normal 'global (kbd "<SPC> <SPC> h") 'hydra-main/body))
+  (define-key my-space-command-map (kbd "h") 'hydra-main/body))
 
 ;; Org mode bindings
 (with-eval-after-load 'org
@@ -106,34 +115,52 @@
   ;; Global projectile bindings
   (evil-define-key 'normal 'global (kbd "<SPC> r") 'projectile-ripgrep)
   (evil-define-key 'normal 'global (kbd "<SPC> f") 'project-find-file)
-  (evil-define-key 'normal 'global (kbd "<SPC> p p") 'consult-projectile-switch-project)
+
+  ;; Define prefix key for projectile commands
+  (define-prefix-command 'my-projectile-command-map)
+  (evil-define-key 'normal 'global (kbd "<SPC> p") 'my-projectile-command-map)
+  (define-key my-projectile-command-map (kbd "p") 'consult-projectile-switch-project)
 
   ;; Python mode specific bindings
   (evil-define-key 'normal python-mode-map (kbd "<SPC> T") 'my-find-implementation-or-test-other-window))
 
 ;; Magit bindings
 (with-eval-after-load 'magit
-  (evil-define-key 'normal 'global (kbd "<SPC> g") 'magit)
-  (evil-define-key 'normal 'global (kbd "<SPC> g s") 'magit-status)
-  (evil-define-key 'normal 'global (kbd "<SPC> g b") 'magit-blame)
-  (evil-define-key 'normal 'global (kbd "<SPC> g l") 'magit-log)
-  (evil-define-key 'normal 'global (kbd "<SPC> g f") 'magit-file-dispatch)
-  (evil-define-key 'normal 'global (kbd "<SPC> g d") 'magit-diff-buffer-file)
-  (evil-define-key 'normal 'global (kbd "<SPC> g c") 'magit-commit)
-  (evil-define-key 'normal 'global (kbd "<SPC> g p") 'magit-push))
+  ;; Define prefix key for magit commands
+  (define-prefix-command 'my-magit-command-map)
+  (evil-define-key 'normal 'global (kbd "<SPC> g") 'my-magit-command-map)
+
+  ;; Define magit subcommands
+  (define-key my-magit-command-map (kbd "s") 'magit-status)
+  (define-key my-magit-command-map (kbd "b") 'magit-blame)
+  (define-key my-magit-command-map (kbd "l") 'magit-log)
+  (define-key my-magit-command-map (kbd "f") 'magit-file-dispatch)
+  (define-key my-magit-command-map (kbd "d") 'magit-diff-buffer-file)
+  (define-key my-magit-command-map (kbd "c") 'magit-commit)
+  (define-key my-magit-command-map (kbd "p") 'magit-push)
+  (define-key my-magit-command-map (kbd "g") 'magit))  ;; <SPC> g g for magit
 
 ;; Consult bindings
 (with-eval-after-load 'consult
   (evil-define-key 'normal 'global (kbd "<SPC> b") 'consult-bookmark)
   (evil-define-key 'normal 'global (kbd "<SPC> o") 'consult-buffer)
-  (evil-define-key 'normal 'global (kbd "<SPC> m m") 'consult-imenu-multi)
-  (evil-define-key 'normal 'global (kbd "<SPC> m i") 'consult-imenu))
+
+  ;; Define prefix key for menu commands
+  (define-prefix-command 'my-menu-command-map)
+  (evil-define-key 'normal 'global (kbd "<SPC> m") 'my-menu-command-map)
+  (define-key my-menu-command-map (kbd "m") 'consult-imenu-multi)
+  (define-key my-menu-command-map (kbd "i") 'consult-imenu))
 
 ;; Perspective bindings
 (with-eval-after-load 'perspective
-  (evil-define-key 'normal 'global (kbd "<SPC> p s") 'persp-switch)
-  (evil-define-key 'normal 'global (kbd "<SPC> p S") 'persp-state-save)
-  (evil-define-key 'normal 'global (kbd "<SPC> p L") 'persp-state-load))
+  ;; Add to projectile prefix map, creating it if needed
+  (unless (fboundp 'my-projectile-command-map)
+    (define-prefix-command 'my-projectile-command-map)
+    (evil-define-key 'normal 'global (kbd "<SPC> p") 'my-projectile-command-map))
+
+  (define-key my-projectile-command-map (kbd "s") 'persp-switch)
+  (define-key my-projectile-command-map (kbd "S") 'persp-state-save)
+  (define-key my-projectile-command-map (kbd "L") 'persp-state-load))
 
 ;; Tab-bar bindings
 (with-eval-after-load 'tab-bar
