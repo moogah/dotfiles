@@ -141,17 +141,7 @@
   (with-eval-after-load 'magit
     ;; Define prefix key for magit commands
     (define-prefix-command 'my-magit-command-map)
-    (evil-define-key 'normal 'global (kbd "<SPC> g") 'my-magit-command-map)
-    
-    ;; Define magit subcommands
-    (define-key my-magit-command-map (kbd "s") 'magit-status)
-    (define-key my-magit-command-map (kbd "b") 'magit-blame)
-    (define-key my-magit-command-map (kbd "l") 'magit-log)
-    (define-key my-magit-command-map (kbd "f") 'magit-file-dispatch)
-    (define-key my-magit-command-map (kbd "d") 'magit-diff-buffer-file)
-    (define-key my-magit-command-map (kbd "c") 'magit-commit)
-    (define-key my-magit-command-map (kbd "p") 'magit-push)
-    (define-key my-magit-command-map (kbd "g") 'magit))  ;; <SPC> g g for magit
+    (evil-define-key 'normal 'global (kbd "<SPC> g") 'magit))
 
   ;; Consult bindings
   (with-eval-after-load 'consult
