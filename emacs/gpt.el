@@ -44,5 +44,25 @@
     :request-params '(:thinking (:type "enabled" :budget_tokens 2048)
                       :max_tokens 4096)))
 
+(gptel-make-tool
+ :name "create_file"                    ; javascript-style  snake_case name
+ :function (lambda (path filename content)   ; the function that runs
+             (let ((full-path (expand-file-name filename path)))
+               (with-temp-buffer
+                 (insert content)
+                 (write-file full-path))
+               (format "Created file %s in %s" filename path)))
+ :description "Create a new file with the specified content"
+ :args (list '(:name "path"             ; a list of argument specifications
+               :type string
+               :description "The directory where to create the file")
+             '(:name "filename"
+               :type string
+               :description "The name of the file to create")
+             '(:name "content"
+               :type string
+               :description "The content to write to the file"))
+ :category "filesystem")                ; An arbitrary label for grouping
+
 (use-package elysium
   :straight (:host github :repo "lanceberge/elysium" :branch "main" :files ("*.el")))
