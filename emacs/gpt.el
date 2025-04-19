@@ -15,7 +15,31 @@
 (use-package gptel
   :straight t
   :custom
-  (gptel-model "gpt-4o"))
+  (gptel-model 'gpt-4o) ;; model is now a symbol, not a string
+  :config
+  ;; Configure Perplexity backend
+  (gptel-make-perplexity "Perplexity"
+    :key (lambda () (auth-source-pick-first-password :host "api.perplexity.ai"))
+    :stream t)
+
+  ;; Configure Anthropic backend for Claude Sonnet
+  (gptel-make-anthropic "Claude"
+    :stream t
+    :key (lambda () (auth-source-pick-first-password :host "api.anthropic.com")))
+
+  ;; Configure Anthropic backend for Claude 3.7 Sonnet with thinking mode
+  (gptel-make-anthropic "Claude-thinking"
+    :key (lambda () (auth-source-pick-first-password :host "api.anthropic.com"))
+    :stream t
+    :models '(claude-3-7-sonnet-20250219)
+    :header (lambda () (when-let* ((key (gptel--get-api-key)))
+                    `(("x-api-key" . ,key)
+                      ("anthropic-version" . "2023-06-01")
+                      ("anthropic-beta" . "pdfs-2024-09-25")
+                      ("anthropic-beta" . "output-128k-2025-02-19")
+                      ("anthropic-beta" . "prompt-caching-2024-07-31"))))
+    :request-params '(:thinking (:type "enabled" :budget_tokens 2048)
+                      :max_tokens 4096)))
 
 (use-package elysium
   :straight (:host github :repo "lanceberge/elysium" :branch "main" :files ("*.el")))
