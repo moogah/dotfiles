@@ -186,30 +186,101 @@ If input matches an existing tab name, switch to it.
 If input matches an existing activity name, resume it.
 If input doesn't match either, create a new activity with that name."
       (interactive)
-      (let* ((tabs (mapcar (lambda (tab) (alist-get 'name tab))
-                          (funcall tab-bar-tabs-function)))
+      (let* ((all-tabs (funcall tab-bar-tabs-function))
+             ;; Get raw tab names
+             (tabs (mapcar (lambda (tab) (alist-get 'name tab)) all-tabs))
+             ;; Get activity names
              (activities (activities-names))
-             (combined-list (delete-dups (append tabs activities)))
+             ;; Get current tab and activity
+             (current-tab-name (alist-get 'name (tab-bar--current-tab)))
+             (current-activity (when (activities-current)
+                                 (activities-activity-name (activities-current))))
+             
+             ;; Create list of items to display
+             ;; - Deduplicate activities that are also tabs
+             ;; - Strip prefix from activity tabs
+             (display-items 
+              (delete-dups
+               (append
+                activities  ;; All activities
+                ;; Tabs that aren't prefixed with the activity prefix
+                (cl-remove-if 
+                 (lambda (tab-name)
+                   (cl-some (lambda (activity-name)
+                              (string= tab-name (concat activities-name-prefix activity-name)))
+                            activities))
+                 tabs))))
+             
+             ;; Define annotation function to show whether items are tabs or activities
+             (annotation-function
+              (lambda (name)
+                (let* (;; Check if name is an activity
+                       (is-activity (member name activities))
+                       ;; Check if name exists as a tab
+                       (is-plain-tab (member name tabs))
+                       ;; Check if activity name exists as a prefixed tab
+                       (prefixed-name (when is-activity
+                                        (concat activities-name-prefix name)))
+                       (is-activity-tab (member prefixed-name tabs))
+                       ;; Check if current tab/activity
+                       (is-current-tab (or (equal name current-tab-name)
+                                           (and prefixed-name
+                                                (equal prefixed-name current-tab-name))))
+                       (is-current-activity (equal name current-activity)))
+                  (cond
+                   ;; If it's both a tab and an activity (either directly or via prefix)
+                   ((or (and is-plain-tab is-activity) is-activity-tab)
+                    (if (or is-current-tab is-current-activity)
+                        (propertize " [Current Tab+Activity]" 'face '(:foreground "green" :weight bold))
+                      (propertize " [Tab+Activity]" 'face '(:foreground "cyan"))))
+                   ;; If it's just a plain tab
+                   (is-plain-tab
+                    (if is-current-tab
+                        (propertize " [Current Tab]" 'face '(:foreground "green" :weight bold))
+                      (propertize " [Tab]" 'face '(:foreground "blue"))))
+                   ;; If it's just an activity
+                   (is-activity
+                    (if is-current-activity
+                        (propertize " [Current Activity]" 'face '(:foreground "green" :weight bold))
+                      (propertize " [Activity]" 'face '(:foreground "orange"))))
+                   (t "")))))
+             
+             ;; Get user selection
              (selected (completing-read
                         "Switch to tab/activity: "
                         (lambda (string pred action)
                           (if (eq action 'metadata)
-                              '(metadata (category . tab-and-activity))
-                            (complete-with-action action combined-list string pred)))
+                              `(metadata 
+                                (category . tab-and-activity)
+                                (annotation-function . ,annotation-function))
+                            (complete-with-action action display-items string pred)))
                         nil nil nil nil
-                        (when (activities-current)
-                          (activities-activity-name (activities-current))))))
+                        (cond
+                         ;; Default to current activity if there is one
+                         (current-activity)
+                         ;; If current tab is a prefixed activity tab, strip the prefix
+                         ((and current-tab-name 
+                               (string-prefix-p activities-name-prefix current-tab-name))
+                          (substring current-tab-name (length activities-name-prefix)))
+                         ;; Otherwise use current tab name
+                         (t current-tab-name)))))
         (cond
-         ;; If it's an existing tab, switch to it
+         ;; If an activity with that name exists, check if it has a tab first
+         ((member selected activities)
+          (let ((activity-tab-name (concat activities-name-prefix selected)))
+            (if (member activity-tab-name tabs)
+                ;; If activity already has a tab, switch to that tab
+                (tab-bar-switch-to-tab activity-tab-name)
+              ;; Otherwise resume the activity
+              (activities-resume (activities-named selected)))))
+         
+         ;; If it's just a plain tab (not an activity tab), switch to it
          ((member selected tabs)
           (tab-bar-switch-to-tab selected))
-         ;; If it's an existing activity, resume it 
-         ((member selected activities)
-          (activities-resume (activities-named selected)))
+         
          ;; Otherwise create a new activity
          (t
           (activities-new selected)))))
     
-    (evil-define-key 'normal 'global (kbd "<SPC> t") 'my-switch-tab-or-activity)))
+    (evil-define-key 'normal 'global (kbd "<SPC> t") 'my-switch-tab-or-activity))
 #+end_src 
-
