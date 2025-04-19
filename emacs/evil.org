@@ -178,8 +178,38 @@
     (define-key my-projectile-command-map (kbd "S") 'persp-state-save)
     (define-key my-projectile-command-map (kbd "L") 'persp-state-load))
 
-  ;; Tab-bar bindings
+  ;; Tab and activity bindings
   (with-eval-after-load 'tab-bar
-    (evil-define-key 'normal 'global (kbd "<SPC> t") 'tab-switch))
+    (defun my-switch-tab-or-activity ()
+      "Switch to an open tab, resume an activity, or create a new activity.
+If input matches an existing tab name, switch to it.
+If input matches an existing activity name, resume it.
+If input doesn't match either, create a new activity with that name."
+      (interactive)
+      (let* ((tabs (mapcar (lambda (tab) (alist-get 'name tab))
+                          (funcall tab-bar-tabs-function)))
+             (activities (activities-names))
+             (combined-list (delete-dups (append tabs activities)))
+             (selected (completing-read
+                        "Switch to tab/activity: "
+                        (lambda (string pred action)
+                          (if (eq action 'metadata)
+                              '(metadata (category . tab-and-activity))
+                            (complete-with-action action combined-list string pred)))
+                        nil nil nil nil
+                        (when (activities-current)
+                          (activities-activity-name (activities-current))))))
+        (cond
+         ;; If it's an existing tab, switch to it
+         ((member selected tabs)
+          (tab-bar-switch-to-tab selected))
+         ;; If it's an existing activity, resume it 
+         ((member selected activities)
+          (activities-resume (activities-named selected)))
+         ;; Otherwise create a new activity
+         (t
+          (activities-new selected)))))
+    
+    (evil-define-key 'normal 'global (kbd "<SPC> t") 'my-switch-tab-or-activity)))
 #+end_src 
 
