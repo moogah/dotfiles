@@ -194,49 +194,10 @@ If input doesn't match either, create a new activity with that name."
                             activities))
                  tabs))))
              
-             ;; Define annotation function to show whether items are tabs or activities
-             (annotation-function
-              (lambda (name)
-                (let* (;; Check if name is an activity
-                       (is-activity (member name activities))
-                       ;; Check if name exists as a tab
-                       (is-plain-tab (member name tabs))
-                       ;; Check if activity name exists as a prefixed tab
-                       (prefixed-name (when is-activity
-                                        (concat activities-name-prefix name)))
-                       (is-activity-tab (member prefixed-name tabs))
-                       ;; Check if current tab/activity
-                       (is-current-tab (or (equal name current-tab-name)
-                                           (and prefixed-name
-                                                (equal prefixed-name current-tab-name))))
-                       (is-current-activity (equal name current-activity)))
-                  (cond
-                   ;; If it's both a tab and an activity (either directly or via prefix)
-                   ((or (and is-plain-tab is-activity) is-activity-tab)
-                    (if (or is-current-tab is-current-activity)
-                        (propertize " [Current Tab+Activity]" 'face '(:foreground "green" :weight bold))
-                      (propertize " [Tab+Activity]" 'face '(:foreground "cyan"))))
-                   ;; If it's just a plain tab
-                   (is-plain-tab
-                    (if is-current-tab
-                        (propertize " [Current Tab]" 'face '(:foreground "green" :weight bold))
-                      (propertize " [Tab]" 'face '(:foreground "blue"))))
-                   ;; If it's just an activity
-                   (is-activity
-                    (if is-current-activity
-                        (propertize " [Current Activity]" 'face '(:foreground "green" :weight bold))
-                      (propertize " [Activity]" 'face '(:foreground "orange"))))
-                   (t "")))))
-             
-             ;; Get user selection
+             ;; Get user selection - using simple list with no annotations
              (selected (completing-read
                         "Switch to tab/activity: "
-                        (lambda (string pred action)
-                          (if (eq action 'metadata)
-                              `(metadata 
-                                (category . tab-and-activity)
-                                (annotation-function . ,annotation-function))
-                            (complete-with-action action display-items string pred)))
+                        display-items
                         nil nil nil nil
                         (cond
                          ;; Default to current activity if there is one
