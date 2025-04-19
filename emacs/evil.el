@@ -39,6 +39,14 @@
   (define-key evil-motion-state-map "H" 'evil-backward-arg)
   (define-key evil-normal-state-map "K" 'evil-jump-out-args))
 
+;; ===============================================================================
+;; Evil Collection provides vim-like bindings for many emacs modes
+;; ===============================================================================
+
+(use-package evil-collection
+  :straight t
+  :after evil)
+
 (defun my-split-or-switch-window-left ()
   "Create a new window on the left and open dired, if a window already exists move there"
   (interactive)
@@ -128,7 +136,8 @@
 (with-eval-after-load 'magit
   ;; Define prefix key for magit commands
   (define-prefix-command 'my-magit-command-map)
-  (evil-define-key 'normal 'global (kbd "<SPC> g") 'magit))
+  (evil-define-key 'normal 'global (kbd "<SPC> g") 'magit)
+  (evil-collection-init 'magit))
 
 ;; Consult bindings
 (with-eval-after-load 'consult

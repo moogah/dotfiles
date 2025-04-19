@@ -45,6 +45,18 @@
     (define-key evil-normal-state-map "K" 'evil-jump-out-args))
 #+end_src
 
+* Install Evil Collection
+
+#+begin_src emacs-lisp :tangle yes
+  ;; ===============================================================================
+  ;; Evil Collection provides vim-like bindings for many emacs modes
+  ;; ===============================================================================
+
+  (use-package evil-collection
+    :straight t
+    :after evil)
+#+end_src
+
 * Configure "Spacemacs" Style Keybindings
 
 #+begin_src emacs-lisp :tangle yes
@@ -82,7 +94,7 @@
 
 #+begin_src emacs-lisp :tangle yes
   ;; Core/global bindings (applied immediately)
-  
+
   ;; Basic global commands
   (evil-define-key 'normal 'global (kbd "<SPC> x") 'kill-this-buffer)
   (evil-define-key 'normal 'global (kbd "<SPC> d") 'dired-jump)
@@ -96,7 +108,7 @@
   (define-key my-window-command-map (kbd "k") 'evil-window-up)
   (define-key my-window-command-map (kbd "h") 'my-split-or-switch-window-left)
   (define-key my-window-command-map (kbd "l") 'my-split-or-switch-window-right)
-  
+
   ;; Define prefix key for space prefix commands
   (define-prefix-command 'my-space-command-map)
   (evil-define-key 'normal 'global (kbd "<SPC> <SPC>") 'my-space-command-map)
@@ -113,7 +125,7 @@
     (evil-define-key 'normal 'global (kbd "<SPC> e") 'org-babel-execute-src-block)
     (evil-define-key 'normal 'global (kbd "<SPC> s l") 'org-store-link)
     (evil-define-key 'normal 'global (kbd "<SPC> i l") 'org-insert-link)
-    
+
     ;; Org mode map specific bindings
     (evil-define-key 'normal org-mode-map (kbd "<SPC> h") 'org-insert-heading)
     (evil-define-key 'normal org-mode-map (kbd "<SPC> H") 'org-insert-subheading))
@@ -128,12 +140,12 @@
     ;; Global projectile bindings
     (evil-define-key 'normal 'global (kbd "<SPC> r") 'projectile-ripgrep)
     (evil-define-key 'normal 'global (kbd "<SPC> f") 'project-find-file)
-    
+
     ;; Define prefix key for projectile commands
     (define-prefix-command 'my-projectile-command-map)
     (evil-define-key 'normal 'global (kbd "<SPC> p") 'my-projectile-command-map)
     (define-key my-projectile-command-map (kbd "p") 'consult-projectile-switch-project)
-    
+
     ;; Python mode specific bindings
     (evil-define-key 'normal python-mode-map (kbd "<SPC> T") 'my-find-implementation-or-test-other-window))
 
@@ -141,13 +153,14 @@
   (with-eval-after-load 'magit
     ;; Define prefix key for magit commands
     (define-prefix-command 'my-magit-command-map)
-    (evil-define-key 'normal 'global (kbd "<SPC> g") 'magit))
+    (evil-define-key 'normal 'global (kbd "<SPC> g") 'magit)
+    (evil-collection-init 'magit))
 
   ;; Consult bindings
   (with-eval-after-load 'consult
     (evil-define-key 'normal 'global (kbd "<SPC> b") 'consult-bookmark)
     (evil-define-key 'normal 'global (kbd "<SPC> o") 'consult-buffer)
-    
+
     ;; Define prefix key for menu commands
     (define-prefix-command 'my-menu-command-map)
     (evil-define-key 'normal 'global (kbd "<SPC> m") 'my-menu-command-map)
@@ -160,7 +173,7 @@
     (unless (fboundp 'my-projectile-command-map)
       (define-prefix-command 'my-projectile-command-map)
       (evil-define-key 'normal 'global (kbd "<SPC> p") 'my-projectile-command-map))
-    
+
     (define-key my-projectile-command-map (kbd "s") 'persp-switch)
     (define-key my-projectile-command-map (kbd "S") 'persp-state-save)
     (define-key my-projectile-command-map (kbd "L") 'persp-state-load))

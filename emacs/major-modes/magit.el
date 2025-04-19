@@ -53,15 +53,3 @@ to the current branch. Uses Magit."
 ;; (use-package forge
 ;;   :straight t
 ;;   :after magit)
-
-;; ===============================================================================
-;; Evil-friendly Magit key bindings
-;; ===============================================================================
-
-;; Fix evil behavior in magit buffers
-(use-package evil-collection
-  :straight t
-  :after magit
-  :config
-  ;; Enable full evil integration with magit
-  (evil-collection-init 'magit))
