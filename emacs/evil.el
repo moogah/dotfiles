@@ -81,9 +81,14 @@
         (progn (my-split-or-switch-window-right) (find-file file)))))
 
 ;; Core/global bindings (applied immediately)
+(defun my/kill-current-buffer ()
+  "Kill the current buffer without prompting."
+  (interactive)
+  (kill-buffer (current-buffer)))
+
 
   ;; Basic global commands
-  (evil-define-key 'normal 'global (kbd "<SPC> x") 'kill-this-buffer)
+  (evil-define-key 'normal 'global (kbd "<SPC> x") 'my/kill-current-buffer)
   (evil-define-key 'normal 'global (kbd "<SPC> d") 'dired-jump)
 
   ;; Define prefix key for window commands
@@ -182,7 +187,7 @@ If input doesn't match either, create a new activity with that name."
              (current-tab-name (alist-get 'name (tab-bar--current-tab)))
              (current-activity (when (activities-current)
                                  (activities-activity-name (activities-current))))
-           
+
              ;; Create list of items to display
              ;; - Deduplicate activities that are also tabs
              ;; - Strip prefix from activity tabs
@@ -197,7 +202,7 @@ If input doesn't match either, create a new activity with that name."
                               (string= tab-name (concat activities-name-prefix activity-name)))
                             activities))
                  tabs))))
-           
+
              ;; Get user selection - using simple list with no annotations
              (selected (completing-read
                         "Switch to tab/activity: "
@@ -221,13 +226,13 @@ If input doesn't match either, create a new activity with that name."
                 (tab-bar-switch-to-tab activity-tab-name)
               ;; Otherwise resume the activity
               (activities-resume (activities-named selected)))))
-       
+
          ;; If it's just a plain tab (not an activity tab), switch to it
          ((member selected tabs)
           (tab-bar-switch-to-tab selected))
-       
+
          ;; Otherwise create a new activity
          (t
           (activities-new selected)))))
-  
+
     (evil-define-key 'normal 'global (kbd "<SPC> t") 'my-switch-tab-or-activity))
