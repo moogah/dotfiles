@@ -31,6 +31,18 @@
   :config
   (global-evil-matchit-mode 1))
 
+(use-package evil-commentary
+  :straight t
+  :after evil
+  :config
+  (evil-commentary-mode))
+
+(use-package evil-exchange
+  :straight t
+  :after evil
+  :config
+  (evil-exchange-install))
+
 ;; ===============================================================================
 ;; Evil Collection provides vim-like bindings for many emacs modes
 ;; ===============================================================================

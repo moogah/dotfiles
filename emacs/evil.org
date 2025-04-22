@@ -35,6 +35,18 @@
     :after evil
     :config
     (global-evil-matchit-mode 1))
+
+  (use-package evil-commentary
+    :straight t
+    :after evil
+    :config
+    (evil-commentary-mode))
+
+  (use-package evil-exchange
+    :straight t
+    :after evil
+    :config
+    (evil-exchange-install))
 #+end_src
 
 * Install Evil Collection
@@ -48,6 +60,7 @@
     :straight t
     :after evil)
 #+end_src
+
 
 * Configure "Spacemacs" Style Keybindings
 
@@ -237,3 +250,11 @@
     
       (evil-define-key 'normal 'global (kbd "<SPC> t") 'my-switch-tab-or-activity))
 #+end_src 
+
+
+* Other Packages to Consider
+
+https://github.com/edkolev/evil-lion
+https://github.com/gabesoft/evil-mc
+https://github.com/hlissner/evil-multiedit?tab=readme-ov-file
+https://github.com/meain/evil-textobj-tree-sitter
