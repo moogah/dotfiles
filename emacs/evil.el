@@ -98,9 +98,9 @@
   (define-key my-space-command-map (kbd "j") 'previous-buffer)
   (define-key my-space-command-map (kbd "k") 'next-buffer)
 
-  ;; Hydra bindings
-  (with-eval-after-load 'hydra
-    (define-key my-space-command-map (kbd "h") 'hydra-main/body))
+  ;; Avy Bindings
+  (with-eval-after-load 'avy
+    (evil-define-key 'normal 'global (kbd "<SPC> j") 'avy-goto-line))
 
   ;; Org mode bindings
   (with-eval-after-load 'org
@@ -116,7 +116,7 @@
   ;; Org-roam bindings
   (with-eval-after-load 'org-roam
     (evil-define-key 'normal 'global (kbd "<SPC> n") 'org-roam-node-find)
-    (evil-define-key 'normal 'global (kbd "<SPC> j") 'org-roam-dailies-goto-today))
+    (evil-define-key 'normal 'global (kbd "<SPC> u") 'org-roam-dailies-goto-today))
 
   ;; Projectile bindings
   (with-eval-after-load 'projectile
@@ -178,7 +178,7 @@ If input doesn't match either, create a new activity with that name."
              (current-tab-name (alist-get 'name (tab-bar--current-tab)))
              (current-activity (when (activities-current)
                                  (activities-activity-name (activities-current))))
-             
+           
              ;; Create list of items to display
              ;; - Deduplicate activities that are also tabs
              ;; - Strip prefix from activity tabs
@@ -193,7 +193,7 @@ If input doesn't match either, create a new activity with that name."
                               (string= tab-name (concat activities-name-prefix activity-name)))
                             activities))
                  tabs))))
-             
+           
              ;; Get user selection - using simple list with no annotations
              (selected (completing-read
                         "Switch to tab/activity: "
@@ -217,13 +217,13 @@ If input doesn't match either, create a new activity with that name."
                 (tab-bar-switch-to-tab activity-tab-name)
               ;; Otherwise resume the activity
               (activities-resume (activities-named selected)))))
-         
+       
          ;; If it's just a plain tab (not an activity tab), switch to it
          ((member selected tabs)
           (tab-bar-switch-to-tab selected))
-         
+       
          ;; Otherwise create a new activity
          (t
           (activities-new selected)))))
-    
+  
     (evil-define-key 'normal 'global (kbd "<SPC> t") 'my-switch-tab-or-activity))

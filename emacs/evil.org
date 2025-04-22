@@ -93,155 +93,155 @@
 #+end_src
 
 #+begin_src emacs-lisp :tangle yes
-  ;; Core/global bindings (applied immediately)
+    ;; Core/global bindings (applied immediately)
 
-  ;; Basic global commands
-  (evil-define-key 'normal 'global (kbd "<SPC> x") 'kill-this-buffer)
-  (evil-define-key 'normal 'global (kbd "<SPC> d") 'dired-jump)
+    ;; Basic global commands
+    (evil-define-key 'normal 'global (kbd "<SPC> x") 'kill-this-buffer)
+    (evil-define-key 'normal 'global (kbd "<SPC> d") 'dired-jump)
 
-  ;; Define prefix key for window commands
-  (define-prefix-command 'my-window-command-map)
-  (evil-define-key 'normal 'global (kbd "<SPC> w") 'my-window-command-map)
-  (define-key my-window-command-map (kbd "c") 'delete-window)
-  (define-key my-window-command-map (kbd "v") 'split-window-vertically)
-  (define-key my-window-command-map (kbd "j") 'evil-window-down)
-  (define-key my-window-command-map (kbd "k") 'evil-window-up)
-  (define-key my-window-command-map (kbd "h") 'my-split-or-switch-window-left)
-  (define-key my-window-command-map (kbd "l") 'my-split-or-switch-window-right)
+    ;; Define prefix key for window commands
+    (define-prefix-command 'my-window-command-map)
+    (evil-define-key 'normal 'global (kbd "<SPC> w") 'my-window-command-map)
+    (define-key my-window-command-map (kbd "c") 'delete-window)
+    (define-key my-window-command-map (kbd "v") 'split-window-vertically)
+    (define-key my-window-command-map (kbd "j") 'evil-window-down)
+    (define-key my-window-command-map (kbd "k") 'evil-window-up)
+    (define-key my-window-command-map (kbd "h") 'my-split-or-switch-window-left)
+    (define-key my-window-command-map (kbd "l") 'my-split-or-switch-window-right)
 
-  ;; Define prefix key for space prefix commands
-  (define-prefix-command 'my-space-command-map)
-  (evil-define-key 'normal 'global (kbd "<SPC> <SPC>") 'my-space-command-map)
-  (define-key my-space-command-map (kbd "j") 'previous-buffer)
-  (define-key my-space-command-map (kbd "k") 'next-buffer)
+    ;; Define prefix key for space prefix commands
+    (define-prefix-command 'my-space-command-map)
+    (evil-define-key 'normal 'global (kbd "<SPC> <SPC>") 'my-space-command-map)
+    (define-key my-space-command-map (kbd "j") 'previous-buffer)
+    (define-key my-space-command-map (kbd "k") 'next-buffer)
 
-  ;; Hydra bindings
-  (with-eval-after-load 'hydra
-    (define-key my-space-command-map (kbd "h") 'hydra-main/body))
+    ;; Avy Bindings
+    (with-eval-after-load 'avy
+      (evil-define-key 'normal 'global (kbd "<SPC> j") 'avy-goto-line))
 
-  ;; Org mode bindings
-  (with-eval-after-load 'org
-    ;; Global org bindings
-    (evil-define-key 'normal 'global (kbd "<SPC> e") 'org-babel-execute-src-block)
-    (evil-define-key 'normal 'global (kbd "<SPC> s l") 'org-store-link)
-    (evil-define-key 'normal 'global (kbd "<SPC> i l") 'org-insert-link)
+    ;; Org mode bindings
+    (with-eval-after-load 'org
+      ;; Global org bindings
+      (evil-define-key 'normal 'global (kbd "<SPC> e") 'org-babel-execute-src-block)
+      (evil-define-key 'normal 'global (kbd "<SPC> s l") 'org-store-link)
+      (evil-define-key 'normal 'global (kbd "<SPC> i l") 'org-insert-link)
 
-    ;; Org mode map specific bindings
-    (evil-define-key 'normal org-mode-map (kbd "<SPC> h") 'org-insert-heading)
-    (evil-define-key 'normal org-mode-map (kbd "<SPC> H") 'org-insert-subheading))
+      ;; Org mode map specific bindings
+      (evil-define-key 'normal org-mode-map (kbd "<SPC> h") 'org-insert-heading)
+      (evil-define-key 'normal org-mode-map (kbd "<SPC> H") 'org-insert-subheading))
 
-  ;; Org-roam bindings
-  (with-eval-after-load 'org-roam
-    (evil-define-key 'normal 'global (kbd "<SPC> n") 'org-roam-node-find)
-    (evil-define-key 'normal 'global (kbd "<SPC> j") 'org-roam-dailies-goto-today))
+    ;; Org-roam bindings
+    (with-eval-after-load 'org-roam
+      (evil-define-key 'normal 'global (kbd "<SPC> n") 'org-roam-node-find)
+      (evil-define-key 'normal 'global (kbd "<SPC> u") 'org-roam-dailies-goto-today))
 
-  ;; Projectile bindings
-  (with-eval-after-load 'projectile
-    ;; Global projectile bindings
-    (evil-define-key 'normal 'global (kbd "<SPC> r") 'projectile-ripgrep)
-    (evil-define-key 'normal 'global (kbd "<SPC> f") 'project-find-file)
+    ;; Projectile bindings
+    (with-eval-after-load 'projectile
+      ;; Global projectile bindings
+      (evil-define-key 'normal 'global (kbd "<SPC> r") 'projectile-ripgrep)
+      (evil-define-key 'normal 'global (kbd "<SPC> f") 'project-find-file)
 
-    ;; Define prefix key for projectile commands
-    (define-prefix-command 'my-projectile-command-map)
-    (evil-define-key 'normal 'global (kbd "<SPC> p") 'my-projectile-command-map)
-    (define-key my-projectile-command-map (kbd "p") 'consult-projectile-switch-project)
-
-    ;; Python mode specific bindings
-    (evil-define-key 'normal python-mode-map (kbd "<SPC> T") 'my-find-implementation-or-test-other-window))
-
-  ;; Magit bindings
-  (with-eval-after-load 'magit
-    ;; Define prefix key for magit commands
-    (define-prefix-command 'my-magit-command-map)
-    (evil-define-key 'normal 'global (kbd "<SPC> g") 'magit)
-    (evil-collection-init 'magit))
-
-  ;; Consult bindings
-  (with-eval-after-load 'consult
-    (evil-define-key 'normal 'global (kbd "<SPC> b") 'consult-bookmark)
-    (evil-define-key 'normal 'global (kbd "<SPC> o") 'consult-buffer)
-
-    ;; Define prefix key for menu commands
-    (define-prefix-command 'my-menu-command-map)
-    (evil-define-key 'normal 'global (kbd "<SPC> m") 'my-menu-command-map)
-    (define-key my-menu-command-map (kbd "m") 'consult-imenu-multi)
-    (define-key my-menu-command-map (kbd "i") 'consult-imenu))
-
-  ;; Perspective bindings
-  (with-eval-after-load 'perspective
-    ;; Add to projectile prefix map, creating it if needed
-    (unless (fboundp 'my-projectile-command-map)
+      ;; Define prefix key for projectile commands
       (define-prefix-command 'my-projectile-command-map)
-      (evil-define-key 'normal 'global (kbd "<SPC> p") 'my-projectile-command-map))
+      (evil-define-key 'normal 'global (kbd "<SPC> p") 'my-projectile-command-map)
+      (define-key my-projectile-command-map (kbd "p") 'consult-projectile-switch-project)
 
-    (define-key my-projectile-command-map (kbd "s") 'persp-switch)
-    (define-key my-projectile-command-map (kbd "S") 'persp-state-save)
-    (define-key my-projectile-command-map (kbd "L") 'persp-state-load))
+      ;; Python mode specific bindings
+      (evil-define-key 'normal python-mode-map (kbd "<SPC> T") 'my-find-implementation-or-test-other-window))
 
-  ;; Tab and activity bindings
-  (with-eval-after-load 'tab-bar
-    (defun my-switch-tab-or-activity ()
-      "Switch to an open tab, resume an activity, or create a new activity.
-If input matches an existing tab name, switch to it.
-If input matches an existing activity name, resume it.
-If input doesn't match either, create a new activity with that name."
-      (interactive)
-      (let* ((all-tabs (funcall tab-bar-tabs-function))
-             ;; Get raw tab names
-             (tabs (mapcar (lambda (tab) (alist-get 'name tab)) all-tabs))
-             ;; Get activity names
-             (activities (activities-names))
-             ;; Get current tab and activity
-             (current-tab-name (alist-get 'name (tab-bar--current-tab)))
-             (current-activity (when (activities-current)
-                                 (activities-activity-name (activities-current))))
+    ;; Magit bindings
+    (with-eval-after-load 'magit
+      ;; Define prefix key for magit commands
+      (define-prefix-command 'my-magit-command-map)
+      (evil-define-key 'normal 'global (kbd "<SPC> g") 'magit)
+      (evil-collection-init 'magit))
+
+    ;; Consult bindings
+    (with-eval-after-load 'consult
+      (evil-define-key 'normal 'global (kbd "<SPC> b") 'consult-bookmark)
+      (evil-define-key 'normal 'global (kbd "<SPC> o") 'consult-buffer)
+
+      ;; Define prefix key for menu commands
+      (define-prefix-command 'my-menu-command-map)
+      (evil-define-key 'normal 'global (kbd "<SPC> m") 'my-menu-command-map)
+      (define-key my-menu-command-map (kbd "m") 'consult-imenu-multi)
+      (define-key my-menu-command-map (kbd "i") 'consult-imenu))
+
+    ;; Perspective bindings
+    (with-eval-after-load 'perspective
+      ;; Add to projectile prefix map, creating it if needed
+      (unless (fboundp 'my-projectile-command-map)
+        (define-prefix-command 'my-projectile-command-map)
+        (evil-define-key 'normal 'global (kbd "<SPC> p") 'my-projectile-command-map))
+
+      (define-key my-projectile-command-map (kbd "s") 'persp-switch)
+      (define-key my-projectile-command-map (kbd "S") 'persp-state-save)
+      (define-key my-projectile-command-map (kbd "L") 'persp-state-load))
+
+    ;; Tab and activity bindings
+    (with-eval-after-load 'tab-bar
+      (defun my-switch-tab-or-activity ()
+        "Switch to an open tab, resume an activity, or create a new activity.
+  If input matches an existing tab name, switch to it.
+  If input matches an existing activity name, resume it.
+  If input doesn't match either, create a new activity with that name."
+        (interactive)
+        (let* ((all-tabs (funcall tab-bar-tabs-function))
+               ;; Get raw tab names
+               (tabs (mapcar (lambda (tab) (alist-get 'name tab)) all-tabs))
+               ;; Get activity names
+               (activities (activities-names))
+               ;; Get current tab and activity
+               (current-tab-name (alist-get 'name (tab-bar--current-tab)))
+               (current-activity (when (activities-current)
+                                   (activities-activity-name (activities-current))))
              
-             ;; Create list of items to display
-             ;; - Deduplicate activities that are also tabs
-             ;; - Strip prefix from activity tabs
-             (display-items 
-              (delete-dups
-               (append
-                activities  ;; All activities
-                ;; Tabs that aren't prefixed with the activity prefix
-                (cl-remove-if 
-                 (lambda (tab-name)
-                   (cl-some (lambda (activity-name)
-                              (string= tab-name (concat activities-name-prefix activity-name)))
-                            activities))
-                 tabs))))
+               ;; Create list of items to display
+               ;; - Deduplicate activities that are also tabs
+               ;; - Strip prefix from activity tabs
+               (display-items 
+                (delete-dups
+                 (append
+                  activities  ;; All activities
+                  ;; Tabs that aren't prefixed with the activity prefix
+                  (cl-remove-if 
+                   (lambda (tab-name)
+                     (cl-some (lambda (activity-name)
+                                (string= tab-name (concat activities-name-prefix activity-name)))
+                              activities))
+                   tabs))))
              
-             ;; Get user selection - using simple list with no annotations
-             (selected (completing-read
-                        "Switch to tab/activity: "
-                        display-items
-                        nil nil nil nil
-                        (cond
-                         ;; Default to current activity if there is one
-                         (current-activity)
-                         ;; If current tab is a prefixed activity tab, strip the prefix
-                         ((and current-tab-name 
-                               (string-prefix-p activities-name-prefix current-tab-name))
-                          (substring current-tab-name (length activities-name-prefix)))
-                         ;; Otherwise use current tab name
-                         (t current-tab-name)))))
-        (cond
-         ;; If an activity with that name exists, check if it has a tab first
-         ((member selected activities)
-          (let ((activity-tab-name (concat activities-name-prefix selected)))
-            (if (member activity-tab-name tabs)
-                ;; If activity already has a tab, switch to that tab
-                (tab-bar-switch-to-tab activity-tab-name)
-              ;; Otherwise resume the activity
-              (activities-resume (activities-named selected)))))
+               ;; Get user selection - using simple list with no annotations
+               (selected (completing-read
+                          "Switch to tab/activity: "
+                          display-items
+                          nil nil nil nil
+                          (cond
+                           ;; Default to current activity if there is one
+                           (current-activity)
+                           ;; If current tab is a prefixed activity tab, strip the prefix
+                           ((and current-tab-name 
+                                 (string-prefix-p activities-name-prefix current-tab-name))
+                            (substring current-tab-name (length activities-name-prefix)))
+                           ;; Otherwise use current tab name
+                           (t current-tab-name)))))
+          (cond
+           ;; If an activity with that name exists, check if it has a tab first
+           ((member selected activities)
+            (let ((activity-tab-name (concat activities-name-prefix selected)))
+              (if (member activity-tab-name tabs)
+                  ;; If activity already has a tab, switch to that tab
+                  (tab-bar-switch-to-tab activity-tab-name)
+                ;; Otherwise resume the activity
+                (activities-resume (activities-named selected)))))
          
-         ;; If it's just a plain tab (not an activity tab), switch to it
-         ((member selected tabs)
-          (tab-bar-switch-to-tab selected))
+           ;; If it's just a plain tab (not an activity tab), switch to it
+           ((member selected tabs)
+            (tab-bar-switch-to-tab selected))
          
-         ;; Otherwise create a new activity
-         (t
-          (activities-new selected)))))
+           ;; Otherwise create a new activity
+           (t
+            (activities-new selected)))))
     
-    (evil-define-key 'normal 'global (kbd "<SPC> t") 'my-switch-tab-or-activity))
+      (evil-define-key 'normal 'global (kbd "<SPC> t") 'my-switch-tab-or-activity))
 #+end_src 
