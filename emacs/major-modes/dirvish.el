@@ -1,5 +1,5 @@
-(use-package dirvish
-  :straight (dirvish :host github :repo "alexluigit/dirvish" :tag "2.0.53")
+﻿(use-package dirvish
+  :straight (dirvish :host github :repo "alexluigit/dirvish" :tag "2.2.3")
   :init
   (dirvish-override-dired-mode)
   :custom

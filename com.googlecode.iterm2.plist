@@ -1083,6 +1083,8 @@
 	<integer>524288</integer>
 	<key>MaxVertically</key>
 	<true/>
+	<key>NeverBlockSystemShutdown</key>
+	<true/>
 	<key>New Bookmarks</key>
 	<array>
 		<dict>
