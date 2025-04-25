@@ -93,7 +93,7 @@
     (kbd "<SPC> j") 'org-roam-dailies-goto-today
 
     ;; Projectile
-    (kbd "<SPC> r") 'projectile-ripgrep
+    (kbd "<SPC> r") 'consult-ripgrep
     (kbd "<SPC> f") 'project-find-file
 
     ;; Magit

@@ -2559,6 +2559,8 @@
 			<string>/Users/jefffarr/src/norns_apps</string>
 		</dict>
 	</array>
+	<key>OnlyWhenMoreTabs</key>
+	<false/>
 	<key>PMPrintingExpandedStateForPrint2</key>
 	<false/>
 	<key>PointerActions</key>
