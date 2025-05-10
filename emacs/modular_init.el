@@ -91,7 +91,7 @@
     ;; ("vertico-consult-embark" "Completion framework")
     
     ;; Language mode modules
-    ;; ("language-modes/ide-features" "Shared IDE functionality")
+    ;; ("language-modes/language-modes" "Programming language modes")
     
     ;; Major mode modules
     ("major-modes/org"    "Org-mode configuration")
