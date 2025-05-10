@@ -88,7 +88,7 @@
     ;; ("language-modes/ide-features" "Shared IDE functionality")
     
     ;; Major mode modules
-    ;; ("major-modes/org"    "Org-mode configuration")
+    ("major-modes/org"    "Org-mode configuration")
     )
   "List of enabled modules with their paths and descriptions.")
 
@@ -96,13 +96,10 @@
 (defvar jf/machine-name (system-name)
   "The machine's hostname, used to load machine-specific configurations.")
 
-;; For demonstration, just load core/evil.el to start
-(jf/load-module (expand-file-name "core/evil.el" jf/emacs-dir))
-
-;; Once you're ready to load all modules, uncomment this:
-;; (dolist (module-spec jf/enabled-modules)
-;;   (let ((module-path (car module-spec)))
-;;     (jf/load-module (jf/resolve-module-path module-path))))
+;; Load all enabled modules
+(dolist (module-spec jf/enabled-modules)
+  (let ((module-path (car module-spec)))
+    (jf/load-module (jf/resolve-module-path module-path))))
 
 ;; Load machine-specific configuration if it exists
 (let ((machine-config (expand-file-name (concat "local/" jf/machine-name ".el") jf/emacs-dir)))
