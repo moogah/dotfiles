@@ -86,6 +86,7 @@
     ("core/defaults"      "Basic Emacs behavior")
     ("core/evil"          "Evil mode configuration")
     ("core/completion"    "Modern completion framework")
+    ("core/yasnippet"     "Snippet system for templates")
     
     ;; Feature modules - use your existing .el files
     ;; ("vertico-consult-embark" "Completion framework")

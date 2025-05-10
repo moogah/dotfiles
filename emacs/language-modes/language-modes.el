@@ -13,9 +13,6 @@
 ;; Project management
 (jf/load-module (expand-file-name "language-modes/projectile.el" jf/emacs-dir))
 
-;; Snippet system
-(jf/load-module (expand-file-name "language-modes/yasnippet.el" jf/emacs-dir))
-
 ;; AI-assisted coding
 (jf/load-module (expand-file-name "language-modes/copilot.el" jf/emacs-dir))
 

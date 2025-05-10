@@ -32,8 +32,6 @@ Load individual language modes and programming tools using the modular loading s
 ;; Project management
 (jf/load-module (expand-file-name "language-modes/projectile.el" jf/emacs-dir))
 
-;; Snippet system
-(jf/load-module (expand-file-name "language-modes/yasnippet.el" jf/emacs-dir))
 
 ;; AI-assisted coding
 (jf/load-module (expand-file-name "language-modes/copilot.el" jf/emacs-dir))
@@ -70,7 +68,7 @@ This configuration provides several IDE-like features for Emacs:
 - Project management with Projectile
 - Code navigation with GTags
 - Syntax highlighting with Tree-sitter
-- Completion with Copilot and YASnippet
+- AI-assisted coding with Copilot
 - Language-specific modes and tools
 
 ** Adding New Languages
