@@ -1,4 +1,6 @@
-﻿;; ===============================================================================
+;; -*- lexical-binding: t; -*-
+
+;; ===============================================================================
 ;; configure evil mode
 ;; ===============================================================================
 
@@ -9,8 +11,8 @@
   (setq evil-want-fine-undo t)
   (add-hook 'org-capture-mode-hook 'evil-insert-state) ;; use insert by default for org capture
   (add-hook 'git-commit-mode-hook 'evil-insert-state) ;; use insert mode by default for magit commits
-  (when (dirvish-override-dired-mode))
-    (evil-set-initial-state 'dired-mode 'emacs))
+  (when (bound-and-true-p dirvish-override-dired-mode)
+    (evil-set-initial-state 'dired-mode 'emacs)))
 
 ;; add visual indicators for common vim commands
 (use-package evil-goggles

@@ -7,20 +7,11 @@
 (setq debug-on-error t)
 
 ;; Register shortcut to quickly open this file
-(set-register ?i (cons 'file "~/src/dotfiles/emacs/modular_init.el"))
+(set-register ?i (cons 'file "~/src/dotfiles/emacs/modular_init.org"))
 
 ;; Define root directory
 (defvar jf/emacs-dir (expand-file-name "~/src/dotfiles/emacs/")
   "The root directory of the Emacs configuration.")
-
-;; Define configuration directories with categories
-(defvar jf/config-dirs
-  '((:core    . ,(expand-file-name "core/" jf/emacs-dir))
-    (:modules . ,(expand-file-name "modules/" jf/emacs-dir))
-    (:lang    . ,(expand-file-name "language-modes/" jf/emacs-dir))
-    (:major   . ,(expand-file-name "major-modes/" jf/emacs-dir))
-    (:local   . ,(expand-file-name "local/" jf/emacs-dir)))
-  "Mapping of configuration categories to their directories.")
 
 ;; Debug mode for troubleshooting
 (defvar jf/module-debug nil
@@ -44,54 +35,23 @@
        (message "ERROR in %s: %s" module-path (error-message-string err))
        nil))))
 
-;; Function to get module directory based on its type
-(defun jf/get-module-dir (module-name)
-  "Get the appropriate directory for MODULE-NAME."
-  (let* ((module-data (seq-find (lambda (m) (string= (nth 1 m) module-name)) jf/modules))
-         (category (if module-data (car module-data) :modules)))
-    (alist-get category jf/config-dirs)))
+;; Function to resolve a module path to a file path
+(defun jf/resolve-module-path (module-path)
+  "Convert a MODULE-PATH like 'core/defaults' to a file path."
+  (let* ((parts (split-string module-path "/"))
+         (dir (car parts))
+         (name (cadr parts)))
+    (expand-file-name (concat dir "/" name ".el") jf/emacs-dir)))
 
 ;; Function to reload a specific module (useful for debugging)
-(defun jf/reload-module (module)
-  "Reload a specific MODULE for debugging."
+(defun jf/reload-module (module-path)
+  "Reload a specific MODULE-PATH for debugging."
   (interactive 
-   (list (completing-read "Reload module: " jf/enabled-modules)))
+   (list (completing-read "Reload module: " 
+                          (mapcar #'car jf/enabled-modules))))
   
-  (let ((jf/module-debug t)
-        (module-dir (jf/get-module-dir module)))
-    (jf/load-module (expand-file-name (concat module ".el") module-dir))))
-
-;; Define module configuration - adapt to your modules
-(defvar jf/modules
-  '(
-    ;; Core modules - these should be enabled by default
-    (:core "defaults"      "Basic Emacs behavior")
-    
-    ;; Feature modules - these can be toggled
-    (:modules "evil"          "Evil mode")
-    (:modules "vertico-consult" "Vertico and Consult")
-    
-    ;; Language modules
-    (:lang "ide-features"  "Shared IDE functionality")
-    
-    ;; Major mode modules
-    (:major "org"          "Org-mode configuration")
-    (:major "magit"        "Git interface")
-    )
-  "List of modules with their type and description.")
-
-;; Extract a list of module names for completion
-(defvar jf/enabled-modules
-  (mapcar (lambda (module) (nth 1 module)) jf/modules)
-  "List of enabled module names.")
-
-;; Define machine-specific configurations
-(defvar jf/machine-name (system-name)
-  "The machine's hostname, used to load machine-specific configurations.")
-
-;; ===============================================================================
-;; Package Management Setup
-;; ===============================================================================
+  (let ((jf/module-debug t))
+    (jf/load-module (jf/resolve-module-path module-path))))
 
 ;; Bootstrap straight.el
 (defvar bootstrap-version)
@@ -114,16 +74,38 @@
 (straight-use-package 'use-package)
 (setq straight-use-package-by-default t)
 
-;; ===============================================================================
-;; Load Example Module
-;; ===============================================================================
+;; Define enabled modules with descriptions
+(defvar jf/enabled-modules
+  '(
+    ;; Core modules - add these as you create them
+    ("core/evil"          "Evil mode configuration")
+    ;; ("core/defaults"      "Basic Emacs behavior")
+    
+    ;; Feature modules - use your existing .el files
+    ;; ("vertico-consult-embark" "Completion framework")
+    
+    ;; Language mode modules
+    ;; ("language-modes/ide-features" "Shared IDE functionality")
+    
+    ;; Major mode modules
+    ;; ("major-modes/org"    "Org-mode configuration")
+    )
+  "List of enabled modules with their paths and descriptions.")
 
-;; For example, load just one module to demonstrate the system
-(jf/load-module (expand-file-name "evil.el" jf/emacs-dir))
+;; Define machine-specific configurations
+(defvar jf/machine-name (system-name)
+  "The machine's hostname, used to load machine-specific configurations.")
+
+;; For demonstration, just load core/evil.el to start
+(jf/load-module (expand-file-name "core/evil.el" jf/emacs-dir))
+
+;; Once you're ready to load all modules, uncomment this:
+;; (dolist (module-spec jf/enabled-modules)
+;;   (let ((module-path (car module-spec)))
+;;     (jf/load-module (jf/resolve-module-path module-path))))
 
 ;; Load machine-specific configuration if it exists
-(let ((machine-config (expand-file-name (concat jf/machine-name ".el") 
-                                        (alist-get :local jf/config-dirs))))
+(let ((machine-config (expand-file-name (concat "local/" jf/machine-name ".el") jf/emacs-dir)))
   (when (file-exists-p machine-config)
     (jf/load-module machine-config)))
 

@@ -1,8 +1,22 @@
+#+title: Evil Mode Configuration
+#+author: Jeff Farr
+#+property: header-args:emacs-lisp :tangle evil.el
 #+auto_tangle: y
+
+* Introduction
+This file configures Evil mode, which provides Vim-like keybindings and editing capabilities in Emacs.
+It includes Evil core, Evil Collection for better integration with Emacs modes, and custom "Spacemacs" style keybindings.
+
+* Basic Configuration
+Setup lexical binding and Evil core.
+
+#+begin_src emacs-lisp
+;; -*- lexical-binding: t; -*-
+#+end_src
 
 * Install Evil
 
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
   ;; ===============================================================================
   ;; configure evil mode
   ;; ===============================================================================
@@ -14,8 +28,8 @@
     (setq evil-want-fine-undo t)
     (add-hook 'org-capture-mode-hook 'evil-insert-state) ;; use insert by default for org capture
     (add-hook 'git-commit-mode-hook 'evil-insert-state) ;; use insert mode by default for magit commits
-    (when (dirvish-override-dired-mode))
-      (evil-set-initial-state 'dired-mode 'emacs))
+    (when (bound-and-true-p dirvish-override-dired-mode)
+      (evil-set-initial-state 'dired-mode 'emacs)))
 
   ;; add visual indicators for common vim commands
   (use-package evil-goggles
@@ -51,7 +65,7 @@
 
 * Install Evil Collection
 
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
   ;; ===============================================================================
   ;; Evil Collection provides vim-like bindings for many emacs modes
   ;; ===============================================================================
@@ -64,7 +78,7 @@
 
 * Configure "Spacemacs" Style Keybindings
 
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
   (defun my-split-or-switch-window-left ()
     "Create a new window on the left and open dired, if a window already exists move there"
     (interactive)
@@ -88,7 +102,7 @@
         (evil-window-right 1))))
 #+end_src
 
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
   (defun my-find-implementation-or-test-other-window ()
     "Finds the corresponding test or implementation window and opens it in a new or existing horizontal split"
     (interactive)
@@ -97,7 +111,7 @@
           (progn (my-split-or-switch-window-right) (find-file file)))))
 #+end_src
 
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
     ;; Core/global bindings (applied immediately)
   (defun my/kill-current-buffer ()
     "Kill the current buffer without prompting."
