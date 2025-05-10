@@ -1,4 +1,4 @@
-;; -*- lexical-binding: t; -*-
+﻿;; -*- lexical-binding: t; -*-
 
 ;; ===============================================================================
 ;; Configure Evil mode - Vim emulation for Emacs
@@ -10,9 +10,13 @@
   (evil-mode 1)
   (setq evil-want-fine-undo t)
   (add-hook 'org-capture-mode-hook 'evil-insert-state) ;; use insert by default for org capture
-  (add-hook 'git-commit-mode-hook 'evil-insert-state) ;; use insert mode by default for magit commits
-  (when (bound-and-true-p dirvish-override-dired-mode)
-    (evil-set-initial-state 'dired-mode 'emacs)))
+  (add-hook 'git-commit-mode-hook 'evil-insert-state)) ;; use insert mode by default for magit commits
+
+
+;; Set up proper dired mode integration with dirvish, but only after dirvish is loaded
+;; this get h and l navigation to work properly where h goes up one directory and j opens a file or directory.
+(with-eval-after-load 'dirvish
+  (evil-set-initial-state 'dired-mode 'emacs))
 
 ;; Add visual indicators for common vim commands
 (use-package evil-goggles

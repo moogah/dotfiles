@@ -18,19 +18,23 @@ Setup lexical binding for better closures and variable scoping.
 Configure the main Evil package that brings Vim emulation to Emacs.
 
 #+begin_src emacs-lisp
-;; ===============================================================================
-;; Configure Evil mode - Vim emulation for Emacs
-;; ===============================================================================
+  ;; ===============================================================================
+  ;; Configure Evil mode - Vim emulation for Emacs
+  ;; ===============================================================================
 
-(use-package evil
-  :straight t
-  :config
-  (evil-mode 1)
-  (setq evil-want-fine-undo t)
-  (add-hook 'org-capture-mode-hook 'evil-insert-state) ;; use insert by default for org capture
-  (add-hook 'git-commit-mode-hook 'evil-insert-state) ;; use insert mode by default for magit commits
-  (when (bound-and-true-p dirvish-override-dired-mode)
-    (evil-set-initial-state 'dired-mode 'emacs)))
+  (use-package evil
+    :straight t
+    :config
+    (evil-mode 1)
+    (setq evil-want-fine-undo t)
+    (add-hook 'org-capture-mode-hook 'evil-insert-state) ;; use insert by default for org capture
+    (add-hook 'git-commit-mode-hook 'evil-insert-state)) ;; use insert mode by default for magit commits
+
+
+  ;; Set up proper dired mode integration with dirvish, but only after dirvish is loaded
+  ;; this get h and l navigation to work properly where h goes up one directory and j opens a file or directory.
+  (with-eval-after-load 'dirvish
+    (evil-set-initial-state 'dired-mode 'emacs))
 #+end_src
 
 * Evil Add-on Packages
