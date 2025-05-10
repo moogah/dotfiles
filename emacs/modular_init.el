@@ -88,8 +88,8 @@
     ("core/completion"    "Modern completion framework")
     ("core/yasnippet"     "Snippet system for templates")
     
-    ;; Feature modules - use your existing .el files
-    ;; ("vertico-consult-embark" "Completion framework")
+    ;; Feature modules
+    ("look-and-feel/look-and-feel" "UI appearance and behavior")
     
     ;; Language mode modules
     ;; ("language-modes/language-modes" "Programming language modes")
