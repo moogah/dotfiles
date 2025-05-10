@@ -96,6 +96,7 @@
     ("major-modes/org"    "Org-mode configuration")
     ("major-modes/org-roam" "Org-roam knowledge management")
     ("major-modes/dirvish" "Enhanced directory viewer")
+    ("major-modes/magit"  "Git interface")
     )
   "List of enabled modules with their paths and descriptions.")
 
