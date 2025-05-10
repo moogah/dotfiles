@@ -89,6 +89,7 @@
     
     ;; Major mode modules
     ("major-modes/org"    "Org-mode configuration")
+    ("major-modes/org-roam" "Org-roam knowledge management")
     )
   "List of enabled modules with their paths and descriptions.")
 
