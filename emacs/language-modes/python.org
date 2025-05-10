@@ -15,9 +15,38 @@
     :config
     (add-hook 'python-mode-hook 'python-isort-on-save-mode))
 
-
   (add-hook 'python-mode-hook 'tree-sitter-hl-mode)
 #+end_src
+
+* Install Linting Program
+
+Flycheck's docs say to install pylint with pip, but that appears an outdated approach and installing system-level packages with pip without a venv isn't reccomended anymore.  See output of below for more detail.
+#+begin_src bash :dir ~/ :prologue exec 2>&1 :epilogue "true" :results output
+  python3 -m pip install pylint
+#+end_src
+
+Brew install seems to work fine.
+#+begin_src bash :dir ~/ :prologue exec 2>&1 :epilogue "true" :results output
+  brew install pylint
+#+end_src
+
+#+begin_src sh :dir ~/ :prologue exec 2>&1 :epilogue "true" :results output
+  which pylint
+#+end_src
+
+#+RESULTS:
+: /opt/homebrew/bin/pylint
+
+#+begin_src emacs-lisp 
+  (flycheck-describe-checker)
+#+end_src
+
+
+flycheck didn't appear to pick up on pylint being available and needed some work to enable it.
+(setq flycheck-python-pylint-executable "pylint")
+and possibly having to run C-u M-x flycheck-disable-checker to enable it?
+
+* Troubleshooting
 
 If you run into this error:
 Debugger entered--Lisp error: (process-sentinel "exited abnormally with code 1")

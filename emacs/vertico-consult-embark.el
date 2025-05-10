@@ -3,6 +3,9 @@
 ;; ===============================================================================
 (use-package corfu
   :straight t
+  :custom
+  (corfu-auto t)
+  (corfu-auto-prefix 2)
   :init)
 ;;  (global-corfu-mode))
 

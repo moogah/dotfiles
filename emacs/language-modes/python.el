@@ -12,5 +12,4 @@
   :config
   (add-hook 'python-mode-hook 'python-isort-on-save-mode))
 
-
 (add-hook 'python-mode-hook 'tree-sitter-hl-mode)
