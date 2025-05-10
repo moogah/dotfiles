@@ -14,14 +14,27 @@ Setup lexical binding and core dependencies.
 ;; -*- lexical-binding: t; -*-
 #+end_src
 
-* Database Dependencies
+* Version Requirements and Dependencies
+Org-Roam requires specific versions of Org and other dependencies to work correctly.
+
+** Org Compatibility
+Ensure we're using a compatible version of Org with Org-Roam.
+
+#+begin_src emacs-lisp
+;; org-roam is sensitive to org version changes
+;; Ensure we have a compatible version of org loaded
+(straight-use-package 'org)
+#+end_src
+
+** Database Dependencies
 Fix for sqlite dependency issues.
 
 This is hopefully a temporary shim to get emacsql-sqlite installed correctly, without this the relatively new emacsql-sqlite-common file is not included in the [[https://github.com/melpa/melpa/blob/master/recipes/emacsql-sqlite][melpa recipe]].
 
-A similar issue may occur after updating to v29 as there is a reported [[https://github.com/org-roam/org-roam/issues/2146][github issue]] with emacsql-sqlite-builtin as well 
+A similar issue may occur after updating to v29 as there is a reported [[https://github.com/org-roam/org-roam/issues/2146][github issue]] with emacsql-sqlite-builtin as well.
 
 #+begin_src emacs-lisp
+;; Use a specific version of emacsql-sqlite with all required files
 (use-package emacsql-sqlite
   :straight (emacsql-sqlite :type git :host github :repo "magit/emacsql" :branch main :files ("emacsql-sqlite.el" "emacsql-sqlite-common.el" "sqlite")))
 #+end_src

@@ -74,12 +74,17 @@
 (straight-use-package 'use-package)
 (setq straight-use-package-by-default t)
 
+;; Ensure we're using a consistent org version
+;; This is important as org-roam depends on specific org versions
+;; Force straight to use org
+(straight-use-package 'org)
+
 ;; Define enabled modules with descriptions
 (defvar jf/enabled-modules
   '(
     ;; Core modules - add these as you create them
+    ("core/defaults"      "Basic Emacs behavior")
     ("core/evil"          "Evil mode configuration")
-    ;; ("core/defaults"      "Basic Emacs behavior")
     
     ;; Feature modules - use your existing .el files
     ;; ("vertico-consult-embark" "Completion framework")
@@ -90,6 +95,7 @@
     ;; Major mode modules
     ("major-modes/org"    "Org-mode configuration")
     ("major-modes/org-roam" "Org-roam knowledge management")
+    ("major-modes/dirvish" "Enhanced directory viewer")
     )
   "List of enabled modules with their paths and descriptions.")
 

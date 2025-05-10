@@ -1,5 +1,10 @@
 ;; -*- lexical-binding: t; -*-
 
+;; org-roam is sensitive to org version changes
+;; Ensure we have a compatible version of org loaded
+(straight-use-package 'org)
+
+;; Use a specific version of emacsql-sqlite with all required files
 (use-package emacsql-sqlite
   :straight (emacsql-sqlite :type git :host github :repo "magit/emacsql" :branch main :files ("emacsql-sqlite.el" "emacsql-sqlite-common.el" "sqlite")))
 

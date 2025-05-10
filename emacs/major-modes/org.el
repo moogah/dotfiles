@@ -1,5 +1,9 @@
 ;; -*- lexical-binding: t; -*-
 
+;; Ensure we have a consistent org version
+;; This is needed for compatibility with org-roam and other packages
+(straight-use-package 'org)
+
 ;; ===============================================================================
 ;; Core Org Mode Settings
 ;; ===============================================================================

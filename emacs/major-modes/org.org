@@ -9,10 +9,14 @@ It includes settings for source blocks, appearance, agenda, export options, and 
 org-related packages to enhance the experience.
 
 * Basic Configuration
-Setup lexical binding and core Org mode settings.
+Setup lexical binding and ensure we're using the right org version.
 
 #+begin_src emacs-lisp
 ;; -*- lexical-binding: t; -*-
+
+;; Ensure we have a consistent org version
+;; This is needed for compatibility with org-roam and other packages
+(straight-use-package 'org)
 
 ;; ===============================================================================
 ;; Core Org Mode Settings
