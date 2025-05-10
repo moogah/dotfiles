@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 (use-package typescript-mode
   :straight t
   :after tree-sitter
@@ -13,8 +15,6 @@
   ;; use our derived mode to map both .tsx AND .ts -> typescriptreact-mode -> treesitter tsx
   (add-to-list 'tree-sitter-major-mode-language-alist '(typescriptreact-mode . tsx)))
 
-;; https://github.com/orzechowskid/tsi.el/
-;; great tree-sitter-based indentation for typescript/tsx, css, json
 (use-package tsi
   :after tree-sitter
   :straight (tsi :type git :host github :repo "orzechowskid/tsi.el")
