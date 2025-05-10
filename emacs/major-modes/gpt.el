@@ -1,4 +1,6 @@
-﻿(use-package shell-maker
+;; -*- lexical-binding: t; -*-
+
+(use-package shell-maker
   :straight (shell-maker :type git :host github :repo "xenodium/shell-maker" :files ("shell-maker.el")))
 
 ; add :build (:not compile) if byte code has problems
@@ -21,12 +23,12 @@
   (gptel-make-perplexity "Perplexity"
     :key (lambda () (auth-source-pick-first-password :host "api.perplexity.ai"))
     :stream t)
-
+  
   ;; Configure Anthropic backend for Claude Sonnet
   (gptel-make-anthropic "Claude"
     :stream t
     :key (lambda () (auth-source-pick-first-password :host "api.anthropic.com")))
-
+  
   ;; Configure Anthropic backend for Claude 3.7 Sonnet with thinking mode
   (gptel-make-anthropic "Claude-thinking"
     :key (lambda () (auth-source-pick-first-password :host "api.anthropic.com"))
