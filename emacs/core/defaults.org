@@ -97,6 +97,9 @@ Configure sensible editing defaults.
 
 ;; Always use y-or-n-p, not yes-or-no-p
 (defalias 'yes-or-no-p 'y-or-n-p)
+
+;; ESC cancels prompts
+(global-set-key (kbd "<escape>") 'keyboard-escape-quit)
 #+end_src
 
 * Backup Settings
@@ -116,4 +119,19 @@ Configure backup and auto-save behavior.
 ;; Set auto-save location
 (setq auto-save-file-name-transforms
       '((".*" "~/.emacs.d/auto-save-list/" t)))
+#+end_src
+
+* OSX Specific Configs
+Configure macOS specific settings to ensure proper environment integration.
+
+#+begin_src emacs-lisp
+;; ===============================================================================
+;; OSX Specific Configs
+;; ===============================================================================
+
+;; Make sure we have access to the same PATH as in our zsh
+(use-package exec-path-from-shell
+  :straight t
+  :init
+  (exec-path-from-shell-initialize))
 #+end_src

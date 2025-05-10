@@ -1,0 +1,55 @@
+#+title: Authentication and Encryption
+#+author: Jeff Farr
+#+property: header-args:emacs-lisp :tangle auth.el
+#+auto_tangle: y
+
+* Introduction
+This file configures EasyPG for GPG encryption, which handles encrypted authentication files
+and other sensitive data in Emacs.
+
+[[https://www.gnu.org/software/emacs/manual/html_mono/epa.html][EasyPG Assistant (EPA)]] is an Emacs interface to the GNU Privacy Guard (GnuPG) encryption tool,
+allowing you to encrypt, decrypt, sign, and verify files directly from Emacs.
+
+* Lexical Binding
+Enable lexical binding for better closures and variable scoping.
+
+#+begin_src emacs-lisp
+;; -*- lexical-binding: t; -*-
+#+end_src
+
+* Configuration
+Set up EasyPG and auth-source to handle encrypted credentials.
+
+#+begin_src emacs-lisp
+;; ===============================================================================
+;; Configure EasyPG
+;; ===============================================================================
+
+;; Set authentication source (use encrypted GPG file)
+(setq auth-sources '("~/.authinfo.gpg"))
+
+;; Don't ask which key to use when encrypting
+(setq epa-file-select-keys nil)
+
+;; Encrypt to this key by default
+(setq epa-file-encrypt-to '("moogah@gmail.com"))
+
+;; Fix EasyPG error in Emacs 25+
+;; From https://colinxy.github.io/software-installation/2016/09/24/emacs25-easypg-issue.html
+;; and https://www.bytedude.com/gpg-in-emacs/
+(defvar epa-pinentry-mode)
+(setq epa-pinentry-mode 'loopback)
+#+end_src
+
+* Usage
+To use GPG encryption in Emacs:
+
+- Save a file with `.gpg` extension to automatically encrypt it
+- Open a `.gpg` file to automatically decrypt it (you may be prompted for your passphrase)
+- `auth-source` will automatically use encrypted credentials for packages like SMTP email, mu4e, etc.
+
+The `~/.authinfo.gpg` file format looks like:
+#+begin_example
+machine smtp.gmail.com login your-email@gmail.com password your-password port 587
+machine imap.gmail.com login your-email@gmail.com password your-password port 993
+#+end_example

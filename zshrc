@@ -174,3 +174,4 @@ export GTAGSLABEL=pygments
 
 # set postgres lib in path
 export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
+alias claude="/Users/jefffarr/.claude/local/claude"

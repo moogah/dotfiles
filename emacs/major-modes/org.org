@@ -252,3 +252,18 @@ Easily drag-and-drop images into Org files.
 (use-package org-download
   :straight t)
 #+end_src
+
+** Ob Async
+Execute asynchronous org-babel source blocks.
+
+#+begin_src emacs-lisp
+;; ===============================================================================
+;; Install ob-async for async babel execution
+;; ===============================================================================
+
+(use-package ob-async
+  :straight t
+  :config)
+  ;; Uncomment to disable async for specific languages
+  ;(setq ob-async-no-async-languages-alist '("ipython"))
+#+end_src
