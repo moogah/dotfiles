@@ -62,3 +62,6 @@
 
 - link:
     ~/.oh-my-zsh/custom/fzf.zsh: oh-my-zsh/custom/fzf.zsh
+
+- link:
+    ~/bin/tangle-org.sh: bin/tangle-org.sh
