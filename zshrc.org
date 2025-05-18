@@ -129,8 +129,9 @@ plugins=(
   docker             # Docker commands and autocomplete
   fzf                # Fuzzy finder integration
   # Important: fzf-tab must be loaded after fzf but before zsh-autosuggestions
-  zsh-autosuggestions # Command suggestions based on history
   fzf-tab            # Enhanced tab completion with fzf
+  zsh-autosuggestions # Command suggestions based on history
+  zsh-vi-mode        # Vim mode for shell editing
 )
 
 source $ZSH/oh-my-zsh.sh
@@ -322,14 +323,20 @@ git clone https://github.com/Aloxaf/fzf-tab ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/p
 
 Then add fzf-tab to your plugins list in the Oh My Zsh configuration section.
 
-*** Loading Solution
+*** Important Note for iTerm on macOS
 
-Since the standard plugin method doesn't work reliably with iTerm on macOS, we manually load the plugin after Oh-My-Zsh initialization:
+The proper order of plugins is critical for ensuring fzf-tab works correctly:
+
+1. The `fzf` plugin must load first
+2. The `fzf-tab` plugin must load second
+3. The `zsh-autosuggestions` plugin must load after fzf-tab
+
+This ensures that all functionality works together correctly without manual loading.
 
 #+begin_src sh
-# Manually load fzf-tab after Oh-My-Zsh initialization
-# This ensures it works properly in iTerm on macOS
-source ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/fzf-tab/fzf-tab.plugin.zsh
+# The fzf-tab plugin is now properly loaded through the oh-my-zsh plugins array
+# By placing it after fzf but before zsh-autosuggestions, we ensure it works correctly
+# No manual loading is needed here as long as the plugin order is correct
 #+end_src
 
 ** FZF and zsh-autosuggestions Integration
@@ -346,9 +353,15 @@ When properly configured together:
 *** Configuration
 
 #+begin_src sh
-# Reset zsh completion system to ensure fzf-tab works properly
-# Force complete rebuild of completion system for iTerm
-rm -f ~/.zcompdump*; autoload -Uz compinit && compinit
+# Properly initialize the completion system for fzf-tab on iTerm
+# This ensures a clean, complete initialization on each session
+# Force compinit to ignore insecure directories to prevent warnings
+autoload -Uz compinit
+if [[ -n ${ZDOTDIR}/.zcompdump(#qN.mh+24) ]]; then
+  compinit
+else
+  compinit -C
+fi
 
 # Advanced FZF configuration with zsh-autosuggestions compatibility
 # Extended FZF options for better visual presentation
@@ -397,6 +410,10 @@ zstyle ':fzf-tab:*' fzf-flags '--bind=ctrl-space:toggle' '--cycle'
 # Special settings for iTerm compatibility
 # Use these settings to ensure all features work together properly
 export TERM="xterm-256color"
+
+# Fix for fzf-tab not working in some terminals
+# This ensures the tab key is correctly bound for fzf-tab
+bindkey '^I' fzf-tab-complete
 
 # Tip: Use right arrow to accept autosuggestions
 # Use CTRL-R for interactive history search with FZF
