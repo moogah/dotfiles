@@ -122,6 +122,7 @@ plugins=(
   # Important: fzf-tab must be loaded after fzf but before zsh-autosuggestions
   fzf-tab            # Enhanced tab completion with fzf
   zsh-autosuggestions # Command suggestions based on history
+  zsh-syntax-highlighting # Syntax highlighting for commands
   # zsh-vi-mode disabled to prevent key binding conflicts with fzf
 )
 
@@ -332,11 +333,11 @@ export FZF_CTRL_T_OPTS="--preview 'bat --style=numbers --color=always --line-ran
 # Improved directory navigation with content preview 
 export FZF_ALT_C_OPTS="--preview 'ls -la --color=always {} | head -50'"
 
-# Keep automatic completion
+# Disable automatic completion triggering (prevents conflicts with autosuggestions)
 export DISABLE_FZF_AUTO_COMPLETION="false"
 
-# Make sure key bindings are enabled
-unset DISABLE_FZF_KEY_BINDINGS
+# Keep key bindings for CTRL-T, CTRL-R, ALT-C
+export DISABLE_FZF_KEY_BINDINGS="false"
 
 # Configure fzf-tab for more visible behavior
 # Show dot files
@@ -397,6 +398,16 @@ bindkey '^I' fzf-tab-complete
 # Use ALT-C for interactive directory navigation with FZF
 # Use TAB for enhanced completion with fzf-tab
 # Configuration:1 ends here
+
+# Syntax Highlighting
+
+# Enable syntax highlighting for commands. Must be loaded after sourcing Oh My Zsh.
+
+
+# [[file:zshrc.org::*Syntax Highlighting][Syntax Highlighting:1]]
+# Source the zsh-syntax-highlighting plugin
+source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+# Syntax Highlighting:1 ends here
 
 # FZF Integration
 

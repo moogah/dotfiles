@@ -131,7 +131,8 @@ plugins=(
   # Important: fzf-tab must be loaded after fzf but before zsh-autosuggestions
   fzf-tab            # Enhanced tab completion with fzf
   zsh-autosuggestions # Command suggestions based on history
-  zsh-vi-mode        # Vim mode for shell editing
+  zsh-syntax-highlighting # Syntax highlighting for commands
+  # zsh-vi-mode disabled to prevent key binding conflicts with fzf
 )
 
 source $ZSH/oh-my-zsh.sh
@@ -282,6 +283,22 @@ source /usr/local/opt/powerlevel10k/powerlevel10k.zsh-theme
 * Productivity Plugins
 
 Additional plugins to enhance shell productivity.
+
+** zsh-syntax-highlighting
+
+Syntax highlighting for the shell that highlights commands, arguments, paths, and other elements as you type.
+
+*** Installation
+
+To install the plugin, use Homebrew:
+
+#+begin_src sh :tangle no :results none
+brew install zsh-syntax-highlighting
+#+end_src
+
+Then add zsh-syntax-highlighting to your plugins list in the Oh My Zsh configuration section.
+
+NOTE: The plugin must be loaded *after* zsh-autosuggestions to work correctly.
 
 ** zsh-autosuggestions
 
@@ -445,6 +462,15 @@ bindkey '^I' fzf-tab-complete
 * External Tools and Integrations
 
 Configuration for external tools and environment.
+
+** Syntax Highlighting
+
+Enable syntax highlighting for commands. Must be loaded after sourcing Oh My Zsh.
+
+#+begin_src sh
+# Source the zsh-syntax-highlighting plugin
+source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+#+end_src
 
 ** FZF Integration
 
