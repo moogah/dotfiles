@@ -1,11 +1,18 @@
+;; -*- lexical-binding: t; -*-
+
+;; Ensure we have a consistent org version
+;; This is needed for compatibility with org-roam and other packages
+(straight-use-package 'org)
 
 ;; ===============================================================================
-;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-;; Org Mode Configuration
-;; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+;; Core Org Mode Settings
 ;; ===============================================================================
+
+;; Source code blocks settings
 (setq org-src-tab-acts-natively t)
 (setq org-src-fontify-natively t)
+
+;; Configure Babel languages
 (org-babel-do-load-languages 'org-babel-load-languages
                              (append org-babel-load-languages
                                      '((python . t)
@@ -13,37 +20,35 @@
                                        (js . t)
                                        (sql . t)
                                        (shell . t))))
+
+;; Python specific settings
 (setq org-babel-python-command "python3 2>&1")
 
-
-;; Enable word wrapping in Org mode
+;; Wrapping and line handling
 (add-hook 'org-mode-hook 'visual-line-mode)
-
-(use-package org-phscroll
-  :straight '(org-phscroll :type git :host github :repo "misohena/phscroll")
-  )
-
 (setq org-startup-truncated nil)
+
+;; Enable horizontal scrolling
+(use-package org-phscroll
+  :straight '(org-phscroll :type git :host github :repo "misohena/phscroll"))
+
 (with-eval-after-load "org"
   (require 'org-phscroll))
 
-
-;; ===============================================================================
-;; Look and Feel
-;; ===============================================================================
-
+;; Modern appearance for org mode
 (use-package org-modern
   :straight t)
 
+;; Replace asterisks with bullets
 (use-package org-bullets
   :straight t
   :config
   (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
 
-;; https://github.com/rougier/org-margin?tab=readme-ov-file
+;; Improved margins in Org mode
+;; https://github.com/rougier/org-margin
 (use-package org-margin
  :straight (org-margin :type git :host github :repo "rougier/org-margin"))
-
 
 ;; TODO add adaptive-wrap-prefix-mode
 
@@ -56,7 +61,6 @@
 (setq org-tags-exclude-from-inheritance (quote ("crypt")))
 (setq org-crypt-key nil)
 
-
 ;; ===============================================================================
 ;; Org Export Engine Config
 ;; ===============================================================================
@@ -67,45 +71,31 @@
   :config
   (setq org-export-copy-to-kill-ring 'if-interactive))
 
-
-;; ===============================================================================
-;; Configs from pragmaticemacs.wordpress.com Org-Mode TODO
-;; ===============================================================================
-
-;; set key for agenda
-(global-set-key (kbd "C-c a") 'org-agenda)
-
-;; file to save todo items in
-(setq org-agenda-files '("~/org/" "~/org/agenda" "~/org/roam/" "~/org/roam/inbox/" "~/org/roam/dailies"))
-
-;; set priority range from A to C with default A
+;; Priority range and defaults
 (setq org-highest-priority ?A)
 (setq org-lowest-priority ?C)
 (setq org-default-priority ?A)
 
-;; set colors for priorities
+;; Priority appearance
 (setq org-priority-faces '((?A . (:foreground "#F0DFAF" :weight bold))
-			   (?B . (:foreground "LightSteelBlue"))
-			   (?C . (:foreground "OliveDrab"))))
+                           (?B . (:foreground "LightSteelBlue"))
+                           (?C . (:foreground "OliveDrab"))))
 
-;; open agenda in current window
+;; Agenda key binding
+(global-set-key (kbd "C-c a") 'org-agenda)
+
+;; Agenda files
+(setq org-agenda-files '("~/org/" 
+                          "~/org/agenda" 
+                          "~/org/roam/" 
+                          "~/org/roam/inbox/" 
+                          "~/org/roam/dailies"))
+
+;; Open agenda in current window
 (setq open-agenda-window-setup (quote current-window))
 
-;; capture todo items using C-c c t
-(define-key global-map (kbd "C-c c") 'org-capture)
-(setq org-capture-templates
-      '(("t" "todo" entry (file+headline "~/todo.org" "Tasks")
-	 "* TODO [#A] %?" :empty-lines-before 1)))
-
-(use-package orgit
-  :straight (orgit :type git :host github :repo "magit/orgit"))
-
-;; ===============================================================================
-;; Configure Org Agenda
-;; ===============================================================================
-
-;; lifted from https://blog.aaronbieber.com/2016/09/24/an-agenda-for-life-with-org-mode.html
-
+;; Custom agenda views
+;; From https://blog.aaronbieber.com/2016/09/24/an-agenda-for-life-with-org-mode.html
 (setq org-agenda-custom-commands
       '(("c" "Simple agenda view"
          ((tags "PRIORITY=\"A\""
@@ -114,6 +104,17 @@
           (agenda "")
           (alltodo "")))))
 
+;; Capture key binding
+(define-key global-map (kbd "C-c c") 'org-capture)
+
+;; Basic capture templates
+(setq org-capture-templates
+      '(("t" "todo" entry (file+headline "~/todo.org" "Tasks")
+         "* TODO [#A] %?" :empty-lines-before 1)))
+
+;; Git integration for Org
+(use-package orgit
+  :straight (orgit :type git :host github :repo "magit/orgit"))
 
 ;; ===============================================================================
 ;; Setup auto-tangle for org files
@@ -132,7 +133,6 @@
 (use-package org-transclusion
   :straight t
   :after org)
-
 
 ;; ===============================================================================
 ;; Install corg for org-babel and dynamic block completions

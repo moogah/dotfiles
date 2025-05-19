@@ -1,0 +1,46 @@
+#+title: In-buffer Completion Configuration
+#+author: Jeff Farr
+#+property: header-args:emacs-lisp :tangle corfu-company.el
+#+auto_tangle: y
+
+* Introduction
+This file configures in-buffer completion frameworks including Corfu and Company.
+These packages provide autocompletion while typing in buffers.
+
+* Corfu Configuration
+Setup Corfu, a minimal in-buffer completion framework.
+
+#+begin_src emacs-lisp
+;; -*- lexical-binding: t; -*-
+
+;; ===============================================================================
+;; Configure Corfu Auto-Completion
+;; ===============================================================================
+(use-package corfu
+  :straight t
+  :custom
+  (corfu-auto t)
+  (corfu-auto-prefix 2)
+  :init)
+;;  (global-corfu-mode))
+#+end_src
+
+* Company Configuration
+Setup Company, a more feature-rich completion framework.
+
+#+begin_src emacs-lisp
+;; ===============================================================================
+;; Configure Company Auto-Completion
+;; ===============================================================================
+;; also try out https://github.com/minad/corfu
+(use-package company
+  :straight t
+  ;;:bind(:map company-active-map
+  ;;           ([return] . nil)
+  ;;           ("RET" . nil))
+  :config
+  (company-mode)
+  (add-hook 'after-init-hook 'global-company-mode))
+
+;; use C-RET to cancel completion
+#+end_src

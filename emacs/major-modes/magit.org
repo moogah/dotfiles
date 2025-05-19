@@ -1,185 +1,97 @@
+#+title: Magit Configuration
+#+author: Jeff Farr
+#+property: header-args:emacs-lisp :tangle magit.el
 #+auto_tangle: y
 
-* Install and Configure Magit
+* Introduction
+This file configures Magit, a complete text-based user interface to Git, and related packages.
+It includes settings for display behavior, window management, and custom keybindings to enhance
+the Git workflow.
 
-#+begin_src emacs-lisp :tangle yes
-  ;; ===============================================================================
-  ;; install magit
-  ;; ===============================================================================
-
-  (use-package magit
-    :straight t
-    :config
-    (setq magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1)
-    (setq magit-bury-buffer-function 'magit-restore-window-configuration))
-
-#+end_src
-
-* Install Browse at Remote
-
-This makes it easy to open a line of code in the GitHub web UI
-
-#+begin_src emacs-lisp :tangle yes
-  ;; ===============================================================================
-  ;; install browse-at-remote
-  ;; ===============================================================================
-
-  (use-package browse-at-remote
-     :straight t
-     :config)
-
-#+end_src
-
-#+begin_src emacs-lisp :tangle yes
-  ;; ===============================================================================
-  ;; magit customizations
-  ;; ===============================================================================
-
-  ; Saving and restoring the window layout work, but the magit-quit-hook part doesn't seem to do it
-  ; also this is apparently what the default behavior is supposed to be
-  (defun my-magit-status ()
-    (interactive)
-    (window-configuration-to-register ?m)
-    (magit-status)
-    (add-hook 'magit-quit-hook
-              (lambda ()
-                (message "Restoring window layout from register m...")
-                (jump-to-register ?m)
-                (remove-hook 'magit-quit-hook (nth 0 magit-quit-hook)))
-              nil t))
-
-  ; two different approaches to navigating to the current branches pull request
-  ; cargo culted from https://emacs.stackexchange.com/questions/3900/command-to-visit-github-pull-request-of-current-branch-with-magit?newreg=420aae794802477e8d03a30e5af21492
-  (defun new-pull-request-url ()
-    "Build the URL or the pull requestion on GitHub corresponding
-  to the current branch. Uses Magit."
-    (interactive)
-    ;; alternately use %s/compare/%s to simply get a comparison
-    (format "%s/pull/new/%s"
-             (replace-regexp-in-string
-              (rx (and string-start (1+ any) "github.com:" (group (1+ any)) ".git" string-end))
-              "https://github.com/\\1"
-              (magit-get "remote" (magit-get-current-remote) "url"))
-            (magit-get-current-branch)))
-
-  ;; this works!
-  ;; (browse-url (pull-request-url))
-
-  ;; (use-package forge
-  ;;   :straight t
-  ;;   :after magit)
-#+end_src
-
-** Evil Keybindings
-   
+* Basic Configuration
+Setup lexical binding and core Magit functionality.
 
 #+begin_src emacs-lisp
-  ;; Custom Vim-style key bindings for magit
-  (defun my/setup-evil-magit-bindings ()
-    "Set up custom Vim-like key bindings for Magit buffers."
-    
-    ;; Magit status buffer (the main magit view)
-    (evil-define-key 'normal magit-status-mode-map
-      ;; Navigation
-      "j" 'magit-section-forward
-      "k" 'magit-section-backward
-      "gj" 'magit-section-forward-sibling
-      "gk" 'magit-section-backward-sibling
-      "[[" 'magit-section-backward-sibling
-      "]]" 'magit-section-forward-sibling
-      "{" 'magit-section-backward
-      "}" 'magit-section-forward
-      "C-d" 'evil-scroll-down
-      "C-u" 'evil-scroll-up
-      
-      ;; Basic actions 
-      (kbd "RET") 'magit-visit-thing     ;; Visit item at point
-      "o" 'magit-visit-thing              ;; Like vim's 'o'
-      "O" 'magit-diff-visit-file-other-window ;; Open in other window
-      "go" 'magit-diff-visit-file-other-window
-      "gO" 'magit-diff-visit-file-other-frame  ;; Open in other frame
+;; -*- lexical-binding: t; -*-
 
-      ;; Staging/unstaging
-      "s" 'magit-stage-file               ;; Stage file or hunk
-      "u" 'magit-unstage-file             ;; Unstage file or hunk
-      "S" 'magit-stage-modified           ;; Stage all modified
-      "U" 'magit-unstage-all              ;; Unstage all
-      
-      ;; Refresh/reload
-      "gr" 'magit-refresh
-      "gR" 'magit-refresh-all
-      
-      ;; Jumping
-      "gs" 'magit-jump-to-staged
-      "gu" 'magit-jump-to-unstaged
-      "gt" 'magit-jump-to-tracked
-      "gn" 'magit-jump-to-untracked
-      
-      ;; Operations
-      "c" 'magit-commit                   ;; Commit
-      "b" 'magit-branch                   ;; Branch operations
-      "B" 'magit-blame                    ;; Git blame
-      "f" 'magit-fetch                    ;; Fetch
-      "F" 'magit-pull                     ;; Pull
-      "m" 'magit-merge                    ;; Merge
-      "p" 'magit-push                     ;; Push
-      "r" 'magit-rebase                   ;; Rebase
-      "t" 'magit-tag                      ;; Tag
-      "l" 'magit-log                      ;; Log
-      "L" 'magit-log-buffer-file          ;; Log for current file
-      "d" 'magit-diff                     ;; Diff menu
-      "D" 'magit-diff-unstaged            ;; Diff unstaged changes
-      
-      ;; Stashing
-      "z" 'magit-stash                    ;; Stash menu
-      "zz" 'magit-stash-both              ;; Stash changes
-      "zp" 'magit-stash-pop               ;; Pop stash
-      
-      ;; Quit
-      "q" 'magit-mode-bury-buffer
-      "ZZ" 'magit-mode-bury-buffer
-      "ZQ" 'evil-quit)
+;; ===============================================================================
+;; Core Magit Setup
+;; ===============================================================================
 
-    ;; Magit log buffer
-    (evil-define-key 'normal magit-log-mode-map
-      "j" 'magit-section-forward
-      "k" 'magit-section-backward
-      (kbd "RET") 'magit-visit-thing
-      "o" 'magit-visit-thing
-      "O" 'magit-diff-visit-file-other-window
-      "q" 'magit-mode-bury-buffer)
-
-    ;; Magit diff buffer
-    (evil-define-key 'normal magit-diff-mode-map
-      "j" 'magit-section-forward
-      "k" 'magit-section-backward
-      "gj" 'magit-section-forward-sibling
-      "gk" 'magit-section-backward-sibling
-      (kbd "RET") 'magit-visit-thing
-      "o" 'magit-visit-thing
-      "O" 'magit-diff-visit-file-other-window
-      "q" 'magit-mode-bury-buffer
-      "[c" 'magit-section-backward
-      "]c" 'magit-section-forward)
-
-    ;; Magit revision buffer
-    (evil-define-key 'normal magit-revision-mode-map
-      "j" 'magit-section-forward
-      "k" 'magit-section-backward
-      (kbd "RET") 'magit-visit-thing
-      "o" 'magit-visit-thing
-      "O" 'magit-diff-visit-file-other-window
-      "q" 'magit-mode-bury-buffer)
-
-    ;; Magit blame mode
-    (evil-define-key 'normal magit-blame-mode-map
-      "j" 'evil-next-line
-      "k" 'evil-previous-line
-      (kbd "RET") 'magit-show-commit
-      "q" 'magit-blame-quit))
-
-  ;; Apply the custom key bindings when magit loads
-  (with-eval-after-load 'magit
-    (my/setup-evil-magit-bindings))
-
+(use-package magit
+  :straight t
+  :config
+  ;; Use full-frame status display
+  (setq magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1)
+  ;; Restore window configuration when quitting magit
+  (setq magit-bury-buffer-function 'magit-restore-window-configuration))
 #+end_src
+
+* GitHub Integration
+Add functionality to interact with GitHub directly from Emacs.
+
+** Browse at Remote
+This makes it easy to open a line of code in the GitHub web UI.
+
+#+begin_src emacs-lisp
+;; ===============================================================================
+;; GitHub Integration - Browse At Remote
+;; ===============================================================================
+
+(use-package browse-at-remote
+   :straight t)
+#+end_src
+
+** Pull Request Integration
+Functions for working with GitHub Pull Requests.
+
+#+begin_src emacs-lisp
+;; ===============================================================================
+;; GitHub Pull Request Integration
+;; ===============================================================================
+
+;; Create a URL to open a new pull request for current branch
+;; From: https://emacs.stackexchange.com/questions/3900/command-to-visit-github-pull-request-of-current-branch-with-magit
+(defun new-pull-request-url ()
+  "Build the URL for a new pull request on GitHub for the current branch.
+Uses Magit to get the remote URL and current branch."
+  (interactive)
+  ;; alternately use %s/compare/%s to simply get a comparison
+  (format "%s/pull/new/%s"
+           (replace-regexp-in-string
+            (rx (and string-start (1+ any) "github.com:" (group (1+ any)) ".git" string-end))
+            "https://github.com/\\1"
+            (magit-get "remote" (magit-get-current-remote) "url"))
+          (magit-get-current-branch)))
+
+;; To use this: (browse-url (new-pull-request-url))
+
+;; For future consideration:
+;; (use-package forge
+;;   :straight t
+;;   :after magit)
+#+end_src
+
+* Window Configuration
+Functions to manage window layouts with Magit.
+
+#+begin_src emacs-lisp
+;; ===============================================================================
+;; Magit Window Management
+;; ===============================================================================
+
+;; Save and restore window configuration when using Magit
+;; Note: This functionality may be redundant with current magit-bury-buffer-function
+(defun my-magit-status ()
+  "Open Magit status while saving current window configuration."
+  (interactive)
+  (window-configuration-to-register ?m)
+  (magit-status)
+  (add-hook 'magit-quit-hook
+            (lambda ()
+              (message "Restoring window layout from register m...")
+              (jump-to-register ?m)
+              (remove-hook 'magit-quit-hook (nth 0 magit-quit-hook)))
+            nil t))
+#+end_src
+

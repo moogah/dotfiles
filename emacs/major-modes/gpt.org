@@ -1,9 +1,24 @@
+#+title: LLM/AI Integration Configuration
+#+author: Jeff Farr
+#+property: header-args:emacs-lisp :tangle gpt.el
 #+auto_tangle: y
 
-* Xenodium's ChatGPT-Shell
+* Introduction
+This file configures various large language model (LLM) and AI integrations for Emacs,
+including OpenAI GPT, Anthropic Claude, and Perplexity models. It sets up interactive
+shells, buffers, and tools for working with these AI assistants.
 
+* Basic Configuration
+Setup lexical binding for better closures and variable scoping.
 
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
+;; -*- lexical-binding: t; -*-
+#+end_src
+
+* ChatGPT Shell
+Configure Xenodium's ChatGPT shell for a conversational interface with OpenAI models.
+
+#+begin_src emacs-lisp
   (use-package shell-maker
     :straight (shell-maker :type git :host github :repo "xenodium/shell-maker" :files ("shell-maker.el")))
 
@@ -20,8 +35,9 @@
 #+end_src
 
 * GPTEL
+Configure gptel, a versatile LLM client with support for multiple models and providers.
 
-#+begin_src emacs-lisp :tangle yes 
+#+begin_src emacs-lisp
   (use-package gptel
     :straight t
     :custom
@@ -56,8 +72,9 @@
 #+end_src
 
 * GPTEL Tools
+Define custom tools and functions that can be used by LLMs to interact with the Emacs environment.
 
-#+begin_src emacs-lisp :tangle yes 
+#+begin_src emacs-lisp
   (gptel-make-tool
    :name "create_file"                    ; javascript-style  snake_case name
    :function (lambda (path filename content)   ; the function that runs
@@ -81,8 +98,9 @@
 
 
 * Elysium
+Setup Elysium, a streamlined interface for using Claude models from Emacs.
 
-#+begin_src emacs-lisp :tangle yes 
+#+begin_src emacs-lisp
   (use-package elysium
     :straight (:host github :repo "lanceberge/elysium" :branch "main" :files ("*.el")))
 #+end_src

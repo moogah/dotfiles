@@ -1,0 +1,52 @@
+#+title: Browser History
+#+author: Jeff Farr
+#+property: header-args:emacs-lisp :tangle browser-hist.el
+#+auto_tangle: y
+
+* Introduction
+Browser-hist is a package that allows you to search and access your web browser's history from within Emacs.
+
+[[https://github.com/agzam/browser-hist.el][Browser Hist]] provides a convenient interface to search through Chrome, Firefox, or other browser
+history databases directly from Emacs.
+
+* Lexical Binding
+Enable lexical binding for better closures and variable scoping.
+
+#+begin_src emacs-lisp
+;; -*- lexical-binding: t; -*-
+#+end_src
+
+* SQLite Dependency
+Browser-hist requires SQLite support in Emacs since browser history databases are SQLite files.
+
+#+begin_src emacs-lisp
+;; ===============================================================================
+;; SQLite is required for browser-hist
+;; ===============================================================================
+
+(use-package sqlite
+  :straight t)
+#+end_src
+
+* Configuration
+#+begin_src emacs-lisp
+;; ===============================================================================
+;; Configure browser-hist for accessing browser history
+;; ===============================================================================
+
+(use-package browser-hist
+  :straight (browser-hist :type git :host github :repo "agzam/browser-hist.el")
+  :config
+  (setq browser-hist-db-paths
+        '((chrome . "/Users/jefffarr/Library/Application Support/Google/Chrome/Default/History")))
+  (setq browser-hist-default-browser 'chrome))
+#+end_src
+
+* Usage
+To search your browser history:
+
+- `M-x browser-hist-search`: Search history from the default browser
+- `M-x browser-hist-search-chrome`: Search specifically in Chrome's history
+- `M-x browser-hist-search-firefox`: Search specifically in Firefox's history
+
+Results are displayed in a buffer where you can select an entry to open in your browser.

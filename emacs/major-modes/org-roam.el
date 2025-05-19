@@ -1,8 +1,15 @@
-﻿(use-package emacsql-sqlite
+;; -*- lexical-binding: t; -*-
+
+;; org-roam is sensitive to org version changes
+;; Ensure we have a compatible version of org loaded
+(straight-use-package 'org)
+
+;; Use a specific version of emacsql-sqlite with all required files
+(use-package emacsql-sqlite
   :straight (emacsql-sqlite :type git :host github :repo "magit/emacsql" :branch main :files ("emacsql-sqlite.el" "emacsql-sqlite-common.el" "sqlite")))
 
 ;; ===============================================================================
-;; Configure Org-Roam
+;; Configure Org-Roam Core
 ;; ===============================================================================
 
 (use-package org-roam
@@ -17,8 +24,10 @@
   (setq org-roam-completion-everywhere t)
   (org-roam-db-autosync-mode))
 
+;; Set the directory for daily notes
 (setq org-roam-dailies-directory "dailies/")
 
+;; Configure daily note templates
 (setq org-roam-dailies-capture-templates
       '(("d" "default" plain
          (file "~/.emacs.d/templates/org-roam-dailies-default.org")
@@ -26,10 +35,13 @@
                             "#+title: apploi-%<%Y-%m-%d>\n\n* %<%Y-%m-%d> Meetings\n\n* %<%Y-%m-%d> Worklog\n\n* %<%Y-%m-%d> Tasks")
          :unnarrowed t)))
 
-(require 'org-roam-protocol)
+;; Enable org-roam-protocol
+(require 'org-roam-protocol) 
 
+;; Ensure Emacs server is running (required for protocol)
 (server-start)
 
+;; Configure standard capture templates
 (setq org-roam-capture-templates
  '(("d" "default" plain
     "%?"
@@ -40,6 +52,7 @@
     :if-new (file+head "inbox/%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n ${body}")
     :unnarrowed t)))
 
+;; Templates for capturing web content
 (setq org-roam-capture-ref-templates
       '(("r" "ref" plain
         "%?"
@@ -47,6 +60,7 @@
         (file+head "${slug}.org" "#+title: ${title}\n${body}")
         :unnarrowed t)))
 
+;; Configure automatic Git synchronization
 (use-package git-sync-mode
   :straight (git-sync-mode :host github :repo "justinbarclay/git-sync-mode")
   :config
