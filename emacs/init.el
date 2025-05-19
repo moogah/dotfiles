@@ -1,4 +1,4 @@
-;; -*- lexical-binding: t; -*-
+﻿;; -*- lexical-binding: t; -*-
 
 ;; Startup profiling - uncomment to debug startup time
 ;; (defvar jf/init-start-time (current-time))
@@ -84,8 +84,14 @@
   '(
     ;; Core modules - add these as you create them
     ("core/defaults"      "Basic Emacs behavior")
+    ("core/auth"      "GPG and authinfo setup")
+    ("core/avy"      "avy navigation package")
+    ("core/ripgrep"      "")
+    ("core/ultra-scroll"      "")
+    ("core/expand-region"      "")
     ("core/evil"          "Evil mode configuration")
     ("core/completion"    "Modern completion framework")
+    ("core/window-management"    "Save and restore window configs")
     ("core/yasnippet"     "Snippet system for templates")
     
     ;; Feature modules

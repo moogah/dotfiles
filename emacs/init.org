@@ -1,6 +1,6 @@
 #+title: Modular Emacs Configuration
 #+author: Jeff Farr
-#+property: header-args:emacs-lisp :tangle modular_init.el
+#+property: header-args:emacs-lisp :tangle init.el
 #+auto_tangle: y
 
 * Introduction
@@ -120,8 +120,14 @@ Define which modules to load and in what order.
   '(
     ;; Core modules - add these as you create them
     ("core/defaults"      "Basic Emacs behavior")
+    ("core/auth"      "GPG and authinfo setup")
+    ("core/avy"      "avy navigation package")
+    ("core/ripgrep"      "")
+    ("core/ultra-scroll"      "")
+    ("core/expand-region"      "")
     ("core/evil"          "Evil mode configuration")
     ("core/completion"    "Modern completion framework")
+    ("core/window-management"    "Save and restore window configs")
     ("core/yasnippet"     "Snippet system for templates")
     
     ;; Feature modules
