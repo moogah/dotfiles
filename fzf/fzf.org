@@ -1,0 +1,275 @@
+#+TITLE: FZF Configuration
+#+AUTHOR: Jeff Farr
+#+PROPERTY: header-args:sh :tangle ~/src/dotfiles/oh-my-zsh/custom/fzf.zsh :comments both
+
+* Introduction
+
+This document contains my FZF (Fuzzy Finder) configuration. FZF is a general-purpose command-line fuzzy finder that enhances many common terminal workflows.
+
+The configuration in this file is tangled to =~/src/dotfiles/oh-my-zsh/custom/fzf.zsh= using Org-mode's tangle functionality.
+
+* Basic Configuration
+
+These settings establish the core behavior of FZF across all its uses.
+
+** Default Command
+
+Set the default command that FZF uses to generate the list of files it searches through.
+This uses =fd= if available (with fallback to =find=), which respects .gitignore and is faster.
+
+#+begin_src sh
+# Default command to use when input is tty
+export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git 2>/dev/null || find . -type f -not -path "*/\.git/*" -not -path "*/node_modules/*"'
+#+end_src
+
+** Default Options
+
+Set default UI options for a more pleasant experience.
+
+#+begin_src sh
+# Default options
+export FZF_DEFAULT_OPTS="--height 40% --layout=reverse --border --info=inline"
+#+end_src
+
+* Key Binding Configurations
+
+FZF provides several key bindings for common operations. Here I customize their behavior.
+
+** CTRL-R: History Search
+
+Enhanced history search with preview and clipboard support. This makes browsing command history much more powerful.
+
+#+begin_src sh
+# CTRL-R - Enhanced history search with preview and clipboard support
+export FZF_CTRL_R_OPTS="--preview 'echo {}' --preview-window down:3:wrap --bind 'ctrl-y:execute-silent(echo -n {2..} | pbcopy)+abort' --header 'Press CTRL-Y to copy command to clipboard'"
+#+end_src
+
+** CTRL-T: File Search
+
+Paste selected files onto the command line with preview using =bat= for syntax highlighting.
+
+#+begin_src sh
+# CTRL-T - Paste the selected files and directories onto the command line
+export FZF_CTRL_T_COMMAND="fd --type f --hidden --follow --exclude .git 2>/dev/null || find . -type f -not -path '*/\.git/*' -not -path '*/node_modules/*'"
+export FZF_CTRL_T_OPTS="--preview 'bat --style=numbers --color=always --line-range :500 {} 2>/dev/null || cat {} 2>/dev/null || echo {} 2>/dev/null'"
+#+end_src
+
+** ALT-C: Directory Navigation
+
+Jump to directories with a preview of their contents.
+
+#+begin_src sh
+# ALT-C - cd into the selected directory
+export FZF_ALT_C_COMMAND="fd --type d --hidden --follow --exclude .git 2>/dev/null || find . -type d -not -path '*/\.git/*' -not -path '*/node_modules/*'"
+export FZF_ALT_C_OPTS="--preview 'ls -la {} | head -50'"
+#+end_src
+
+* Git Integration Functions
+
+These functions enhance git workflows with fuzzy finding and previews.
+
+** Interactive Git Add (fga)
+
+Interactively stage files for commit with diff preview.
+
+#+begin_src sh
+# Interactive git add
+fga() {
+  git status --short |
+  fzf --multi --preview 'git diff --color {+2}' |
+  awk '{print $2}' |
+  xargs git add
+}
+#+end_src
+
+** Git Branch Checkout (fgb)
+
+Switch between branches with commit history preview.
+
+#+begin_src sh
+# Git checkout branch
+fgb() {
+  git branch |
+  grep -v HEAD |
+  sed 's/^..//' |
+  fzf --preview 'git log --oneline --graph --date=short --color=always --pretty="format:%C(auto)%cd %h%d %s" {} | head -200' |
+  xargs git checkout
+}
+#+end_src
+
+** Git Commit Checkout (fgc)
+
+Checkout specific commits with detailed preview.
+
+#+begin_src sh
+# Git checkout commit
+fgc() {
+  git log --oneline --color=always | 
+  fzf --ansi --no-sort --preview 'git show --color=always {1}' | 
+  awk '{print $1}' | 
+  xargs git checkout
+}
+#+end_src
+
+** Git File Search (fgf)
+
+Search through git tracked files and open in editor.
+
+#+begin_src sh
+# Fuzzy search file paths in Git repo and edit
+fgf() {
+  git ls-files | fzf --preview 'bat --style=numbers --color=always {}' | xargs -o ${EDITOR:-vim}
+}
+#+end_src
+
+* System Operations
+
+Functions that improve system management tasks using fuzzy finding.
+
+** Process Management (fkill)
+
+Interactive process killing.
+
+#+begin_src sh
+# Kill process interactively
+fkill() {
+  local pid
+  pid=$(ps -ef | sed 1d | fzf -m | awk '{print $2}')
+
+  if [ "x$pid" != "x" ]; then
+    echo $pid | xargs kill -${1:-9}
+  fi
+}
+#+end_src
+
+** Directory Navigation (fcd)
+
+Enhanced directory navigation with content preview.
+
+#+begin_src sh
+# Enhanced cd with preview
+fcd() {
+  local dir
+  dir=$(find ${1:-.} -path '*/\.*' -prune -o -type d -print 2> /dev/null | fzf +m --preview 'ls -la {}')
+  cd "$dir"
+}
+#+end_src
+
+** Environment Variables (fenv)
+
+Explore and extract environment variables.
+
+#+begin_src sh
+# Browse environment variables
+fenv() {
+  local out
+  out=$(env | fzf)
+  echo $(echo $out | cut -d= -f2)
+}
+#+end_src
+
+* File Operations
+
+Functions for working with files using fuzzy finding.
+
+** Search and Edit (fe)
+
+Find files and open them in your editor.
+
+#+begin_src sh
+# Enhanced file search and edit
+fe() {
+  IFS=$'\n' files=($(fzf-tmux --preview 'bat --style=numbers --color=always {}' --query="$1" --multi --select-1 --exit-0))
+  [[ -n "$files" ]] && ${EDITOR:-vim} "${files[@]}"
+}
+#+end_src
+
+** Search File Contents (frg)
+
+Search file contents with ripgrep and open in editor at the matching line.
+
+#+begin_src sh
+# Search file contents with ripgrep and open in $EDITOR
+frg() {
+  result=$(rg --line-number --no-heading --color=always --smart-case "${*:-''}" |
+    fzf --ansi \
+        --color "hl:-1:underline,hl+:-1:underline:reverse" \
+        --delimiter : \
+        --preview 'bat --color=always {1} --highlight-line {2}' \
+        --preview-window 'up,60%,border-bottom,+{2}+3/3,~3')
+  
+  if [[ -n "$result" ]]; then
+    file=$(echo "$result" | awk -F: '{print $1}')
+    line=$(echo "$result" | awk -F: '{print $2}')
+    
+    if [[ -n $EDITOR ]]; then
+      $EDITOR "$file" +$line
+    else
+      vim "$file" +$line
+    fi
+  fi
+}
+#+end_src
+
+* Application Integration
+
+Functions that integrate FZF with other applications.
+
+** Docker (fdoc)
+
+Attach to running Docker containers.
+
+#+begin_src sh
+# Get inside a running Docker container
+fdoc() {
+  local cid
+  cid=$(docker ps | sed 1d | fzf -1 -q "$1" | awk '{print $1}')
+
+  [ -n "$cid" ] && docker exec -it "$cid" /bin/bash
+}
+#+end_src
+
+** Tmux Sessions (ftm)
+
+Switch between tmux sessions easily.
+
+#+begin_src sh
+# Switch tmux session
+ftm() {
+  [[ -n "$TMUX" ]] && change="switch-client" || change="attach-session"
+  if [ $1 ]; then
+    tmux $change -t "$1" 2>/dev/null || (tmux new-session -d -s $1 && tmux $change -t "$1"); return
+  fi
+  session=$(tmux list-sessions -F "#{session_name}" 2>/dev/null | fzf --exit-0) &&  
+  tmux $change -t "$session" || echo "No sessions found."
+}
+#+end_src
+
+** Homebrew (fbrew)
+
+Search and install Homebrew packages.
+
+#+begin_src sh
+# Find and install homebrew packages
+fbrew() {
+  local inst=$(brew search | fzf -m)
+
+  if [[ $inst ]]; then
+    for prog in $(echo $inst); do
+      brew install $prog
+    done
+  fi
+}
+#+end_src
+
+** Directory History (fz)
+
+Navigate to recently used directories (requires z plugin).
+
+#+begin_src sh
+# Search and navigate through recent directories (requires z plugin)
+fz() {
+  local dir
+  dir="$(z -l | sort -rn | awk '{print $2}' | fzf --preview 'ls -la {}')" && cd "$dir"
+}
+#+end_src

@@ -32,6 +32,7 @@
     ~/.emacs.d/init.el: emacs/init.el
     ~/.emacs.d/straight/versions/default.el: emacs-straight-versions.el
     ~/.fzf.zsh: fzf.zsh
+    ~/.fzf.bash: fzf.bash
     ~/.config/karabiner/karabiner.json: karabiner/karabiner.json
     ~/.config/karabiner/assets/complex_modifications/capslock_mods.json: karabiner/1605240912.json
     ~/.config/karabiner/assets/complex_modifications/return_to_command.json: karabiner/return_to_command.json
@@ -59,3 +60,9 @@
 
 - link:
     ~/.oh-my-zsh/custom/bat.zsh: oh-my-zsh/custom/bat.zsh
+
+- link:
+    ~/.oh-my-zsh/custom/fzf.zsh: oh-my-zsh/custom/fzf.zsh
+
+- link:
+    ~/bin/tangle-org.sh: bin/tangle-org.sh

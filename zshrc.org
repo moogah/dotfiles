@@ -1,23 +1,35 @@
-# Powerlevel10k Instant Prompt
+#+TITLE: ZSH Configuration
+#+AUTHOR: Jeff Farr
+#+PROPERTY: header-args:sh :tangle ~/src/dotfiles/zshrc :comments both
 
-# Powerlevel10k's instant prompt makes the shell appear instantly, rendering the UI elements while other startup operations happen in the background.
+* Introduction
 
+This document contains my ZSH shell configuration. ZSH is a powerful shell with many features beyond the standard Bash shell, including improved tab completion, spelling correction, path expansion, and theming via frameworks like Oh My Zsh.
 
-# [[file:zshrc.org::*Powerlevel10k Instant Prompt][Powerlevel10k Instant Prompt:1]]
+The configuration in this file is tangled to =~/src/dotfiles/zshrc= using Org-mode's tangle functionality.
+
+* Powerlevel10k Instant Prompt
+
+Powerlevel10k's instant prompt makes the shell appear instantly, rendering the UI elements while other startup operations happen in the background.
+
+#+begin_src sh
 # Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
 # Initialization code that may require console input (password prompts, [y/n]
 # confirmations, etc.) must go above this block; everything else may go below.
 if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
-# Powerlevel10k Instant Prompt:1 ends here
+#+end_src
 
-# Basic Setup
+* Oh My Zsh Configuration
 
-# Path to the Oh My Zsh installation and theme selection.
+Oh My Zsh is a framework for managing ZSH configuration, providing themes, plugins, and functions to enhance the shell experience.
 
+** Basic Setup
 
-# [[file:zshrc.org::*Basic Setup][Basic Setup:1]]
+Path to the Oh My Zsh installation and theme selection.
+
+#+begin_src sh
 # If you come from bash you might have to change your $PATH.
 # export PATH=$HOME/bin:/usr/local/bin:$PATH
 
@@ -35,14 +47,13 @@ ZSH_THEME="powerlevel10k/powerlevel10k"
 # a theme from this variable instead of looking in ~/.oh-my-zsh/themes/
 # If set to an empty array, this variable will have no effect.
 # ZSH_THEME_RANDOM_CANDIDATES=( "robbyrussell" "agnoster" )
-# Basic Setup:1 ends here
+#+end_src
 
-# Shell Behavior Options
+** Shell Behavior Options
 
-# Configuration options that control how ZSH behaves.
+Configuration options that control how ZSH behaves.
 
-
-# [[file:zshrc.org::*Shell Behavior Options][Shell Behavior Options:1]]
+#+begin_src sh
 # Uncomment the following line to use case-sensitive completion.
 # CASE_SENSITIVE="true"
 
@@ -78,14 +89,13 @@ ZSH_THEME="powerlevel10k/powerlevel10k"
 # under VCS as dirty. This makes repository status check for large repositories
 # much, much faster.
 # DISABLE_UNTRACKED_FILES_DIRTY="true"
-# Shell Behavior Options:1 ends here
+#+end_src
 
-# History Configuration
+** History Configuration
 
-# Configure how command history is stored and displayed.
+Configure how command history is stored and displayed.
 
-
-# [[file:zshrc.org::*History Configuration][History Configuration:1]]
+#+begin_src sh
 # Uncomment the following line if you want to change the command execution time
 # stamp shown in the history command output.
 # You can set one of the optional three formats:
@@ -98,14 +108,13 @@ HIST_STAMPS="yyyy-mm-dd"
 setopt INC_APPEND_HISTORY     # Append to history file as commands are executed
 setopt HIST_FIND_NO_DUPS      # Don't display duplicates when searching history
 setopt HIST_IGNORE_ALL_DUPS   # Don't save duplicates in history
-# History Configuration:1 ends here
+#+end_src
 
-# Plugins
+** Plugins
 
-# Enable Oh My Zsh plugins to extend functionality.
+Enable Oh My Zsh plugins to extend functionality.
 
-
-# [[file:zshrc.org::*Plugins][Plugins:1]]
+#+begin_src sh
 # Would you like to use another custom folder than $ZSH/custom?
 # ZSH_CUSTOM=/path/to/new-custom-folder
 
@@ -120,19 +129,18 @@ plugins=(
   docker             # Docker commands and autocomplete
   fzf                # Fuzzy finder integration
   # Important: fzf-tab must be loaded after fzf but before zsh-autosuggestions
-  fzf-tab            # Enhanced tab completion with fzf
   zsh-autosuggestions # Command suggestions based on history
+  fzf-tab            # Enhanced tab completion with fzf
 )
 
 source $ZSH/oh-my-zsh.sh
-# Plugins:1 ends here
+#+end_src
 
-# User Configuration
+* User Configuration
 
-# User-specific settings and preferences.
+User-specific settings and preferences.
 
-
-# [[file:zshrc.org::*User Configuration][User Configuration:1]]
+#+begin_src sh
 # User configuration
 
 # export MANPATH="/usr/local/man:$MANPATH"
@@ -154,14 +162,17 @@ source $ZSH/oh-my-zsh.sh
 #autoload -Uz edit-command-line
 #zle -N edit-command-line
 # todo bind this to a key, appears to be default to ^x^e when in emacs mode
-# User Configuration:1 ends here
+#+end_src
 
-# Aliases
+* Aliases and Functions
 
-# Shorthand commands for frequently used operations.
+Custom aliases and functions to simplify common tasks.
 
+** Aliases
 
-# [[file:zshrc.org::*Aliases][Aliases:1]]
+Shorthand commands for frequently used operations.
+
+#+begin_src sh
 # Set personal aliases, overriding those provided by oh-my-zsh libs,
 # plugins, and themes. Aliases can be placed here, though oh-my-zsh
 # users are encouraged to define aliases within the ZSH_CUSTOM folder.
@@ -176,27 +187,25 @@ alias l="exa -algh --icons"
 
 # Monitor Time Machine backup activity
 alias timemachine-activity="sudo fs_usage -w |grep -i backupd |grep -i fsctl"
-# Aliases:1 ends here
+#+end_src
 
-# Functions for Time Machine
+** Functions for Time Machine
 
-# Functions to view and monitor Time Machine backup logs.
+Functions to view and monitor Time Machine backup logs.
 
-
-# [[file:zshrc.org::*Functions for Time Machine][Functions for Time Machine:1]]
+#+begin_src sh
 # Function to display filtered Time Machine logs
 function timemachine-logs() {
     echo teest
     printf '\e[3J' && log show --predicate 'subsystem == "com.apple.TimeMachine"' --info --last 6h | grep -F 'eMac' | grep -Fv 'etat' | awk -F']' '{print substr($0,1,19), $NF}'
 }
-# Functions for Time Machine:1 ends here
+#+end_src
 
-# Media and Audio Functions
+** Media and Audio Functions
 
-# Functions for handling YouTube downloads and audio processing.
+Functions for handling YouTube downloads and audio processing.
 
-
-# [[file:zshrc.org::*Media and Audio Functions][Media and Audio Functions:1]]
+#+begin_src sh
 # Download YouTube videos as audio files with metadata
 function ytdl() {
   #youtube-dl "https://www.youtube.com/watch?v=$1" -o - | ffmpeg -i pipe: $2.wav
@@ -224,26 +233,24 @@ function ot-convert() {
   # @TODO: reduce volume to prevent clipping, then normalize
   find . -type f -name '*.wav' | xargs -t -I % sh -c 'sox "%" -b 16 outfile.wav; mv outfile.wav "%"'
 }
-# Media and Audio Functions:1 ends here
+#+end_src
 
-# SSH Management Functions
+** SSH Management Functions
 
-# Functions to manage SSH configurations.
+Functions to manage SSH configurations.
 
-
-# [[file:zshrc.org::*SSH Management Functions][SSH Management Functions:1]]
+#+begin_src sh
 # Remove entries from SSH known_hosts file
 function clean-known-hosts() {
   sed -i '' -e '"$@"d' ~/.ssh/known_hosts
 }
-# SSH Management Functions:1 ends here
+#+end_src
 
-# Shell Options
+* Shell Options
 
-# Additional settings to configure shell behavior.
+Additional settings to configure shell behavior.
 
-
-# [[file:zshrc.org::*Shell Options][Shell Options:1]]
+#+begin_src sh
 # Enable directory stack functionality (pushd, popd)
 setopt auto_pushd
 
@@ -257,27 +264,41 @@ zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
 
 # Enable VI mode (currently commented out)
 # set -o vi
-# Shell Options:1 ends here
+#+end_src
 
-# Theme Configuration
+* Theme Configuration
 
-# Settings for the Powerlevel10k theme.
+Settings for the Powerlevel10k theme.
 
-
-# [[file:zshrc.org::*Theme Configuration][Theme Configuration:1]]
+#+begin_src sh
 # Power Level 10k Configuration
 source /usr/local/opt/powerlevel10k/powerlevel10k.zsh-theme
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
-# Theme Configuration:1 ends here
+#+end_src
 
-# Configuration
+* Productivity Plugins
 
-# Configure how autosuggestions work:
+Additional plugins to enhance shell productivity.
 
+** zsh-autosuggestions
 
-# [[file:zshrc.org::*Configuration][Configuration:1]]
+Fish-like autosuggestions for zsh that suggests commands as you type based on history and completions.
+
+*** Installation
+
+To install the plugin, run the following command:
+
+#+begin_src sh :tangle no :results none :dir ~
+git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+#+end_src
+
+*** Configuration
+
+Configure how autosuggestions work:
+
+#+begin_src sh
 # Configure autosuggestions
 ZSH_AUTOSUGGEST_STRATEGY=(history completion)
 ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=20
@@ -285,23 +306,46 @@ ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#8a8a8a"
 # Use right arrow to accept entire suggestion
 # Use forward-word (Alt+f) to accept suggestion up to a point
 bindkey "^[[1;3C" forward-word # Alt+Right arrow to accept word
-# Configuration:1 ends here
+#+end_src
 
-# Loading Solution
+** fzf-tab
 
-# Since the standard plugin method doesn't work reliably with iTerm on macOS, we manually load the plugin after Oh-My-Zsh initialization:
+Add tab completion powered by fzf for enhanced interactive selection.
 
+*** Installation
 
-# [[file:zshrc.org::*Loading Solution][Loading Solution:1]]
+To install the plugin, run the following command:
+
+#+begin_src sh :tangle no :results none :dir ~
+git clone https://github.com/Aloxaf/fzf-tab ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/fzf-tab
+#+end_src
+
+Then add fzf-tab to your plugins list in the Oh My Zsh configuration section.
+
+*** Loading Solution
+
+Since the standard plugin method doesn't work reliably with iTerm on macOS, we manually load the plugin after Oh-My-Zsh initialization:
+
+#+begin_src sh
 # Manually load fzf-tab after Oh-My-Zsh initialization
 # This ensures it works properly in iTerm on macOS
 source ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/fzf-tab/fzf-tab.plugin.zsh
-# Loading Solution:1 ends here
+#+end_src
 
-# Configuration
+** FZF and zsh-autosuggestions Integration
 
+This section configures FZF and zsh-autosuggestions to work together optimally, enhancing your command-line productivity.
 
-# [[file:zshrc.org::*Configuration][Configuration:1]]
+*** Benefits of Integration
+
+When properly configured together:
+- zsh-autosuggestions provides quick inline history suggestions
+- FZF offers powerful fuzzy search for more complex situations
+- fzf-tab enhances tab completion with interactive selection
+
+*** Configuration
+
+#+begin_src sh
 # Reset zsh completion system to ensure fzf-tab works properly
 # Force complete rebuild of completion system for iTerm
 rm -f ~/.zcompdump*; autoload -Uz compinit && compinit
@@ -359,36 +403,37 @@ export TERM="xterm-256color"
 # Use CTRL-T for interactive file selection with FZF
 # Use ALT-C for interactive directory navigation with FZF
 # Use TAB for enhanced completion with fzf-tab
-# Configuration:1 ends here
+#+end_src
 
-# FZF Integration
+* External Tools and Integrations
 
-# Fuzzy finder integration for improved file and history search.
+Configuration for external tools and environment.
 
+** FZF Integration
 
-# [[file:zshrc.org::*FZF Integration][FZF Integration:1]]
+Fuzzy finder integration for improved file and history search.
+
+#+begin_src sh
 # Source FZF configuration if it exists
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
-# FZF Integration:1 ends here
+#+end_src
 
-# Node Version Manager
+** Node Version Manager
 
-# NVM configuration for managing Node.js versions.
+NVM configuration for managing Node.js versions.
 
-
-# [[file:zshrc.org::*Node Version Manager][Node Version Manager:1]]
+#+begin_src sh
 # Node Version Manager configuration
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-# Node Version Manager:1 ends here
+#+end_src
 
-# Development Tools Configuration
+** Development Tools Configuration
 
-# Settings for various development tools.
+Settings for various development tools.
 
-
-# [[file:zshrc.org::*Development Tools Configuration][Development Tools Configuration:1]]
+#+begin_src sh
 # Configure gtags to use pygments backend
 export GTAGSLABEL=pygments
 
@@ -397,4 +442,4 @@ export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
 
 # Add Claude CLI to aliases
 alias claude="/Users/jefffarr/.claude/local/claude"
-# Development Tools Configuration:1 ends here
+#+end_src
