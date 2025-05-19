@@ -348,7 +348,27 @@ zstyle ':completion:*:*:*:*:*' list-colors ${(s.:.)LS_COLORS}
 # Use the preview window for showing content
 zstyle ':fzf-tab:complete:cd:*' fzf-preview 'ls -la --color=always $realpath'
 zstyle ':fzf-tab:complete:ls:*' fzf-preview 'ls -la --color=always $realpath'
-zstyle ':fzf-tab:complete:*:*' fzf-preview 'less ${(Q)realpath}'
+
+# Display command help in preview window for commands
+# Try different methods to show command help:
+# 1. Run --help if available
+# 2. Show man page if available
+# 3. Show which path if nothing else works
+zstyle ':fzf-tab:complete:(\\|)([^:]#):*' fzf-preview '
+  if [[ -n "$word" ]]; then
+    if command -v "$word" > /dev/null 2>&1; then
+      # First try --help
+      "$word" --help 2>/dev/null || man "$word" 2>/dev/null || which "$word"
+    else
+      # If command not found, try man
+      man "$word" 2>/dev/null || echo "No help found for $word"
+    fi
+  fi'
+zstyle ':fzf-tab:complete:systemctl-*:*' fzf-preview 'SYSTEMD_COLORS=1 systemctl status $word'
+# Special case for kill completion to show process info
+zstyle ':fzf-tab:complete:kill:argument-rest' fzf-preview 'ps --pid=$word -o cmd,pid,%cpu,%mem,user,start,time,stat'
+# If not a command/special case, use standard file preview
+zstyle ':fzf-tab:complete:*:*' fzf-preview 'less ${(Q)realpath} 2>/dev/null || echo $realpath'
 
 # Switch group using `,` and `.`
 zstyle ':fzf-tab:*' switch-group ',' '.'
