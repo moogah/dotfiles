@@ -13,6 +13,8 @@
     ~/.config/nvim/init.vim: init.vim
     ~/.config/nvim/coc-settings.json: coc-settings.json
     ~/.zshrc: zshrc
+    ~/.zprofile: zprofile
+    ~/.p10k.zsh: p10k.zsh
     ~/.tmux.conf: tmux.conf
     ~/.kube/config: kube/config
     "~/Library/Application Support/Code/User/settings.json": 
@@ -63,6 +65,11 @@
 
 - link:
     ~/.oh-my-zsh/custom/fzf.zsh: oh-my-zsh/custom/fzf.zsh
+
+- link:
+    ~/.oh-my-zsh/custom/plugins/fzf-tab: oh-my-zsh/custom/plugins/fzf-tab
+    ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions: oh-my-zsh/custom/plugins/zsh-autosuggestions
+    ~/.oh-my-zsh/custom/plugins/zsh-vi-mode: oh-my-zsh/custom/plugins/zsh-vi-mode
 
 - link:
     ~/bin/tangle-org.sh: bin/tangle-org.sh

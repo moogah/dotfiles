@@ -1,12 +1,46 @@
 #+TITLE: FZF Configuration
 #+AUTHOR: Jeff Farr
-#+PROPERTY: header-args:sh :tangle ~/src/dotfiles/oh-my-zsh/custom/fzf.zsh :comments both
+#+PROPERTY: header-args:sh :tangle ~/src/dotfiles/fzf.zsh :comments both
 
 * Introduction
 
 This document contains my FZF (Fuzzy Finder) configuration. FZF is a general-purpose command-line fuzzy finder that enhances many common terminal workflows.
 
-The configuration in this file is tangled to =~/src/dotfiles/oh-my-zsh/custom/fzf.zsh= using Org-mode's tangle functionality.
+The configuration in this file is tangled to =~/src/dotfiles/fzf.zsh= using Org-mode's tangle functionality.
+
+* Core FZF Setup
+
+This section contains the essential configuration needed for FZF to work properly, with special attention to ensuring that reverse-i-search (CTRL-R) works correctly.
+
+** Path Setup
+
+Make sure fzf is in your PATH.
+
+#+begin_src sh
+# Setup fzf
+# ---------
+if [[ ! "$PATH" == */usr/local/bin* ]]; then
+  export PATH="${PATH:+${PATH}:}/usr/local/bin"
+fi
+#+end_src
+
+** FZF Base Directory
+
+Set the base directory to help oh-my-zsh plugin locate fzf.
+
+#+begin_src sh
+# Set environment variable to help oh-my-zsh plugin locate fzf
+export FZF_BASE="/Users/jefffarr/.fzf"
+#+end_src
+
+** Key Bindings Configuration
+
+Ensure key bindings are enabled.
+
+#+begin_src sh
+# Make sure key bindings are enabled (unset the disable flag)
+unset DISABLE_FZF_KEY_BINDINGS
+#+end_src
 
 * Basic Configuration
 
@@ -27,8 +61,8 @@ export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git 2>/dev/
 Set default UI options for a more pleasant experience.
 
 #+begin_src sh
-# Default options
-export FZF_DEFAULT_OPTS="--height 40% --layout=reverse --border --info=inline"
+# Set basic fzf options for better UI
+export FZF_DEFAULT_OPTS="--height 40% --layout=reverse --border"
 #+end_src
 
 * Key Binding Configurations
@@ -37,239 +71,262 @@ FZF provides several key bindings for common operations. Here I customize their 
 
 ** CTRL-R: History Search
 
-Enhanced history search with preview and clipboard support. This makes browsing command history much more powerful.
+Enhanced history search with preview. This is the critical configuration for reverse-i-search.
 
 #+begin_src sh
-# CTRL-R - Enhanced history search with preview and clipboard support
-export FZF_CTRL_R_OPTS="--preview 'echo {}' --preview-window down:3:wrap --bind 'ctrl-y:execute-silent(echo -n {2..} | pbcopy)+abort' --header 'Press CTRL-Y to copy command to clipboard'"
+# CTRL-R - Focused configuration for reverse history search
+export FZF_CTRL_R_OPTS="--preview 'echo {}' --preview-window down:3:wrap"
 #+end_src
 
-** CTRL-T: File Search
+** Direct Key Bindings Source
 
-Paste selected files onto the command line with preview using =bat= for syntax highlighting.
+Directly source the key bindings file to ensure CTRL-R works properly.
 
 #+begin_src sh
-# CTRL-T - Paste the selected files and directories onto the command line
-export FZF_CTRL_T_COMMAND="fd --type f --hidden --follow --exclude .git 2>/dev/null || find . -type f -not -path '*/\.git/*' -not -path '*/node_modules/*'"
+# Directly source the key bindings file to ensure CTRL-R works
+if [[ -f "/Users/jefffarr/.fzf/shell/key-bindings.zsh" ]]; then
+  source "/Users/jefffarr/.fzf/shell/key-bindings.zsh"
+  # Explicitly bind CTRL-R to the history widget
+  bindkey '^R' fzf-history-widget 2>/dev/null
+fi
+#+end_src
+
+* Optional Features
+
+The following sections contain additional FZF functionality that can be enabled if desired.
+To keep the configuration minimal and focused on ensuring reverse-i-search works correctly,
+these sections are commented out by default.
+
+** CTRL-T: File Search (Optional)
+
+#+begin_src sh :tangle no
+# CTRL-T - Paste the selected files onto the command line
 export FZF_CTRL_T_OPTS="--preview 'bat --style=numbers --color=always --line-range :500 {} 2>/dev/null || cat {} 2>/dev/null || echo {} 2>/dev/null'"
 #+end_src
 
-** ALT-C: Directory Navigation
+** ALT-C: Directory Navigation (Optional)
 
-Jump to directories with a preview of their contents.
-
-#+begin_src sh
+#+begin_src sh :tangle no
 # ALT-C - cd into the selected directory
-export FZF_ALT_C_COMMAND="fd --type d --hidden --follow --exclude .git 2>/dev/null || find . -type d -not -path '*/\.git/*' -not -path '*/node_modules/*'"
-export FZF_ALT_C_OPTS="--preview 'ls -la {} | head -50'"
+export FZF_ALT_C_OPTS="--preview 'ls -la --color=always {} | head -50'"
 #+end_src
 
-* Git Integration Functions
+* Troubleshooting
 
-These functions enhance git workflows with fuzzy finding and previews.
+Here are some Babel blocks with diagnostic commands to help validate your FZF configuration.
+These blocks are not intended to be tangled into the final configuration file, but can be 
+executed directly from this org file to diagnose issues.
 
-** Interactive Git Add (fga)
+** Check FZF Installation
 
-Interactively stage files for commit with diff preview.
+This verifies that fzf is properly installed and on your PATH.
 
-#+begin_src sh
-# Interactive git add
-fga() {
-  git status --short |
-  fzf --multi --preview 'git diff --color {+2}' |
-  awk '{print $2}' |
-  xargs git add
-}
+#+begin_src sh :results output :exports both :tangle no
+# Check if fzf binary exists
+which fzf && echo "✅ fzf binary found" || echo "❌ fzf binary NOT found"
+
+# Check fzf version
+echo "FZF Version:"
+fzf --version
+
+# Check where fzf is installed
+echo "\nFZF Installation:"
+ls -la $(which fzf)
+
+# Check fzf shell script directories
+echo "\nFZF Shell Integration Files:"
+[ -d ~/.fzf/shell ] && ls -la ~/.fzf/shell/ || echo "~/.fzf/shell/ not found"
 #+end_src
 
-** Git Branch Checkout (fgb)
+#+RESULTS:
+#+begin_example
+/usr/local/bin/fzf
+✅ fzf binary found
+FZF Version:
+0.27.3 (brew)
 
-Switch between branches with commit history preview.
+FZF Installation:
+lrwxr-xr-x  1 jefffarr  admin  28 Oct 27  2021 /usr/local/bin/fzf -> ../Cellar/fzf/0.27.3/bin/fzf
 
-#+begin_src sh
-# Git checkout branch
-fgb() {
-  git branch |
-  grep -v HEAD |
-  sed 's/^..//' |
-  fzf --preview 'git log --oneline --graph --date=short --color=always --pretty="format:%C(auto)%cd %h%d %s" {} | head -200' |
-  xargs git checkout
-}
+FZF Shell Integration Files:
+total 80
+drwxr-xr-x   7 jefffarr  staff    224 Oct 18  2020 .
+drwxr-xr-x  27 jefffarr  staff    864 Oct 18  2020 ..
+-rw-r--r--   1 jefffarr  staff   9891 Oct 18  2020 completion.bash
+-rw-r--r--   1 jefffarr  staff  10724 Oct 18  2020 completion.zsh
+-rw-r--r--   1 jefffarr  staff   3705 Oct 18  2020 key-bindings.bash
+-rw-r--r--   1 jefffarr  staff   5299 Oct 18  2020 key-bindings.fish
+-rw-r--r--   1 jefffarr  staff   3723 Oct 18  2020 key-bindings.zsh
+#+end_example
+
+** Check Key Bindings
+
+This verifies that CTRL-R is properly bound to the fzf-history-widget function.
+
+#+begin_src sh :results output :exports both :tangle no
+# Check if fzf-history-widget function is defined
+echo "Checking fzf-history-widget function:"
+type fzf-history-widget 2>&1 | head -1
+
+# Check what CTRL-R is bound to
+echo "\nCurrent CTRL-R binding:"
+bindkey | grep "\^R" || echo "No binding found for CTRL-R"
+
+# Check environment variables that might affect key bindings
+echo "\nKey binding control variables:"
+echo "DISABLE_FZF_KEY_BINDINGS: ${DISABLE_FZF_KEY_BINDINGS:-'not set'}"
+echo "DISABLE_FZF_AUTO_COMPLETION: ${DISABLE_FZF_AUTO_COMPLETION:-'not set'}"
+
+# Check if zsh-vi-mode is active
+echo "\nChecking for vi-mode:"
+bindkey -l | grep -q "viins" && echo "vi-mode is ACTIVE" || echo "vi-mode is NOT active"
 #+end_src
 
-** Git Commit Checkout (fgc)
+#+RESULTS:
+#+begin_example
+Checking fzf-history-widget function:
+sh: line 3: type: fzf-history-widget: not found
 
-Checkout specific commits with detailed preview.
+Current CTRL-R binding:
+No binding found for CTRL-R
 
-#+begin_src sh
-# Git checkout commit
-fgc() {
-  git log --oneline --color=always | 
-  fzf --ansi --no-sort --preview 'git show --color=always {1}' | 
-  awk '{print $1}' | 
-  xargs git checkout
-}
+Key binding control variables:
+DISABLE_FZF_KEY_BINDINGS: 'not set'
+DISABLE_FZF_AUTO_COMPLETION: 'not set'
+
+Checking for vi-mode:
+vi-mode is NOT active
+#+end_example
+
+** Check FZF Configuration
+
+This examines your current FZF environment variables and shell integration.
+
+#+begin_src sh :results output :exports both :tangle no
+# Check FZF environment variables
+echo "FZF Environment Variables:"
+echo "FZF_BASE: ${FZF_BASE:-'not set'}"
+echo "FZF_DEFAULT_COMMAND: ${FZF_DEFAULT_COMMAND:-'not set'}"
+echo "FZF_DEFAULT_OPTS: ${FZF_DEFAULT_OPTS:-'not set'}"
+echo "FZF_CTRL_R_OPTS: ${FZF_CTRL_R_OPTS:-'not set'}"
+
+# Check if key-bindings.zsh exists and is accessible
+echo "\nFZF Key Bindings File:"
+[ -f ~/.fzf/shell/key-bindings.zsh ] && 
+  echo "✅ key-bindings.zsh found at ~/.fzf/shell/key-bindings.zsh" || 
+  echo "❌ key-bindings.zsh NOT found at ~/.fzf/shell/key-bindings.zsh"
+
+# Try to find key-bindings.zsh elsewhere
+if [ ! -f ~/.fzf/shell/key-bindings.zsh ]; then
+  echo "\nSearching for key-bindings.zsh in other locations:"
+  find ~/ -name 'key-bindings.zsh' -not -path "*/\.*" 2>/dev/null
+fi
+
+# Check if fzf plugin is loaded in oh-my-zsh
+echo "\nOh-My-Zsh FZF Plugin:"
+[ -d ~/.oh-my-zsh/plugins/fzf ] && 
+  echo "✅ fzf plugin directory exists" || 
+  echo "❌ fzf plugin directory NOT found"
 #+end_src
 
-** Git File Search (fgf)
+#+RESULTS:
+#+begin_example
+FZF Environment Variables:
+FZF_BASE: 'not set'
+FZF_DEFAULT_COMMAND: 'not set'
+FZF_DEFAULT_OPTS: 'not set'
+FZF_CTRL_R_OPTS: 'not set'
 
-Search through git tracked files and open in editor.
+FZF Key Bindings File:
+✅ key-bindings.zsh found at ~/.fzf/shell/key-bindings.zsh
 
-#+begin_src sh
-# Fuzzy search file paths in Git repo and edit
-fgf() {
-  git ls-files | fzf --preview 'bat --style=numbers --color=always {}' | xargs -o ${EDITOR:-vim}
-}
-#+end_src
+Oh-My-Zsh FZF Plugin:
+✅ fzf plugin directory exists
+#+end_example
 
-* System Operations
+** Check for Plugin Conflicts
 
-Functions that improve system management tasks using fuzzy finding.
+This identifies potential conflicts with other plugins or config issues.
 
-** Process Management (fkill)
-
-Interactive process killing.
-
-#+begin_src sh
-# Kill process interactively
-fkill() {
-  local pid
-  pid=$(ps -ef | sed 1d | fzf -m | awk '{print $2}')
-
-  if [ "x$pid" != "x" ]; then
-    echo $pid | xargs kill -${1:-9}
-  fi
-}
-#+end_src
-
-** Directory Navigation (fcd)
-
-Enhanced directory navigation with content preview.
-
-#+begin_src sh
-# Enhanced cd with preview
-fcd() {
-  local dir
-  dir=$(find ${1:-.} -path '*/\.*' -prune -o -type d -print 2> /dev/null | fzf +m --preview 'ls -la {}')
-  cd "$dir"
-}
-#+end_src
-
-** Environment Variables (fenv)
-
-Explore and extract environment variables.
-
-#+begin_src sh
-# Browse environment variables
-fenv() {
-  local out
-  out=$(env | fzf)
-  echo $(echo $out | cut -d= -f2)
-}
-#+end_src
-
-* File Operations
-
-Functions for working with files using fuzzy finding.
-
-** Search and Edit (fe)
-
-Find files and open them in your editor.
-
-#+begin_src sh
-# Enhanced file search and edit
-fe() {
-  IFS=$'\n' files=($(fzf-tmux --preview 'bat --style=numbers --color=always {}' --query="$1" --multi --select-1 --exit-0))
-  [[ -n "$files" ]] && ${EDITOR:-vim} "${files[@]}"
-}
-#+end_src
-
-** Search File Contents (frg)
-
-Search file contents with ripgrep and open in editor at the matching line.
-
-#+begin_src sh
-# Search file contents with ripgrep and open in $EDITOR
-frg() {
-  result=$(rg --line-number --no-heading --color=always --smart-case "${*:-''}" |
-    fzf --ansi \
-        --color "hl:-1:underline,hl+:-1:underline:reverse" \
-        --delimiter : \
-        --preview 'bat --color=always {1} --highlight-line {2}' \
-        --preview-window 'up,60%,border-bottom,+{2}+3/3,~3')
+#+begin_src sh :results output :exports both :tangle no
+# Check loaded plugins that might interfere with FZF
+echo "Checking for potential conflicting plugins:"
+echo "zsh-vi-mode status: " 
+[ -d ~/.oh-my-zsh/custom/plugins/zsh-vi-mode ] && 
+  echo "✅ zsh-vi-mode plugin directory exists" || 
+  echo "❌ zsh-vi-mode plugin directory NOT found"
   
-  if [[ -n "$result" ]]; then
-    file=$(echo "$result" | awk -F: '{print $1}')
-    line=$(echo "$result" | awk -F: '{print $2}')
-    
-    if [[ -n $EDITOR ]]; then
-      $EDITOR "$file" +$line
-    else
-      vim "$file" +$line
-    fi
-  fi
-}
+echo "\nPlugin load order in .zshrc:"
+grep -A 15 "plugins=(" ~/.zshrc | grep -v "^#" | head -20
+
+# Check for custom bindkey commands in zshrc
+echo "\nCustom bindkey commands in .zshrc that might override CTRL-R:"
+grep -i "bindkey" ~/.zshrc | grep -v "^#"
 #+end_src
 
-* Application Integration
+#+RESULTS:
+#+begin_example
+Checking for potential conflicting plugins:
+zsh-vi-mode status: 
+✅ zsh-vi-mode plugin directory exists
 
-Functions that integrate FZF with other applications.
+Plugin load order in .zshrc:
+plugins=(
+  git                # Git integration and shortcuts
+  macos              # macOS-specific commands and functions
+  docker             # Docker commands and autocomplete
+  fzf                # Fuzzy finder integration
+  # Important: fzf-tab must be loaded after fzf but before zsh-autosuggestions
+  fzf-tab            # Enhanced tab completion with fzf
+  zsh-autosuggestions # Command suggestions based on history
+  # zsh-vi-mode disabled to prevent key binding conflicts with fzf
+)
 
-** Docker (fdoc)
+source $ZSH/oh-my-zsh.sh
 
-Attach to running Docker containers.
 
-#+begin_src sh
-# Get inside a running Docker container
-fdoc() {
-  local cid
-  cid=$(docker ps | sed 1d | fzf -1 -q "$1" | awk '{print $1}')
 
-  [ -n "$cid" ] && docker exec -it "$cid" /bin/bash
-}
+Custom bindkey commands in .zshrc that might override CTRL-R:
+bindkey "^[[1;3C" forward-word # Alt+Right arrow to accept word
+bindkey '^I' fzf-tab-complete
+#+end_example
+
+** Quick Fix for Common Issues
+
+If you're still having problems, try these fixes. Copy/paste into your terminal to execute:
+
+#+begin_src sh :results output :exports both :tangle no
+echo 'Quick fixes to try if CTRL-R is not working:'
+echo '1. Unset any variables that disable key bindings:'
+echo '   unset DISABLE_FZF_KEY_BINDINGS'
+echo ''
+echo '2. Source key-bindings.zsh directly (if it exists):'
+echo '   source ~/.fzf/shell/key-bindings.zsh'
+echo ''
+echo '3. Explicitly bind CTRL-R:'
+echo '   bindkey "^R" fzf-history-widget'
+echo ''
+echo '4. If you use zsh-vi-mode, try disabling it temporarily:'
+echo '   Edit ~/.zshrc and comment out zsh-vi-mode in plugins list'
+echo ''
+echo '5. Check if another terminal session is stealing the key binding:'
+echo '   Start a fresh terminal session without sourcing .zshrc:'
+echo '   env -i zsh'
+echo '   And then try the minimal config:'
+echo '   source ~/.fzf/shell/key-bindings.zsh'
+echo '   bindkey "^R" fzf-history-widget'
 #+end_src
 
-** Tmux Sessions (ftm)
+* Notes for iTerm and zsh Users
 
-Switch between tmux sessions easily.
+When using FZF with iTerm2 on macOS and zsh (especially with oh-my-zsh), be aware of these potential issues:
 
-#+begin_src sh
-# Switch tmux session
-ftm() {
-  [[ -n "$TMUX" ]] && change="switch-client" || change="attach-session"
-  if [ $1 ]; then
-    tmux $change -t "$1" 2>/dev/null || (tmux new-session -d -s $1 && tmux $change -t "$1"); return
-  fi
-  session=$(tmux list-sessions -F "#{session_name}" 2>/dev/null | fzf --exit-0) &&  
-  tmux $change -t "$session" || echo "No sessions found."
-}
-#+end_src
+1. Plugin order matters: Load fzf before fzf-tab, and load both before zsh-autosuggestions
+2. zsh-vi-mode can conflict with FZF key bindings (especially CTRL-R)
+3. The DISABLE_FZF_KEY_BINDINGS variable must be unset (or set to "false") to enable key bindings
 
-** Homebrew (fbrew)
-
-Search and install Homebrew packages.
-
-#+begin_src sh
-# Find and install homebrew packages
-fbrew() {
-  local inst=$(brew search | fzf -m)
-
-  if [[ $inst ]]; then
-    for prog in $(echo $inst); do
-      brew install $prog
-    done
-  fi
-}
-#+end_src
-
-** Directory History (fz)
-
-Navigate to recently used directories (requires z plugin).
-
-#+begin_src sh
-# Search and navigate through recent directories (requires z plugin)
-fz() {
-  local dir
-  dir="$(z -l | sort -rn | awk '{print $2}' | fzf --preview 'ls -la {}')" && cd "$dir"
-}
-#+end_src
+If CTRL-R isn't working:
+- Check if another plugin is capturing the CTRL-R key binding
+- Verify that key-bindings.zsh is being sourced correctly
+- Disable zsh-vi-mode temporarily to test if it's causing conflicts
+- Run the diagnostic scripts in the Troubleshooting section above

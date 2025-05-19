@@ -122,6 +122,7 @@ plugins=(
   # Important: fzf-tab must be loaded after fzf but before zsh-autosuggestions
   fzf-tab            # Enhanced tab completion with fzf
   zsh-autosuggestions # Command suggestions based on history
+  # zsh-vi-mode disabled to prevent key binding conflicts with fzf
 )
 
 source $ZSH/oh-my-zsh.sh
@@ -287,24 +288,36 @@ ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#8a8a8a"
 bindkey "^[[1;3C" forward-word # Alt+Right arrow to accept word
 # Configuration:1 ends here
 
-# Loading Solution
+# Important Note for iTerm on macOS
 
-# Since the standard plugin method doesn't work reliably with iTerm on macOS, we manually load the plugin after Oh-My-Zsh initialization:
+# The proper order of plugins is critical for ensuring fzf-tab works correctly:
+
+# 1. The `fzf` plugin must load first
+# 2. The `fzf-tab` plugin must load second
+# 3. The `zsh-autosuggestions` plugin must load after fzf-tab
+
+# This ensures that all functionality works together correctly without manual loading.
 
 
-# [[file:zshrc.org::*Loading Solution][Loading Solution:1]]
-# Manually load fzf-tab after Oh-My-Zsh initialization
-# This ensures it works properly in iTerm on macOS
-source ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/fzf-tab/fzf-tab.plugin.zsh
-# Loading Solution:1 ends here
+# [[file:zshrc.org::*Important Note for iTerm on macOS][Important Note for iTerm on macOS:1]]
+# The fzf-tab plugin is now properly loaded through the oh-my-zsh plugins array
+# By placing it after fzf but before zsh-autosuggestions, we ensure it works correctly
+# No manual loading is needed here as long as the plugin order is correct
+# Important Note for iTerm on macOS:1 ends here
 
 # Configuration
 
 
 # [[file:zshrc.org::*Configuration][Configuration:1]]
-# Reset zsh completion system to ensure fzf-tab works properly
-# Force complete rebuild of completion system for iTerm
-rm -f ~/.zcompdump*; autoload -Uz compinit && compinit
+# Properly initialize the completion system for fzf-tab on iTerm
+# This ensures a clean, complete initialization on each session
+# Force compinit to ignore insecure directories to prevent warnings
+autoload -Uz compinit
+if [[ -n ${ZDOTDIR}/.zcompdump(#qN.mh+24) ]]; then
+  compinit
+else
+  compinit -C
+fi
 
 # Advanced FZF configuration with zsh-autosuggestions compatibility
 # Extended FZF options for better visual presentation
@@ -319,11 +332,11 @@ export FZF_CTRL_T_OPTS="--preview 'bat --style=numbers --color=always --line-ran
 # Improved directory navigation with content preview 
 export FZF_ALT_C_OPTS="--preview 'ls -la --color=always {} | head -50'"
 
-# Disable automatic completion triggering (prevents conflicts with autosuggestions)
+# Keep automatic completion
 export DISABLE_FZF_AUTO_COMPLETION="false"
 
-# Keep key bindings for CTRL-T, CTRL-R, ALT-C
-export DISABLE_FZF_KEY_BINDINGS="false"
+# Make sure key bindings are enabled
+unset DISABLE_FZF_KEY_BINDINGS
 
 # Configure fzf-tab for more visible behavior
 # Show dot files
@@ -335,7 +348,27 @@ zstyle ':completion:*:*:*:*:*' list-colors ${(s.:.)LS_COLORS}
 # Use the preview window for showing content
 zstyle ':fzf-tab:complete:cd:*' fzf-preview 'ls -la --color=always $realpath'
 zstyle ':fzf-tab:complete:ls:*' fzf-preview 'ls -la --color=always $realpath'
-zstyle ':fzf-tab:complete:*:*' fzf-preview 'less ${(Q)realpath}'
+
+# Display command help in preview window for commands
+# Try different methods to show command help:
+# 1. Run --help if available
+# 2. Show man page if available
+# 3. Show which path if nothing else works
+zstyle ':fzf-tab:complete:(\\|)([^:]#):*' fzf-preview '
+  if [[ -n "$word" ]]; then
+    if command -v "$word" > /dev/null 2>&1; then
+      # First try --help
+      "$word" --help 2>/dev/null || man "$word" 2>/dev/null || which "$word"
+    else
+      # If command not found, try man
+      man "$word" 2>/dev/null || echo "No help found for $word"
+    fi
+  fi'
+zstyle ':fzf-tab:complete:systemctl-*:*' fzf-preview 'SYSTEMD_COLORS=1 systemctl status $word'
+# Special case for kill completion to show process info
+zstyle ':fzf-tab:complete:kill:argument-rest' fzf-preview 'ps --pid=$word -o cmd,pid,%cpu,%mem,user,start,time,stat'
+# If not a command/special case, use standard file preview
+zstyle ':fzf-tab:complete:*:*' fzf-preview 'less ${(Q)realpath} 2>/dev/null || echo $realpath'
 
 # Switch group using `,` and `.`
 zstyle ':fzf-tab:*' switch-group ',' '.'
@@ -353,6 +386,10 @@ zstyle ':fzf-tab:*' fzf-flags '--bind=ctrl-space:toggle' '--cycle'
 # Special settings for iTerm compatibility
 # Use these settings to ensure all features work together properly
 export TERM="xterm-256color"
+
+# Fix for fzf-tab not working in some terminals
+# This ensures the tab key is correctly bound for fzf-tab
+bindkey '^I' fzf-tab-complete
 
 # Tip: Use right arrow to accept autosuggestions
 # Use CTRL-R for interactive history search with FZF

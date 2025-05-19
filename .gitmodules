@@ -2,3 +2,12 @@
 	path = dotbot
 	url = https://github.com/anishathalye/dotbot
 	ignore = dirty
+[submodule "oh-my-zsh/custom/plugins/fzf-tab"]
+	path = oh-my-zsh/custom/plugins/fzf-tab
+	url = https://github.com/Aloxaf/fzf-tab.git
+[submodule "oh-my-zsh/custom/plugins/zsh-autosuggestions"]
+	path = oh-my-zsh/custom/plugins/zsh-autosuggestions
+	url = https://github.com/zsh-users/zsh-autosuggestions.git
+[submodule "oh-my-zsh/custom/plugins/zsh-vi-mode"]
+	path = oh-my-zsh/custom/plugins/zsh-vi-mode
+	url = https://github.com/jeffreytse/zsh-vi-mode.git
