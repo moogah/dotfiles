@@ -98,7 +98,7 @@
     ("look-and-feel/look-and-feel" "UI appearance and behavior")
     
     ;; Language mode modules
-    ;; ("language-modes/language-modes" "Programming language modes")
+    ("language-modes/language-modes" "Programming language modes")
     
     ;; Major mode modules
     ("major-modes/org"    "Org-mode configuration")
