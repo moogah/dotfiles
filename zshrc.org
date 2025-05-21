@@ -407,40 +407,43 @@ zstyle ':completion:*' special-dirs true
 zstyle ':completion:*:*:*:*:*' list-colors ${(s.:.)LS_COLORS}
 
 # Use the preview window for showing content
-# For directory previews, show colorized directory listing
-zstyle ':fzf-tab:complete:cd:*' fzf-preview 'ls -la --color=always $realpath'
-zstyle ':fzf-tab:complete:ls:*' fzf-preview 'ls -la --color=always $realpath'
+# Simple file and directory preview configuration
+# These settings follow the recommendation from the fzf-tab README
 
-# Enhanced file preview with syntax highlighting and content preview for all file completions
-zstyle ':fzf-tab:complete:*:*' fzf-preview '
-if [[ -d $realpath ]]; then
-  # Directory preview - show detailed listing
-  ls -la --color=always $realpath
+# Preview directory's content with ls when completing cd
+zstyle ':fzf-tab:complete:cd:*' fzf-preview 'ls -la --color=always $realpath'
+
+# Preview files and directories when completing with ls-related commands
+zstyle ':fzf-tab:complete:(ls|exa|l|la|ll|lt|tree):*' fzf-preview 'if [[ -d $realpath ]]; then
+    ls -la --color=always $realpath
 elif [[ -f $realpath ]]; then
-  # File preview - show content with syntax highlighting if possible
-  if file --mime-type $realpath | grep -q "text/"; then
-    # Text file - use bat for syntax highlighting
-    bat --style=numbers --color=always --line-range :200 $realpath 2>/dev/null || cat $realpath
-  elif [[ $realpath == *.json ]]; then
-    # JSON files - pretty print with jq if available
-    jq -C . $realpath 2>/dev/null || bat --style=numbers --color=always --line-range :200 $realpath 2>/dev/null || cat $realpath
-  elif [[ $realpath == *.md || $realpath == *.markdown ]]; then
-    # Markdown files
-    bat --style=numbers --color=always --line-range :200 $realpath 2>/dev/null || cat $realpath
-  elif [[ $realpath == *.yml || $realpath == *.yaml ]]; then
-    # YAML files
-    bat --style=numbers --color=always --line-range :200 $realpath 2>/dev/null || cat $realpath
-  elif file --mime-type $realpath | grep -q "image/"; then
-    # Image files - show basic info
-    file -b $realpath
-  else
-    # Other files - show file info and first few lines
-    file -b $realpath
-    head -20 $realpath 2>/dev/null || echo "[Binary file]"
-  fi
+    file --mime-type $realpath | grep -q "^.*/text" && 
+        bat --style=numbers --color=always --line-range :200 $realpath 2>/dev/null || 
+        (file -b $realpath && ls -la $realpath)
 else
-  # Not a file or directory
-  echo "Not a regular file or directory: $realpath"
+    echo "No preview available"
+fi'
+
+# Preview file content or ls directory when completing with vim/nvim/emacs/etc
+zstyle ':fzf-tab:complete:vim:*' fzf-preview 'bat --style=numbers --color=always --line-range :200 $realpath 2>/dev/null || cat $realpath 2>/dev/null || ls -la --color=always $realpath'
+zstyle ':fzf-tab:complete:nvim:*' fzf-preview 'bat --style=numbers --color=always --line-range :200 $realpath 2>/dev/null || cat $realpath 2>/dev/null || ls -la --color=always $realpath'
+zstyle ':fzf-tab:complete:nano:*' fzf-preview 'bat --style=numbers --color=always --line-range :200 $realpath 2>/dev/null || cat $realpath 2>/dev/null || ls -la --color=always $realpath'
+zstyle ':fzf-tab:complete:emacs:*' fzf-preview 'bat --style=numbers --color=always --line-range :200 $realpath 2>/dev/null || cat $realpath 2>/dev/null || ls -la --color=always $realpath'
+zstyle ':fzf-tab:complete:bat:*' fzf-preview 'bat --style=numbers --color=always --line-range :200 $realpath 2>/dev/null || cat $realpath 2>/dev/null || ls -la --color=always $realpath'
+zstyle ':fzf-tab:complete:cat:*' fzf-preview 'bat --style=numbers --color=always --line-range :200 $realpath 2>/dev/null || cat $realpath 2>/dev/null || ls -la --color=always $realpath'
+zstyle ':fzf-tab:complete:less:*' fzf-preview 'bat --style=numbers --color=always --line-range :200 $realpath 2>/dev/null || cat $realpath 2>/dev/null || ls -la --color=always $realpath'
+zstyle ':fzf-tab:complete:head:*' fzf-preview 'bat --style=numbers --color=always --line-range :200 $realpath 2>/dev/null || cat $realpath 2>/dev/null || ls -la --color=always $realpath'
+zstyle ':fzf-tab:complete:tail:*' fzf-preview 'bat --style=numbers --color=always --line-range :200 $realpath 2>/dev/null || cat $realpath 2>/dev/null || ls -la --color=always $realpath'
+
+# For all other commands, preview files appropriately 
+zstyle ':fzf-tab:complete:*:*' fzf-preview 'if [[ -d $realpath ]]; then
+    ls -la --color=always $realpath
+elif [[ -f $realpath ]]; then
+    file --mime-type $realpath | grep -q "^.*/text" && 
+        bat --style=numbers --color=always --line-range :200 $realpath 2>/dev/null || 
+        (file -b $realpath && ls -la $realpath)
+else
+    echo "No preview available"
 fi'
 
 # Display command help in preview window for commands
@@ -473,6 +476,7 @@ zstyle ':fzf-tab:*' continuous-trigger 'tab'
 zstyle ':fzf-tab:*' fzf-command fzf
 
 # Configure preview window size and position with enhanced controls
+# Make sure the preview window is visible and large enough
 zstyle ':fzf-tab:*' fzf-flags '--preview-window=right:60%:wrap' '--bind=ctrl-space:toggle,tab:accept,shift-tab:toggle+down' '--cycle'
 
 # Special settings for iTerm compatibility
