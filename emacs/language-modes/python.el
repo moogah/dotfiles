@@ -1,4 +1,6 @@
-﻿(use-package flycheck
+;; -*- lexical-binding: t; -*-
+
+(use-package flycheck
   :straight t
   :init (global-flycheck-mode))
 
@@ -12,5 +14,7 @@
   :config
   (add-hook 'python-mode-hook 'python-isort-on-save-mode))
 
-
 (add-hook 'python-mode-hook 'tree-sitter-hl-mode)
+
+;; Set the path to pylint executable if needed
+;; (setq flycheck-python-pylint-executable "pylint")

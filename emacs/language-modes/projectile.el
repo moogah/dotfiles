@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 (use-package projectile
   :straight t
   :init
@@ -7,7 +9,6 @@
               ("C-c p" . projectile-command-map)))
 
 ;; configure python custom project type for testing with docker-compose
-
 (projectile-register-project-type 'python '("pytest.ini" "docker-compose.yaml")
                                   :project-file "pytest.ini"
                                   :test "docker-compose run test-watch"

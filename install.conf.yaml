@@ -13,6 +13,8 @@
     ~/.config/nvim/init.vim: init.vim
     ~/.config/nvim/coc-settings.json: coc-settings.json
     ~/.zshrc: zshrc
+    ~/.zprofile: zprofile
+    ~/.p10k.zsh: p10k.zsh
     ~/.tmux.conf: tmux.conf
     ~/.kube/config: kube/config
     "~/Library/Application Support/Code/User/settings.json": 
@@ -33,6 +35,7 @@
     ~/.emacs.d/straight/versions/default.el: emacs-straight-versions.el
     ~/.fzf.zsh: fzf.zsh
     ~/.globalrc: globalrc
+    ~/.fzf.bash: fzf.bash
     ~/.config/karabiner/karabiner.json: karabiner/karabiner.json
     ~/.config/karabiner/assets/complex_modifications/capslock_mods.json: karabiner/1605240912.json
     ~/.config/karabiner/assets/complex_modifications/return_to_command.json: karabiner/return_to_command.json
@@ -60,3 +63,14 @@
 
 - link:
     ~/.oh-my-zsh/custom/bat.zsh: oh-my-zsh/custom/bat.zsh
+
+- link:
+    ~/.oh-my-zsh/custom/fzf.zsh: oh-my-zsh/custom/fzf.zsh
+
+- link:
+    ~/.oh-my-zsh/custom/plugins/fzf-tab: oh-my-zsh/custom/plugins/fzf-tab
+    ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions: oh-my-zsh/custom/plugins/zsh-autosuggestions
+    ~/.oh-my-zsh/custom/plugins/zsh-vi-mode: oh-my-zsh/custom/plugins/zsh-vi-mode
+
+- link:
+    ~/bin/tangle-org.sh: bin/tangle-org.sh

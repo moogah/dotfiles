@@ -1,103 +1,150 @@
+#+title: Org Roam Configuration
+#+author: Jeff Farr
+#+property: header-args:emacs-lisp :tangle org-roam.el
 #+auto_tangle: y
 
-* Configure Org Roam
+* Introduction
+This file configures Org Roam, a personal knowledge management system for Emacs based on the Zettelkasten method.
+It includes settings for basic functionality, daily notes, capture templates, and Git synchronization.
+
+* Basic Configuration
+Setup lexical binding and core dependencies.
+
+#+begin_src emacs-lisp
+;; -*- lexical-binding: t; -*-
+#+end_src
+
+* Version Requirements and Dependencies
+Org-Roam requires specific versions of Org and other dependencies to work correctly.
+
+** Org Compatibility
+Ensure we're using a compatible version of Org with Org-Roam.
+
+#+begin_src emacs-lisp
+;; org-roam is sensitive to org version changes
+;; Ensure we have a compatible version of org loaded
+(straight-use-package 'org)
+#+end_src
+
+** Database Dependencies
+Fix for sqlite dependency issues.
 
 This is hopefully a temporary shim to get emacsql-sqlite installed correctly, without this the relatively new emacsql-sqlite-common file is not included in the [[https://github.com/melpa/melpa/blob/master/recipes/emacsql-sqlite][melpa recipe]].
 
-A similar issue may occur after updating to v29 as there is a reported [[https://github.com/org-roam/org-roam/issues/2146][github issue]] with emacsql-sqlite-builtin as well 
+A similar issue may occur after updating to v29 as there is a reported [[https://github.com/org-roam/org-roam/issues/2146][github issue]] with emacsql-sqlite-builtin as well.
 
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
+;; Use a specific version of emacsql-sqlite with all required files
 (use-package emacsql-sqlite
   :straight (emacsql-sqlite :type git :host github :repo "magit/emacsql" :branch main :files ("emacsql-sqlite.el" "emacsql-sqlite-common.el" "sqlite")))
 #+end_src
 
+* Core Org Roam Setup
+Configure the main Org Roam package with keybindings and basic settings.
 
-#+begin_src emacs-lisp :tangle yes
-    ;; ===============================================================================
-    ;; Configure Org-Roam
-    ;; ===============================================================================
+#+begin_src emacs-lisp
+;; ===============================================================================
+;; Configure Org-Roam Core
+;; ===============================================================================
 
-    (use-package org-roam
-      :straight (org-roam :host github :repo "org-roam/org-roam" :tag "v2.2.2")
-      :bind (("C-c n f" . org-roam-node-find)
-             ("C-c n i" . org-roam-node-insert)
-             ("C-c n c" . org-roam-capture)
-             ("C-c n d" . org-roam-dailies-goto-today))
-      :config
-      (setq org-roam-directory (file-truename "~/org/roam"))
-      (setq find-file-visit-truename t)
-      (setq org-roam-completion-everywhere t)
-      (org-roam-db-autosync-mode))
+(use-package org-roam
+  :straight (org-roam :host github :repo "org-roam/org-roam" :tag "v2.2.2")
+  :bind (("C-c n f" . org-roam-node-find)
+         ("C-c n i" . org-roam-node-insert)
+         ("C-c n c" . org-roam-capture)
+         ("C-c n d" . org-roam-dailies-goto-today))
+  :config
+  (setq org-roam-directory (file-truename "~/org/roam"))
+  (setq find-file-visit-truename t)
+  (setq org-roam-completion-everywhere t)
+  (org-roam-db-autosync-mode))
 #+end_src
 
 
-* Configure Org Roam Dailies
-This attempt to use a file template didn't work, the content of the template didn't appear in a new node
-#+begin_src emacs-lisp 
-  (setq org-roam-dailies-capture-templates
-        '(("d" "default" plain
-           (file "~/.emacs.d/templates/org-roam-dailies-default.org")
-           :if-new (file+head "%<%Y-%m-%d>.org"
-                              "#+title: %<%Y-%m-%d>\nddddd")
-           :unnarrowed t)))
+* Dailies Configuration
+Configure daily notes functionality for journaling and daily tracking.
+
+** Previous Attempt
+This attempt to use a file template didn't work, the content of the template didn't appear in a new node.
+Kept for reference purposes.
+
+#+begin_src emacs-lisp :tangle no
+(setq org-roam-dailies-capture-templates
+      '(("d" "default" plain
+         (file "~/.emacs.d/templates/org-roam-dailies-default.org")
+         :if-new (file+head "%<%Y-%m-%d>.org"
+                            "#+title: %<%Y-%m-%d>\nddddd")
+         :unnarrowed t)))
 #+end_src
 
-#+begin_src emacs-lisp :tangle yes
-  (setq org-roam-dailies-directory "dailies/")
+** Daily Templates
+Configure the directory and templates for daily notes.
 
-  (setq org-roam-dailies-capture-templates
-        '(("d" "default" plain
-           (file "~/.emacs.d/templates/org-roam-dailies-default.org")
-           :if-new (file+head "apploi-%<%Y-%m-%d>.org"
-                              "#+title: apploi-%<%Y-%m-%d>\n\n* %<%Y-%m-%d> Meetings\n\n* %<%Y-%m-%d> Worklog\n\n* %<%Y-%m-%d> Tasks")
-           :unnarrowed t)))
+#+begin_src emacs-lisp
+;; Set the directory for daily notes
+(setq org-roam-dailies-directory "dailies/")
+
+;; Configure daily note templates
+(setq org-roam-dailies-capture-templates
+      '(("d" "default" plain
+         (file "~/.emacs.d/templates/org-roam-dailies-default.org")
+         :if-new (file+head "apploi-%<%Y-%m-%d>.org"
+                            "#+title: apploi-%<%Y-%m-%d>\n\n* %<%Y-%m-%d> Meetings\n\n* %<%Y-%m-%d> Worklog\n\n* %<%Y-%m-%d> Tasks")
+         :unnarrowed t)))
 #+end_src
 
-* Configure org-roam-protocol
+* Protocol Configuration
+Setup org-roam-protocol for capturing web content into your Org Roam database.
 
-Also follow [[https://www.orgroam.com/manual.html#org_002droam_002dprotocol][docs]] to setup org-protocol
+Follow the [[https://www.orgroam.com/manual.html#org_002droam_002dprotocol][org-roam-protocol documentation]] to complete the browser setup.
 
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp
+;; Enable org-roam-protocol
 (require 'org-roam-protocol) 
+
+;; Ensure Emacs server is running (required for protocol)
+(server-start)
 #+end_src
 
-#+begin_src emacs-lisp :tangle yes
-  (server-start)
+* Note Capture Templates
+Configure templates for capturing different types of notes.
+
+#+begin_src emacs-lisp
+;; Configure standard capture templates
+(setq org-roam-capture-templates
+ '(("d" "default" plain
+    "%?"
+    :if-new (file+head "%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
+    :unnarrowed t)
+   ("f" "foo" plain
+    (file "~/.emacs.d/templates/org-roam-default.org")
+    :if-new (file+head "inbox/%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n ${body}")
+    :unnarrowed t)))
 #+end_src
 
-* Setup Capture Templates
+* Web Capture Templates
+Configure capture templates for web content via org-roam-protocol.
 
-#+begin_src emacs-lisp :tangle yes
-    (setq org-roam-capture-templates
-     '(("d" "default" plain
+#+begin_src emacs-lisp
+;; Templates for capturing web content
+(setq org-roam-capture-ref-templates
+      '(("r" "ref" plain
         "%?"
-        :if-new (file+head "%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
-        :unnarrowed t)
-       ("f" "foo" plain
-        (file "~/.emacs.d/templates/org-roam-default.org")
-        :if-new (file+head "inbox/%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n ${body}")
+        :target
+        (file+head "${slug}.org" "#+title: ${title}\n${body}")
         :unnarrowed t)))
 #+end_src
 
-* Ref Capture Templates (for org-roam-protocol)
+* Automatic Git Synchronization
+Setup automatic Git synchronization for your knowledge base.
 
-#+begin_src emacs-lisp :tangle yes
-  (setq org-roam-capture-ref-templates
-        '(("r" "ref" plain
-          "%?"
-          :target
-          (file+head "${slug}.org" "#+title: ${title}\n${body}")
-          :unnarrowed t)))
-#+end_src
+This will automatically add and commit changes to files in your Org Roam directory.
 
-* Git Sync Mode
-
-This will automatically add and commit changes to files
-
-#+begin_src emacs-lisp :tangle yes 
-  (use-package git-sync-mode
-    :straight (git-sync-mode :host github :repo "justinbarclay/git-sync-mode")
-    :config
-    (git-sync-global-mode)
-    (add-to-list 'git-sync-allow-list '"~/org/roam"))
+#+begin_src emacs-lisp
+;; Configure automatic Git synchronization
+(use-package git-sync-mode
+  :straight (git-sync-mode :host github :repo "justinbarclay/git-sync-mode")
+  :config
+  (git-sync-global-mode)
+  (add-to-list 'git-sync-allow-list '"~/org/roam"))
 #+end_src
