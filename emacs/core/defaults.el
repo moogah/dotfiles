@@ -1,4 +1,4 @@
-;; -*- lexical-binding: t; -*-
+﻿;; -*- lexical-binding: t; -*-
 
 ;; ===============================================================================
 ;; Frame Size and Position
@@ -30,6 +30,7 @@
 (tool-bar-mode -1)
 (menu-bar-mode -1)
 (scroll-bar-mode -1)
+
 
 ;; No startup screen
 (setq inhibit-startup-screen t)
@@ -70,6 +71,9 @@
 ;; Always use y-or-n-p, not yes-or-no-p
 (defalias 'yes-or-no-p 'y-or-n-p)
 
+;; ESC cancels prompts
+(global-set-key (kbd "<escape>") 'keyboard-escape-quit)
+
 ;; ===============================================================================
 ;; Backup Settings
 ;; ===============================================================================
@@ -83,3 +87,13 @@
 ;; Set auto-save location
 (setq auto-save-file-name-transforms
       '((".*" "~/.emacs.d/auto-save-list/" t)))
+
+;; ===============================================================================
+;; OSX Specific Configs
+;; ===============================================================================
+
+;; Make sure we have access to the same PATH as in our zsh
+(use-package exec-path-from-shell
+  :straight t
+  :init
+  (exec-path-from-shell-initialize))
