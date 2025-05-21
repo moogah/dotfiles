@@ -347,8 +347,41 @@ zstyle ':completion:*' special-dirs true
 zstyle ':completion:*:*:*:*:*' list-colors ${(s.:.)LS_COLORS}
 
 # Use the preview window for showing content
+# For directory previews, show colorized directory listing
 zstyle ':fzf-tab:complete:cd:*' fzf-preview 'ls -la --color=always $realpath'
 zstyle ':fzf-tab:complete:ls:*' fzf-preview 'ls -la --color=always $realpath'
+
+# Enhanced file preview with syntax highlighting and content preview for all file completions
+zstyle ':fzf-tab:complete:*:*' fzf-preview '
+if [[ -d $realpath ]]; then
+  # Directory preview - show detailed listing
+  ls -la --color=always $realpath
+elif [[ -f $realpath ]]; then
+  # File preview - show content with syntax highlighting if possible
+  if file --mime-type $realpath | grep -q "text/"; then
+    # Text file - use bat for syntax highlighting
+    bat --style=numbers --color=always --line-range :200 $realpath 2>/dev/null || cat $realpath
+  elif [[ $realpath == *.json ]]; then
+    # JSON files - pretty print with jq if available
+    jq -C . $realpath 2>/dev/null || bat --style=numbers --color=always --line-range :200 $realpath 2>/dev/null || cat $realpath
+  elif [[ $realpath == *.md || $realpath == *.markdown ]]; then
+    # Markdown files
+    bat --style=numbers --color=always --line-range :200 $realpath 2>/dev/null || cat $realpath
+  elif [[ $realpath == *.yml || $realpath == *.yaml ]]; then
+    # YAML files
+    bat --style=numbers --color=always --line-range :200 $realpath 2>/dev/null || cat $realpath
+  elif file --mime-type $realpath | grep -q "image/"; then
+    # Image files - show basic info
+    file -b $realpath
+  else
+    # Other files - show file info and first few lines
+    file -b $realpath
+    head -20 $realpath 2>/dev/null || echo "[Binary file]"
+  fi
+else
+  # Not a file or directory
+  echo "Not a regular file or directory: $realpath"
+fi'
 
 # Display command help in preview window for commands
 # Try different methods to show command help:
@@ -368,8 +401,6 @@ zstyle ':fzf-tab:complete:(\\|)([^:]#):*' fzf-preview '
 zstyle ':fzf-tab:complete:systemctl-*:*' fzf-preview 'SYSTEMD_COLORS=1 systemctl status $word'
 # Special case for kill completion to show process info
 zstyle ':fzf-tab:complete:kill:argument-rest' fzf-preview 'ps --pid=$word -o cmd,pid,%cpu,%mem,user,start,time,stat'
-# If not a command/special case, use standard file preview
-zstyle ':fzf-tab:complete:*:*' fzf-preview 'less ${(Q)realpath} 2>/dev/null || echo $realpath'
 
 # Switch group using `,` and `.`
 zstyle ':fzf-tab:*' switch-group ',' '.'
@@ -381,8 +412,8 @@ zstyle ':fzf-tab:*' continuous-trigger 'tab'
 # This can help with iTerm compatibility
 zstyle ':fzf-tab:*' fzf-command fzf
 
-# Enable mouse support
-zstyle ':fzf-tab:*' fzf-flags '--bind=ctrl-space:toggle' '--cycle'
+# Configure preview window size and position with enhanced controls
+zstyle ':fzf-tab:*' fzf-flags '--preview-window=right:60%:wrap' '--bind=ctrl-space:toggle,tab:accept,shift-tab:toggle+down' '--cycle'
 
 # Special settings for iTerm compatibility
 # Use these settings to ensure all features work together properly
