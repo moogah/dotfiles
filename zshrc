@@ -479,5 +479,5 @@ export GTAGSLABEL=pygments
 export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
 
 # Add Claude CLI to aliases
-alias claude="/Users/jefffarr/.claude/local/claude"
+#alias claude="/Users/jefffarr/.claude/local/claude"
 # Development Tools Configuration:1 ends here
