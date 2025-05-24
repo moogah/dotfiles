@@ -1,5 +1,5 @@
 [user]
-	email = jeff.farr@apploi.com
+	email = moogah@gmail.com
 	name = Jeff Farr
 [init]
 	defaultBranch = main
@@ -9,6 +9,6 @@
 	process = git-lfs filter-process
 	required = true
 [github]
-	user = jefarr-apploi
+	user = moogah
 [core]
 	excludesFile = ~/.gitignore_global
