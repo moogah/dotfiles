@@ -240,6 +240,11 @@ function clean-known-hosts() {
 }
 # SSH Management Functions:1 ends here
 
+# command to hopefully unfreeze emacs if it stops responding to user input
+function unfreeze_emacs() {
+  pkill -SIGUSR2 emacs
+}
+
 # Shell Options
 
 # Additional settings to configure shell behavior.
@@ -477,6 +482,7 @@ export GTAGSLABEL=pygments
 
 # Set postgres lib in path
 export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
+alias claude="/Users/jefffarr/.claude/local/claude"
 
 # Add Claude CLI to aliases
 #alias claude="/Users/jefffarr/.claude/local/claude"
