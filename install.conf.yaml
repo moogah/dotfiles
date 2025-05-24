@@ -7,7 +7,6 @@
 
 - link:
     ~/.gitignore_global: gitignore_global
-    ~/.gitconfig: gitconfig
     ~/.ssh/config: ssh/config
     ~/.vimrc: vimrc
     ~/.config/nvim/init.vim: init.vim
@@ -66,6 +65,17 @@
 
 - link:
     ~/.oh-my-zsh/custom/fzf.zsh: oh-my-zsh/custom/fzf.zsh
+
+# Machine-specific gitconfig
+- link:
+    ~/.gitconfig:
+      if: '[ `hostname` = molokai ]'
+      path: gitconfig.personal
+
+- link:
+    ~/.gitconfig:
+      if: '[ `hostname` = Jeffs-MBP ]'
+      path: gitconfig.work
 
 - link:
     ~/.oh-my-zsh/custom/plugins/fzf-tab: oh-my-zsh/custom/plugins/fzf-tab
