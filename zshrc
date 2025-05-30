@@ -1,4 +1,4 @@
-﻿# Powerlevel10k Instant Prompt
+# Powerlevel10k Instant Prompt
 
 # Powerlevel10k's instant prompt makes the shell appear instantly, rendering the UI elements while other startup operations happen in the background.
 
@@ -22,7 +22,7 @@ fi
 # export PATH=$HOME/bin:/usr/local/bin:$PATH
 
 # Path to your oh-my-zsh installation.
-export ZSH="/Users/jefffarr/.oh-my-zsh"
+export ZSH="$HOME/src/dotfiles/oh-my-zsh"
 
 # Set name of the theme to load --- if set to "random", it will
 # load a random theme each time oh-my-zsh is loaded, in which case,
@@ -278,7 +278,7 @@ zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
 
 # [[file:zshrc.org::*Theme Configuration][Theme Configuration:1]]
 # Power Level 10k Configuration
-source /usr/local/opt/powerlevel10k/powerlevel10k.zsh-theme
+# Theme is loaded through oh-my-zsh plugins
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
@@ -450,8 +450,8 @@ bindkey '^I' fzf-tab-complete
 
 
 # [[file:zshrc.org::*Syntax Highlighting][Syntax Highlighting:1]]
-# Source the zsh-syntax-highlighting plugin
-source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+# zsh-syntax-highlighting is now loaded through the plugins array above
+# No manual sourcing needed
 # Syntax Highlighting:1 ends here
 
 # FZF Integration

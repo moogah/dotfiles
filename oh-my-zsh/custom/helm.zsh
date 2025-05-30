@@ -1,2 +1,2 @@
 # Load helm autocompletions
-source ~/helm.zsh
+[ -f ~/helm.zsh ] && source ~/helm.zsh
