@@ -1,4 +1,4 @@
-;; -*- lexical-binding: t; -*-
+﻿;; -*- lexical-binding: t; -*-
 
 ;; ===============================================================================
 ;; Winner Mode - Window configuration history
@@ -11,13 +11,13 @@
 ;; Perspective - Workspace management for Emacs
 ;; ===============================================================================
 
-(use-package perspective
-  :straight t
-  :custom
-  (persp-mode-prefix-key (kbd "C-c M-p"))
-  (persp-modestring-short t)
-  :config
-  (persp-mode))
+ ;; (use-package perspective
+ ;;   :straight t
+ ;;   :custom
+ ;;   (persp-mode-prefix-key (kbd "C-c M-p"))
+ ;;   (persp-modestring-short t)
+ ;;   :config
+ ;;   (persp-mode))
 
 ;; ===============================================================================
 ;; Ace Window - Quick window selection
@@ -37,6 +37,11 @@
   (activities-tabs-mode)
   ;; Prevent `edebug' default bindings from interfering.
   (setq edebug-inhibit-emacs-lisp-mode-bindings t)
+
+  :config
+  (activities-mode)
+  (activities-tabs-mode)
+  (customize-set-variable 'activities-buffer-isolation-mode t)
 
   :bind
   (("C-x C-a C-n" . activities-new)

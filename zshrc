@@ -1,4 +1,4 @@
-# Powerlevel10k Instant Prompt
+﻿# Powerlevel10k Instant Prompt
 
 # Powerlevel10k's instant prompt makes the shell appear instantly, rendering the UI elements while other startup operations happen in the background.
 
@@ -240,10 +240,15 @@ function clean-known-hosts() {
 }
 # SSH Management Functions:1 ends here
 
+# Un-freeze Emacs
+
+
+# [[file:zshrc.org::*Un-freeze Emacs][Un-freeze Emacs:1]]
 # command to hopefully unfreeze emacs if it stops responding to user input
 function unfreeze_emacs() {
   pkill -SIGUSR2 emacs
 }
+# Un-freeze Emacs:1 ends here
 
 # Shell Options
 
@@ -482,8 +487,4 @@ export GTAGSLABEL=pygments
 
 # Set postgres lib in path
 export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
-alias claude="/Users/jefffarr/.claude/local/claude"
-
-# Add Claude CLI to aliases
-#alias claude="/Users/jefffarr/.claude/local/claude"
 # Development Tools Configuration:1 ends here

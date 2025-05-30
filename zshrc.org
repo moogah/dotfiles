@@ -1,6 +1,8 @@
 #+TITLE: ZSH Configuration
 #+AUTHOR: Jeff Farr
 #+PROPERTY: header-args:sh :tangle ~/src/dotfiles/zshrc :comments both
+#+auto_tangle: y
+
 
 * Introduction
 
@@ -30,23 +32,28 @@ Oh My Zsh is a framework for managing ZSH configuration, providing themes, plugi
 Path to the Oh My Zsh installation and theme selection.
 
 #+begin_src sh
-# If you come from bash you might have to change your $PATH.
-# export PATH=$HOME/bin:/usr/local/bin:$PATH
+  # If you come from bash you might have to change your $PATH.
+  # export PATH=$HOME/bin:/usr/local/bin:$PATH
 
-# Path to your oh-my-zsh installation.
-export ZSH="/Users/jefffarr/.oh-my-zsh"
+  # install zsh-completions before oh-my-zsh
+  fpath+=${ZSH_CUSTOM:-${ZSH:-~/.oh-my-zsh}/custom}/plugins/zsh-completions/src
+  autoload -U compinit && compinit
+  source "$ZSH/oh-my-zsh.sh"
 
-# Set name of the theme to load --- if set to "random", it will
-# load a random theme each time oh-my-zsh is loaded, in which case,
-# to know which specific one was loaded, run: echo $RANDOM_THEME
-# See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
-ZSH_THEME="powerlevel10k/powerlevel10k"
+  # Path to your oh-my-zsh installation.
+  export ZSH="/Users/jefffarr/.oh-my-zsh"
 
-# Set list of themes to pick from when loading at random
-# Setting this variable when ZSH_THEME=random will cause zsh to load
-# a theme from this variable instead of looking in ~/.oh-my-zsh/themes/
-# If set to an empty array, this variable will have no effect.
-# ZSH_THEME_RANDOM_CANDIDATES=( "robbyrussell" "agnoster" )
+  # Set name of the theme to load --- if set to "random", it will
+  # load a random theme each time oh-my-zsh is loaded, in which case,
+  # to know which specific one was loaded, run: echo $RANDOM_THEME
+  # See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
+  ZSH_THEME="powerlevel10k/powerlevel10k"
+
+  # Set list of themes to pick from when loading at random
+  # Setting this variable when ZSH_THEME=random will cause zsh to load
+  # a theme from this variable instead of looking in ~/.oh-my-zsh/themes/
+  # If set to an empty array, this variable will have no effect.
+  # ZSH_THEME_RANDOM_CANDIDATES=( "robbyrussell" "agnoster" )
 #+end_src
 
 ** Shell Behavior Options
@@ -246,6 +253,15 @@ Functions to manage SSH configurations.
 function clean-known-hosts() {
   sed -i '' -e '"$@"d' ~/.ssh/known_hosts
 }
+#+end_src
+
+** Un-freeze Emacs
+
+#+begin_src sh
+  # command to hopefully unfreeze emacs if it stops responding to user input
+  function unfreeze_emacs() {
+    pkill -SIGUSR2 emacs
+  }
 #+end_src
 
 * Shell Options
@@ -537,7 +553,4 @@ export GTAGSLABEL=pygments
 
 # Set postgres lib in path
 export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
-
-# Add Claude CLI to aliases
-alias claude="/Users/jefffarr/.claude/local/claude"
 #+end_src
