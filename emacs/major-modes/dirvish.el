@@ -1,4 +1,5 @@
-;; -*- lexical-binding: t; -*-
+﻿;; -*- lexical-binding: t; -*-
+
 
 ;; Core Dirvish setup with specific version
 (use-package dirvish
@@ -7,7 +8,7 @@
   (dirvish-override-dired-mode)
   :custom
   (dirvish-mode-line-format
-   '(:left (sort file-time " " file-size symlink) :right (omit yank index)))
+   '(:left (path) :right (sort file-time " " file-size symlink omit yank index)))
   (dirvish-attributes '(vscode-icon file-size collapse subtree-state vc-state))
   :config
   ;; Platform-specific settings
@@ -50,6 +51,23 @@
 ;; Automatically update dired buffers when state-on-disk changes
 (add-hook 'dired-mode-hook 'auto-revert-mode)
 
+;; Custom function to copy file paths relative to git repo root
+(defun dirvish-copy-file-path-relative (&optional multi-line)
+  "Copy filepath of marked files relative to project root.
+If MULTI-LINE, make every path occupy a new line.
+Uses dirvish's built-in project detection via project.el."
+  (interactive "P")
+  (if-let ((project-root (dirvish--get-project-root)))
+      (let* ((files (mapcar #'file-local-name (dired-get-marked-files)))
+             (relative-files (mapcar (lambda (file)
+                                       (file-relative-name file project-root))
+                                     files))
+             (names (mapconcat #'concat relative-files (if multi-line "\n" " ")))
+             (result (if multi-line (concat "\n" names) names)))
+        (kill-new result)
+        (message "Copied: %s" result))
+    (message "Not in a project")))
+
 ;; Global and mode-specific keybindings
 (with-eval-after-load 'dirvish
   ;; Global keys
@@ -70,6 +88,7 @@
   (define-key dirvish-mode-map (kbd "b") 'dirvish-quick-access)
   (define-key dirvish-mode-map (kbd "f") 'dirvish-file-info-menu)
   (define-key dirvish-mode-map (kbd "y") 'dirvish-yank-menu)
+  (define-key dirvish-mode-map (kbd "Y") 'dirvish-copy-file-path-relative)
   (define-key dirvish-mode-map (kbd "N") 'dirvish-narrow)
   (define-key dirvish-mode-map (kbd "/") 'dired-isearch-filenames)
   (define-key dirvish-mode-map (kbd "^") 'dirvish-history-last)
