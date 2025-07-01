@@ -35,13 +35,13 @@ Perspective provides workspace functionality similar to virtual desktops.
   ;; Perspective - Workspace management for Emacs
   ;; ===============================================================================
 
-   ;; (use-package perspective
-   ;;   :straight t
-   ;;   :custom
-   ;;   (persp-mode-prefix-key (kbd "C-c M-p"))
-   ;;   (persp-modestring-short t)
-   ;;   :config
-   ;;   (persp-mode))
+    (use-package perspective
+      :straight t
+      :custom
+      (persp-mode-prefix-key (kbd "C-c M-p"))
+      (persp-modestring-short t)
+      :config
+      (persp-mode))
 #+end_src
 
 * Ace Window
@@ -75,7 +75,6 @@ Activities provides a higher-level workspace management and task organization sy
     :config
     (activities-mode)
     (activities-tabs-mode)
-    (setq activities-buffer-isolation-mode t)
 
     :bind
     (("C-x C-a C-n" . activities-new)

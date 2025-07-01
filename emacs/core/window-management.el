@@ -11,13 +11,13 @@
 ;; Perspective - Workspace management for Emacs
 ;; ===============================================================================
 
- ;; (use-package perspective
- ;;   :straight t
- ;;   :custom
- ;;   (persp-mode-prefix-key (kbd "C-c M-p"))
- ;;   (persp-modestring-short t)
- ;;   :config
- ;;   (persp-mode))
+  (use-package perspective
+    :straight t
+    :custom
+    (persp-mode-prefix-key (kbd "C-c M-p"))
+    (persp-modestring-short t)
+    :config
+    (persp-mode))
 
 ;; ===============================================================================
 ;; Ace Window - Quick window selection
@@ -41,7 +41,6 @@
   :config
   (activities-mode)
   (activities-tabs-mode)
-  (customize-set-variable 'activities-buffer-isolation-mode t)
 
   :bind
   (("C-x C-a C-n" . activities-new)
