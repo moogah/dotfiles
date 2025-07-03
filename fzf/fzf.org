@@ -1,6 +1,7 @@
 #+TITLE: FZF Configuration
 #+AUTHOR: Jeff Farr
 #+PROPERTY: header-args:sh :tangle ~/src/dotfiles/fzf.zsh :comments both
+#+auto_tangle: y
 
 * Introduction
 
