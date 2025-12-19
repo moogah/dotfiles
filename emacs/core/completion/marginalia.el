@@ -5,7 +5,7 @@
 ;; ===============================================================================
 
 (use-package marginalia
-  :straight (marginalia :host github :repo "minad/consult/marginalia") ; later versions require emacs 29
+  :straight (marginalia :host github :repo "minad/marginalia") 
   :bind (
    :map minibuffer-local-map
         ("M-A" . marginalia-cycle))

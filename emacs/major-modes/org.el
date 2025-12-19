@@ -91,6 +91,14 @@
                           "~/org/roam/inbox/" 
                           "~/org/roam/dailies"))
 
+;; Display sorting for TODO items
+
+(setq org-agenda-sorting-strategy
+      '((agenda time-up priority-down category-up)
+        (todo priority-down alpha-up)
+        (tags priority-down category-up alpha-up)
+        (search category-up)))
+
 ;; Open agenda in current window
 (setq open-agenda-window-setup (quote current-window))
 
@@ -153,3 +161,13 @@
 
 (use-package org-download
   :straight t)
+
+;; ===============================================================================
+;; Install ob-async for async babel execution
+;; ===============================================================================
+
+(use-package ob-async
+  :straight t
+  :config)
+  ;; Uncomment to disable async for specific languages
+  ;(setq ob-async-no-async-languages-alist '("ipython"))

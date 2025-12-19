@@ -141,28 +141,36 @@ Configure priority levels and their appearance.
 Setup for Org agenda views and files.
 
 #+begin_src emacs-lisp
-;; Agenda key binding
-(global-set-key (kbd "C-c a") 'org-agenda)
+  ;; Agenda key binding
+  (global-set-key (kbd "C-c a") 'org-agenda)
 
-;; Agenda files
-(setq org-agenda-files '("~/org/" 
-                          "~/org/agenda" 
-                          "~/org/roam/" 
-                          "~/org/roam/inbox/" 
-                          "~/org/roam/dailies"))
+  ;; Agenda files
+  (setq org-agenda-files '("~/org/" 
+                            "~/org/agenda" 
+                            "~/org/roam/" 
+                            "~/org/roam/inbox/" 
+                            "~/org/roam/dailies"))
 
-;; Open agenda in current window
-(setq open-agenda-window-setup (quote current-window))
+  ;; Display sorting for TODO items
 
-;; Custom agenda views
-;; From https://blog.aaronbieber.com/2016/09/24/an-agenda-for-life-with-org-mode.html
-(setq org-agenda-custom-commands
-      '(("c" "Simple agenda view"
-         ((tags "PRIORITY=\"A\""
-                ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
-                 (org-agenda-overriding-header "High Priority Tasks:")))
-          (agenda "")
-          (alltodo "")))))
+  (setq org-agenda-sorting-strategy
+        '((agenda time-up priority-down category-up)
+          (todo priority-down alpha-up)
+          (tags priority-down category-up alpha-up)
+          (search category-up)))
+
+  ;; Open agenda in current window
+  (setq open-agenda-window-setup (quote current-window))
+
+  ;; Custom agenda views
+  ;; From https://blog.aaronbieber.com/2016/09/24/an-agenda-for-life-with-org-mode.html
+  (setq org-agenda-custom-commands
+        '(("c" "Simple agenda view"
+           ((tags "PRIORITY=\"A\""
+                  ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
+                   (org-agenda-overriding-header "High Priority Tasks:")))
+            (agenda "")
+            (alltodo "")))))
 #+end_src
 
 ** Capture Templates

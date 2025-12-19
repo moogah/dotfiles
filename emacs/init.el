@@ -1,4 +1,4 @@
-﻿;; -*- lexical-binding: t; -*-
+;; -*- lexical-binding: t; -*-
 
 ;; Startup profiling - uncomment to debug startup time
 ;; (defvar jf/init-start-time (current-time))
@@ -86,6 +86,7 @@
     ("core/defaults"      "Basic Emacs behavior")
     ("core/auth"      "GPG and authinfo setup")
     ("core/avy"      "avy navigation package")
+    ("core/browser-hist"     "Search browser history")
     ("core/ripgrep"      "")
     ("core/ultra-scroll"      "")
     ("core/expand-region"      "")

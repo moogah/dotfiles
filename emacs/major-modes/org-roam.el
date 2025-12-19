@@ -5,8 +5,6 @@
 (straight-use-package 'org)
 
 ;; Use a specific version of emacsql-sqlite with all required files
-(use-package emacsql-sqlite
-  :straight (emacsql-sqlite :type git :host github :repo "magit/emacsql" :branch main :files ("emacsql-sqlite.el" "emacsql-sqlite-common.el" "sqlite")))
 
 ;; ===============================================================================
 ;; Configure Org-Roam Core
@@ -61,8 +59,8 @@
         :unnarrowed t)))
 
 ;; Configure automatic Git synchronization
-(use-package git-sync-mode
-  :straight (git-sync-mode :host github :repo "justinbarclay/git-sync-mode")
-  :config
-  (git-sync-global-mode)
-  (add-to-list 'git-sync-allow-list '"~/org/roam"))
+;;(use-package git-sync-mode
+;;  :straight (git-sync-mode :host github :repo "justinbarclay/git-sync-mode")
+;;  :config
+;;  (git-sync-global-mode)
+;;  (add-to-list 'git-sync-allow-list '"~/org/roam"))
