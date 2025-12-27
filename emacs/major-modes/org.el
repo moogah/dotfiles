@@ -118,7 +118,7 @@
 ;; Basic capture templates
 (setq org-capture-templates
       '(("t" "todo" entry (file+headline "~/todo.org" "Tasks")
-         "* TODO [#A] %?" :empty-lines-before 1)))
+         "* TODO [#B] %?" :empty-lines-before 1)))
 
 ;; Git integration for Org
 (use-package orgit

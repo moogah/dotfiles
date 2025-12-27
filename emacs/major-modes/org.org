@@ -173,6 +173,9 @@ Setup for Org agenda views and files.
             (alltodo "")))))
 #+end_src
 
+*** TODO Install org-super-agenda
+
+
 ** Capture Templates
 Configure templates for quickly capturing notes and tasks.
 
@@ -183,7 +186,7 @@ Configure templates for quickly capturing notes and tasks.
 ;; Basic capture templates
 (setq org-capture-templates
       '(("t" "todo" entry (file+headline "~/todo.org" "Tasks")
-         "* TODO [#A] %?" :empty-lines-before 1)))
+         "* TODO [#B] %?" :empty-lines-before 1)))
 #+end_src
 
 * Git Integration
