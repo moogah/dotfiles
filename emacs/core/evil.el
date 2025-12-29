@@ -1,4 +1,4 @@
-﻿;; -*- lexical-binding: t; -*-
+;; -*- lexical-binding: t; -*-
 
 ;; ===============================================================================
 ;; Configure Evil mode - Vim emulation for Emacs
@@ -133,8 +133,8 @@
 ;; Projectile bindings
 (with-eval-after-load 'projectile
   ;; Global projectile bindings
-  (evil-define-key 'normal 'global (kbd "<SPC> r") 'projectile-ripgrep)
-  (evil-define-key 'normal 'global (kbd "<SPC> f") 'project-find-file)
+  (evil-define-key 'normal 'global (kbd "<SPC> r") 'consult-projectile-ripgrep)
+  (evil-define-key 'normal 'global (kbd "<SPC> f") 'consult-projectile-find-file)
 
   ;; Define prefix key for projectile commands
   (define-prefix-command 'my-projectile-command-map)
