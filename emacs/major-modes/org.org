@@ -138,6 +138,7 @@ Configure priority levels and their appearance.
 #+end_src
 
 ** Agenda Configuration
+
 Setup for Org agenda views and files.
 
 #+begin_src emacs-lisp
@@ -167,17 +168,101 @@ Setup for Org agenda views and files.
                   ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
                    (org-agenda-overriding-header "High Priority Tasks:")))
             (agenda "")
-            (alltodo "")))))
+            (alltodo "")))
+          ("n" "Enhanced TODO view with newest/oldest"
+           ((alltodo ""
+                     ((org-agenda-overriding-header "📅 3 Most Recent TODOs")
+                      (org-agenda-sorting-strategy '(timestamp-down))
+                      (org-agenda-skip-function
+                       '(or (org-agenda-skip-entry-if 'notregexp ":CREATED:")
+                            (when (> (org-current-line)
+                                    (+ (org-current-line) 3))
+                              (point-max))))
+                      (org-super-agenda-groups nil)))
+            (alltodo ""
+                     ((org-agenda-overriding-header "⏳ 10 Oldest TODOs")
+                      (org-agenda-sorting-strategy '(timestamp-up))
+                      (org-agenda-skip-function
+                       '(or (org-agenda-skip-entry-if 'notregexp ":CREATED:")
+                            (when (> (org-current-line)
+                                    (+ (org-current-line) 10))
+                              (point-max))))
+                      (org-super-agenda-groups nil)))
+            (alltodo ""
+                     ((org-agenda-overriding-header "All TODOs")
+                      (org-super-agenda-groups
+                       '((:name "High Priority"
+                          :priority "A"
+                          :order 1)
+                         (:name "Personal Knowledge Management"
+                          :category "pkm"
+                          :order 2)
+                         (:name "Getting Things Done"
+                          :category "gtd"
+                          :order 3)
+                         (:name "Everything Else"
+                          :anything t
+                          :order 99)))))))))
+#+end_src
+
+*** Org QL
+
+org-ql provides powerful querying capabilities for org files.
+
+#+begin_src emacs-lisp
+;; org-ql for powerful agenda queries
+(use-package org-ql
+  :straight t
+  :after org)
+#+end_src
+
+*** Org Expiry
+
+Automatically add CREATED property to new org entries for tracking creation time.
+
+#+begin_src emacs-lisp
+;; Automatically add CREATED property to new org entries
+(use-package org-expiry
+  :straight (org-contrib :includes org-expiry)
+  :after org
+  :config
+  (setq org-expiry-created-property-name "CREATED")
+  (setq org-expiry-inactive-timestamps t)
+  (org-expiry-insinuate))
 #+end_src
 
 *** Org Super Agenda
-
 
 Enhance agenda views with automatic grouping and filtering.
 
 org-super-agenda provides flexible, customizable grouping for agenda items. It works by filtering items after org-agenda builds the view, allowing you to organize tasks by priority, tags, deadlines, and more.
 
 See the [[https://github.com/alphapapa/org-super-agenda][official documentation]] for advanced grouping options.
+
+**** Evil Mode Navigation in Agenda
+
+evil-org-mode is enabled for org-agenda buffers (configured in =emacs/core/evil.org=), providing vim-style keybindings:
+
+**Movement:**
+- =j/k= - Move up/down through entries
+- =gg/G= - Jump to top/bottom
+- =C-d/C-u= - Scroll down/up half page
+
+**Actions:**
+- =RET= or =SPC= - Open item at point
+- =TAB= - Show item details in other window
+- =r= - Refresh agenda
+- =q= - Quit agenda buffer
+- =.= - Go to today
+
+**Time Navigation:**
+- =f/b= - Go forward/backward in time
+- =d/w/m/y= - Switch to day/week/month/year view
+
+**Other:**
+- =t= - Show TODO entries
+- =v= - View mode toggles (followed by another key)
+- =?= - Show all keybindings
 
 #+begin_src emacs-lisp
 ;; Enhanced agenda grouping with org-super-agenda
@@ -214,7 +299,8 @@ Configure templates for quickly capturing notes and tasks.
 ;; Basic capture templates
 (setq org-capture-templates
       '(("t" "todo" entry (file+headline "~/todo.org" "Tasks")
-         "* TODO [#B] %?" :empty-lines-before 1)))
+         "* TODO [#B] %?\n:PROPERTIES:\n:CREATED: %U\n:END:"
+         :empty-lines-before 1)))
 #+end_src
 
 * Git Integration

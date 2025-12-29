@@ -107,7 +107,55 @@
                 ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
                  (org-agenda-overriding-header "High Priority Tasks:")))
           (agenda "")
-          (alltodo "")))))
+          (alltodo "")))
+        ("n" "Enhanced TODO view with newest/oldest"
+         ((alltodo ""
+                   ((org-agenda-overriding-header "📅 3 Most Recent TODOs")
+                    (org-agenda-sorting-strategy '(timestamp-down))
+                    (org-agenda-skip-function
+                     '(or (org-agenda-skip-entry-if 'notregexp ":CREATED:")
+                          (when (> (org-current-line)
+                                  (+ (org-current-line) 3))
+                            (point-max))))
+                    (org-super-agenda-groups nil)))
+          (alltodo ""
+                   ((org-agenda-overriding-header "⏳ 10 Oldest TODOs")
+                    (org-agenda-sorting-strategy '(timestamp-up))
+                    (org-agenda-skip-function
+                     '(or (org-agenda-skip-entry-if 'notregexp ":CREATED:")
+                          (when (> (org-current-line)
+                                  (+ (org-current-line) 10))
+                            (point-max))))
+                    (org-super-agenda-groups nil)))
+          (alltodo ""
+                   ((org-agenda-overriding-header "All TODOs")
+                    (org-super-agenda-groups
+                     '((:name "High Priority"
+                        :priority "A"
+                        :order 1)
+                       (:name "Personal Knowledge Management"
+                        :category "pkm"
+                        :order 2)
+                       (:name "Getting Things Done"
+                        :category "gtd"
+                        :order 3)
+                       (:name "Everything Else"
+                        :anything t
+                        :order 99)))))))))
+
+;; org-ql for powerful agenda queries
+(use-package org-ql
+  :straight t
+  :after org)
+
+;; Automatically add CREATED property to new org entries
+(use-package org-expiry
+  :straight (org-contrib :includes org-expiry)
+  :after org
+  :config
+  (setq org-expiry-created-property-name "CREATED")
+  (setq org-expiry-inactive-timestamps t)
+  (org-expiry-insinuate))
 
 ;; Enhanced agenda grouping with org-super-agenda
 (use-package org-super-agenda
@@ -137,7 +185,8 @@
 ;; Basic capture templates
 (setq org-capture-templates
       '(("t" "todo" entry (file+headline "~/todo.org" "Tasks")
-         "* TODO [#B] %?" :empty-lines-before 1)))
+         "* TODO [#B] %?\n:PROPERTIES:\n:CREATED: %U\n:END:"
+         :empty-lines-before 1)))
 
 ;; Git integration for Org
 (use-package orgit
