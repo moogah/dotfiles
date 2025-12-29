@@ -84,12 +84,9 @@
 ;; Agenda key binding
 (global-set-key (kbd "C-c a") 'org-agenda)
 
-;; Agenda files
-(setq org-agenda-files '("~/org/" 
-                          "~/org/agenda" 
-                          "~/org/roam/" 
-                          "~/org/roam/inbox/" 
-                          "~/org/roam/dailies"))
+;; Agenda files - recursively find all .org files in ~/org/ directory
+(setq org-agenda-files
+      (directory-files-recursively "~/org/" "\\.org$"))
 
 ;; Display sorting for TODO items
 
@@ -111,6 +108,28 @@
                  (org-agenda-overriding-header "High Priority Tasks:")))
           (agenda "")
           (alltodo "")))))
+
+;; Enhanced agenda grouping with org-super-agenda
+(use-package org-super-agenda
+  :straight t
+  :after org
+  :config
+  (org-super-agenda-mode 1)
+
+  ;; Group by priority and category
+  (setq org-super-agenda-groups
+        '((:name "High Priority"
+           :priority "A"
+           :order 1)
+          (:name "Personal Knowledge Management"
+           :category "pkm"
+           :order 2)
+          (:name "Getting Things Done"
+           :category "gtd"
+           :order 3)
+          (:name "Everything Else"
+           :anything t
+           :order 99))))
 
 ;; Capture key binding
 (define-key global-map (kbd "C-c c") 'org-capture)

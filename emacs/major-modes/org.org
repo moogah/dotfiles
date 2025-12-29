@@ -144,12 +144,9 @@ Setup for Org agenda views and files.
   ;; Agenda key binding
   (global-set-key (kbd "C-c a") 'org-agenda)
 
-  ;; Agenda files
-  (setq org-agenda-files '("~/org/" 
-                            "~/org/agenda" 
-                            "~/org/roam/" 
-                            "~/org/roam/inbox/" 
-                            "~/org/roam/dailies"))
+  ;; Agenda files - recursively find all .org files in ~/org/ directory
+  (setq org-agenda-files
+        (directory-files-recursively "~/org/" "\\.org$"))
 
   ;; Display sorting for TODO items
 
@@ -173,7 +170,38 @@ Setup for Org agenda views and files.
             (alltodo "")))))
 #+end_src
 
-*** TODO Install org-super-agenda
+*** Org Super Agenda
+
+
+Enhance agenda views with automatic grouping and filtering.
+
+org-super-agenda provides flexible, customizable grouping for agenda items. It works by filtering items after org-agenda builds the view, allowing you to organize tasks by priority, tags, deadlines, and more.
+
+See the [[https://github.com/alphapapa/org-super-agenda][official documentation]] for advanced grouping options.
+
+#+begin_src emacs-lisp
+;; Enhanced agenda grouping with org-super-agenda
+(use-package org-super-agenda
+  :straight t
+  :after org
+  :config
+  (org-super-agenda-mode 1)
+
+  ;; Group by priority and category
+  (setq org-super-agenda-groups
+        '((:name "High Priority"
+           :priority "A"
+           :order 1)
+          (:name "Personal Knowledge Management"
+           :category "pkm"
+           :order 2)
+          (:name "Getting Things Done"
+           :category "gtd"
+           :order 3)
+          (:name "Everything Else"
+           :anything t
+           :order 99))))
+#+end_src
 
 
 ** Capture Templates
