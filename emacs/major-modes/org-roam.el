@@ -1,10 +1,8 @@
-;; -*- lexical-binding: t; -*-
+﻿;; -*- lexical-binding: t; -*-
 
 ;; org-roam is sensitive to org version changes
 ;; Ensure we have a compatible version of org loaded
 (straight-use-package 'org)
-
-;; Use a specific version of emacsql-sqlite with all required files
 
 ;; ===============================================================================
 ;; Configure Org-Roam Core
@@ -23,14 +21,16 @@
   (org-roam-db-autosync-mode))
 
 ;; Set the directory for daily notes
+;; this may be overridden by machine specific config
+
 (setq org-roam-dailies-directory "dailies/")
 
 ;; Configure daily note templates
 (setq org-roam-dailies-capture-templates
       '(("d" "default" plain
          (file "~/.emacs.d/templates/org-roam-dailies-default.org")
-         :if-new (file+head "apploi-%<%Y-%m-%d>.org"
-                            "#+title: apploi-%<%Y-%m-%d>\n\n* %<%Y-%m-%d> Meetings\n\n* %<%Y-%m-%d> Worklog\n\n* %<%Y-%m-%d> Tasks")
+         :if-new (file+head "%<%Y-%m-%d>.org"
+                            "#+title: %<%Y-%m-%d>\n\n")
          :unnarrowed t)))
 
 ;; Enable org-roam-protocol

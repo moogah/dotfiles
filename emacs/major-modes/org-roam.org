@@ -76,16 +76,18 @@ Kept for reference purposes.
 Configure the directory and templates for daily notes.
 
 #+begin_src emacs-lisp
-;; Set the directory for daily notes
-(setq org-roam-dailies-directory "dailies/")
+  ;; Set the directory for daily notes
+  ;; this may be overridden by machine specific config
 
-;; Configure daily note templates
-(setq org-roam-dailies-capture-templates
-      '(("d" "default" plain
-         (file "~/.emacs.d/templates/org-roam-dailies-default.org")
-         :if-new (file+head "apploi-%<%Y-%m-%d>.org"
-                            "#+title: apploi-%<%Y-%m-%d>\n\n* %<%Y-%m-%d> Meetings\n\n* %<%Y-%m-%d> Worklog\n\n* %<%Y-%m-%d> Tasks")
-         :unnarrowed t)))
+  (setq org-roam-dailies-directory "dailies/")
+
+  ;; Configure daily note templates
+  (setq org-roam-dailies-capture-templates
+        '(("d" "default" plain
+           (file "~/.emacs.d/templates/org-roam-dailies-default.org")
+           :if-new (file+head "%<%Y-%m-%d>.org"
+                              "#+title: %<%Y-%m-%d>\n\n")
+           :unnarrowed t)))
 #+end_src
 
 * Protocol Configuration
