@@ -56,8 +56,8 @@ Set the active theme.
 ;; doom-moonlight
 ;; doom-palenight
 ;;(load-theme 'doom-palenight t)
-(load-theme 'doom-palenight)
-(enable-theme 'doom-palenight)
+(load-theme 'distinguished)
+(enable-theme 'distinguished)
 ;;(set-background-color "black")
 #+end_src
 
