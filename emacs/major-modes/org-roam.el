@@ -56,6 +56,11 @@
         "%?"
         :target
         (file+head "${slug}.org" "#+title: ${title}\n${body}")
+        :unnarrowed t)
+        ("b" "browser-history" plain
+        "%?"
+        :target
+        (file+head "${slug}.org" "#+title: ${title}\n\n")
         :unnarrowed t)))
 
 ;; Configure automatic Git synchronization

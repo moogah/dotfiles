@@ -129,6 +129,11 @@ Configure capture templates for web content via org-roam-protocol.
         "%?"
         :target
         (file+head "${slug}.org" "#+title: ${title}\n${body}")
+        :unnarrowed t)
+        ("b" "browser-history" plain
+        "%?"
+        :target
+        (file+head "${slug}.org" "#+title: ${title}\n\n")
         :unnarrowed t)))
 #+end_src
 
