@@ -103,8 +103,8 @@ setopt HIST_IGNORE_ALL_DUPS   # Don't save duplicates in history
 # Plugins
 
 
-HISTDB_TABULATE_CMD=(sed -e $'s/\x1f/\t/g')
-source $HOME/.oh-my-zsh/custom/plugins/zsh-histdb/sqlite-history.zsh
+# HISTDB_TABULATE_CMD=(sed -e $'s/\x1f/\t/g')
+# source $HOME/.oh-my-zsh/custom/plugins/zsh-histdb/sqlite-history.zsh
 autoload -Uz add-zsh-hook
 
 # Enable Oh My Zsh plugins to extend functionality.
@@ -491,5 +491,5 @@ export NVM_DIR="$HOME/.nvm"
 export GTAGSLABEL=pygments
 
 # Set postgres lib in path
-export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
+export PATH="$HOME/.local/bin:/opt/homebrew/opt/libpq/bin:$PATH"
 # Development Tools Configuration:1 ends here

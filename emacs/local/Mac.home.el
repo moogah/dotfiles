@@ -5,6 +5,6 @@
 (setq org-roam-dailies-directory "dailies/Mac.home/")
 
 (setq browser-hist-db-paths
-      '((chrome . "/Users/jefffarr/Library/Application Support/Google/Chrome/Default/History")))
+      '((chrome . "/Users/jefffarr/Library/Application Support/Google/Chrome/Profile 1/History")))
 
 (setq browser-hist-default-browser 'chrome)

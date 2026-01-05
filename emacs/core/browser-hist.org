@@ -9,6 +9,8 @@ Browser-hist is a package that allows you to search and access your web browser'
 [[https://github.com/agzam/browser-hist.el][Browser Hist]] provides a convenient interface to search through Chrome, Firefox, or other browser
 history databases directly from Emacs.
 
+
+
 * Lexical Binding
 Enable lexical binding for better closures and variable scoping.
 
