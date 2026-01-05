@@ -158,7 +158,7 @@ Setup for Org agenda views and files.
           (search category-up)))
 
   ;; Open agenda in current window
-  (setq open-agenda-window-setup (quote current-window))
+  (setq org-agenda-window-setup (quote current-window))
 
   ;; Custom agenda views
   ;; From https://blog.aaronbieber.com/2016/09/24/an-agenda-for-life-with-org-mode.html
@@ -288,6 +288,36 @@ evil-org-mode is enabled for org-agenda buffers (configured in =emacs/core/evil.
            :order 99))))
 #+end_src
 
+***** Agenda Tab Integration
+
+Configure org-agenda to open TODO items in new tabs, integrating with vim-tab-bar.
+
+When pressing RET on an agenda item, create a new tab and open the file there,
+leaving the agenda accessible in its original location.
+
+#+begin_src emacs-lisp
+;; Function to open agenda items in new tabs
+(defun my/org-agenda-switch-to-new-tab (orig-fn &rest args)
+  "Advice for `org-agenda-switch-to' to open items in a new tab.
+Creates a new tab before switching to the item, preserving the agenda view
+in its original tab."
+  (when (and (fboundp 'tab-bar-mode)
+             tab-bar-mode)
+    ;; Create a new tab - it will automatically switch to it
+    (tab-bar-new-tab))
+  ;; Call the original function - this will now happen in the new tab
+  (apply orig-fn args))
+
+;; Apply advice after org-agenda loads
+(with-eval-after-load 'org-agenda
+  (advice-add 'org-agenda-switch-to :around #'my/org-agenda-switch-to-new-tab))
+#+end_src
+
+***** TODO [#A] Set keybindings for org-insert-todo-heading and org-insert-todo-subheading
+:PROPERTIES:
+:CREATED:  [2025-12-29 Mon 16:33]
+:CATEGORY: gtd
+:END:
 
 ** Capture Templates
 Configure templates for quickly capturing notes and tasks.

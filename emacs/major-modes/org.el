@@ -97,7 +97,7 @@
         (search category-up)))
 
 ;; Open agenda in current window
-(setq open-agenda-window-setup (quote current-window))
+(setq org-agenda-window-setup (quote current-window))
 
 ;; Custom agenda views
 ;; From https://blog.aaronbieber.com/2016/09/24/an-agenda-for-life-with-org-mode.html
@@ -178,6 +178,22 @@
           (:name "Everything Else"
            :anything t
            :order 99))))
+
+;; Function to open agenda items in new tabs
+(defun my/org-agenda-switch-to-new-tab (orig-fn &rest args)
+  "Advice for `org-agenda-switch-to' to open items in a new tab.
+Creates a new tab before switching to the item, preserving the agenda view
+in its original tab."
+  (when (and (fboundp 'tab-bar-mode)
+             tab-bar-mode)
+    ;; Create a new tab - it will automatically switch to it
+    (tab-bar-new-tab))
+  ;; Call the original function - this will now happen in the new tab
+  (apply orig-fn args))
+
+;; Apply advice after org-agenda loads
+(with-eval-after-load 'org-agenda
+  (advice-add 'org-agenda-switch-to :around #'my/org-agenda-switch-to-new-tab))
 
 ;; Capture key binding
 (define-key global-map (kbd "C-c c") 'org-capture)
