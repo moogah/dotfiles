@@ -34,8 +34,8 @@
 ;; doom-moonlight
 ;; doom-palenight
 ;;(load-theme 'doom-palenight t)
-(load-theme 'distinguished)
-(enable-theme 'distinguished)
+(load-theme 'doom-palenight)
+(enable-theme 'doom-palenight)
 ;;(set-background-color "black")
 
 ;; set font size to 14pt for my aging eyes

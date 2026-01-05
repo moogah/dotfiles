@@ -102,6 +102,11 @@ setopt HIST_IGNORE_ALL_DUPS   # Don't save duplicates in history
 
 # Plugins
 
+
+HISTDB_TABULATE_CMD=(sed -e $'s/\x1f/\t/g')
+source $HOME/.oh-my-zsh/custom/plugins/zsh-histdb/sqlite-history.zsh
+autoload -Uz add-zsh-hook
+
 # Enable Oh My Zsh plugins to extend functionality.
 
 

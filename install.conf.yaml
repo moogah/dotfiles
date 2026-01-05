@@ -74,6 +74,11 @@
 
 - link:
     ~/.gitconfig:
+      if: '[ `hostname` = Jeffs-MacBook-Air.local ]'
+      path: gitconfig.personal
+
+- link:
+    ~/.gitconfig:
       if: '[ `hostname` = Jeffs-MBP ]'
       path: gitconfig.work
 

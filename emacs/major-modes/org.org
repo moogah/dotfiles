@@ -138,32 +138,186 @@ Configure priority levels and their appearance.
 #+end_src
 
 ** Agenda Configuration
+
 Setup for Org agenda views and files.
 
 #+begin_src emacs-lisp
-;; Agenda key binding
-(global-set-key (kbd "C-c a") 'org-agenda)
+  ;; Agenda key binding
+  (global-set-key (kbd "C-c a") 'org-agenda)
 
-;; Agenda files
-(setq org-agenda-files '("~/org/" 
-                          "~/org/agenda" 
-                          "~/org/roam/" 
-                          "~/org/roam/inbox/" 
-                          "~/org/roam/dailies"))
+  ;; Agenda files - recursively find all .org files in ~/org/ directory
+  (setq org-agenda-files
+        (directory-files-recursively "~/org/" "\\.org$"))
 
-;; Open agenda in current window
-(setq open-agenda-window-setup (quote current-window))
+  ;; Display sorting for TODO items
 
-;; Custom agenda views
-;; From https://blog.aaronbieber.com/2016/09/24/an-agenda-for-life-with-org-mode.html
-(setq org-agenda-custom-commands
-      '(("c" "Simple agenda view"
-         ((tags "PRIORITY=\"A\""
-                ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
-                 (org-agenda-overriding-header "High Priority Tasks:")))
-          (agenda "")
-          (alltodo "")))))
+  (setq org-agenda-sorting-strategy
+        '((agenda time-up priority-down category-up)
+          (todo priority-down alpha-up)
+          (tags priority-down category-up alpha-up)
+          (search category-up)))
+
+  ;; Open agenda in current window
+  (setq org-agenda-window-setup (quote current-window))
+
+  ;; Custom agenda views
+  ;; From https://blog.aaronbieber.com/2016/09/24/an-agenda-for-life-with-org-mode.html
+  (setq org-agenda-custom-commands
+        '(("c" "Simple agenda view"
+           ((tags "PRIORITY=\"A\""
+                  ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
+                   (org-agenda-overriding-header "High Priority Tasks:")))
+            (agenda "")
+            (alltodo "")))
+          ("n" "Enhanced TODO view with newest/oldest"
+           ((alltodo ""
+                     ((org-agenda-overriding-header "📅 3 Most Recent TODOs")
+                      (org-agenda-sorting-strategy '(timestamp-down))
+                      (org-agenda-skip-function
+                       '(or (org-agenda-skip-entry-if 'notregexp ":CREATED:")
+                            (when (> (org-current-line)
+                                    (+ (org-current-line) 3))
+                              (point-max))))
+                      (org-super-agenda-groups nil)))
+            (alltodo ""
+                     ((org-agenda-overriding-header "⏳ 10 Oldest TODOs")
+                      (org-agenda-sorting-strategy '(timestamp-up))
+                      (org-agenda-skip-function
+                       '(or (org-agenda-skip-entry-if 'notregexp ":CREATED:")
+                            (when (> (org-current-line)
+                                    (+ (org-current-line) 10))
+                              (point-max))))
+                      (org-super-agenda-groups nil)))
+            (alltodo ""
+                     ((org-agenda-overriding-header "All TODOs")
+                      (org-super-agenda-groups
+                       '((:name "High Priority"
+                          :priority "A"
+                          :order 1)
+                         (:name "Personal Knowledge Management"
+                          :category "pkm"
+                          :order 2)
+                         (:name "Getting Things Done"
+                          :category "gtd"
+                          :order 3)
+                         (:name "Everything Else"
+                          :anything t
+                          :order 99)))))))))
 #+end_src
+
+*** Org QL
+
+org-ql provides powerful querying capabilities for org files.
+
+#+begin_src emacs-lisp
+;; org-ql for powerful agenda queries
+(use-package org-ql
+  :straight t
+  :after org)
+#+end_src
+
+*** Org Expiry
+
+Automatically add CREATED property to new org entries for tracking creation time.
+
+#+begin_src emacs-lisp
+;; Automatically add CREATED property to new org entries
+(use-package org-expiry
+  :straight (org-contrib :includes org-expiry)
+  :after org
+  :config
+  (setq org-expiry-created-property-name "CREATED")
+  (setq org-expiry-inactive-timestamps t)
+  (org-expiry-insinuate))
+#+end_src
+
+*** Org Super Agenda
+
+Enhance agenda views with automatic grouping and filtering.
+
+org-super-agenda provides flexible, customizable grouping for agenda items. It works by filtering items after org-agenda builds the view, allowing you to organize tasks by priority, tags, deadlines, and more.
+
+See the [[https://github.com/alphapapa/org-super-agenda][official documentation]] for advanced grouping options.
+
+**** Evil Mode Navigation in Agenda
+
+evil-org-mode is enabled for org-agenda buffers (configured in =emacs/core/evil.org=), providing vim-style keybindings:
+
+**Movement:**
+- =j/k= - Move up/down through entries
+- =gg/G= - Jump to top/bottom
+- =C-d/C-u= - Scroll down/up half page
+
+**Actions:**
+- =RET= or =SPC= - Open item at point
+- =TAB= - Show item details in other window
+- =r= - Refresh agenda
+- =q= - Quit agenda buffer
+- =.= - Go to today
+
+**Time Navigation:**
+- =f/b= - Go forward/backward in time
+- =d/w/m/y= - Switch to day/week/month/year view
+
+**Other:**
+- =t= - Show TODO entries
+- =v= - View mode toggles (followed by another key)
+- =?= - Show all keybindings
+
+#+begin_src emacs-lisp
+;; Enhanced agenda grouping with org-super-agenda
+(use-package org-super-agenda
+  :straight t
+  :after org
+  :config
+  (org-super-agenda-mode 1)
+
+  ;; Group by priority and category
+  (setq org-super-agenda-groups
+        '((:name "High Priority"
+           :priority "A"
+           :order 1)
+          (:name "Personal Knowledge Management"
+           :category "pkm"
+           :order 2)
+          (:name "Getting Things Done"
+           :category "gtd"
+           :order 3)
+          (:name "Everything Else"
+           :anything t
+           :order 99))))
+#+end_src
+
+***** Agenda Tab Integration
+
+Configure org-agenda to open TODO items in new tabs, integrating with vim-tab-bar.
+
+When pressing RET on an agenda item, create a new tab and open the file there,
+leaving the agenda accessible in its original location.
+
+#+begin_src emacs-lisp
+;; Function to open agenda items in new tabs
+(defun my/org-agenda-switch-to-new-tab (orig-fn &rest args)
+  "Advice for `org-agenda-switch-to' to open items in a new tab.
+Creates a new tab before switching to the item, preserving the agenda view
+in its original tab."
+  (when (and (fboundp 'tab-bar-mode)
+             tab-bar-mode)
+    ;; Create a new tab - it will automatically switch to it
+    (tab-bar-new-tab))
+  ;; Call the original function - this will now happen in the new tab
+  (apply orig-fn args))
+
+;; Apply advice after org-agenda loads
+(with-eval-after-load 'org-agenda
+  (advice-add 'org-agenda-switch-to :around #'my/org-agenda-switch-to-new-tab))
+#+end_src
+
+***** TODO [#A] Set keybindings for org-insert-todo-heading and org-insert-todo-subheading
+:PROPERTIES:
+:CREATED:  [2025-12-29 Mon 16:33]
+:CATEGORY: gtd
+:END:
 
 ** Capture Templates
 Configure templates for quickly capturing notes and tasks.
@@ -175,7 +329,8 @@ Configure templates for quickly capturing notes and tasks.
 ;; Basic capture templates
 (setq org-capture-templates
       '(("t" "todo" entry (file+headline "~/todo.org" "Tasks")
-         "* TODO [#A] %?" :empty-lines-before 1)))
+         "* TODO [#B] %?\n:PROPERTIES:\n:CREATED: %U\n:END:"
+         :empty-lines-before 1)))
 #+end_src
 
 * Git Integration

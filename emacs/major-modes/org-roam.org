@@ -33,11 +33,6 @@ This is hopefully a temporary shim to get emacsql-sqlite installed correctly, wi
 
 A similar issue may occur after updating to v29 as there is a reported [[https://github.com/org-roam/org-roam/issues/2146][github issue]] with emacsql-sqlite-builtin as well.
 
-#+begin_src emacs-lisp
-;; Use a specific version of emacsql-sqlite with all required files
-(use-package emacsql-sqlite
-  :straight (emacsql-sqlite :type git :host github :repo "magit/emacsql" :branch main :files ("emacsql-sqlite.el" "emacsql-sqlite-common.el" "sqlite")))
-#+end_src
 
 * Core Org Roam Setup
 Configure the main Org Roam package with keybindings and basic settings.
@@ -142,9 +137,9 @@ This will automatically add and commit changes to files in your Org Roam directo
 
 #+begin_src emacs-lisp
 ;; Configure automatic Git synchronization
-(use-package git-sync-mode
-  :straight (git-sync-mode :host github :repo "justinbarclay/git-sync-mode")
-  :config
-  (git-sync-global-mode)
-  (add-to-list 'git-sync-allow-list '"~/org/roam"))
+;;(use-package git-sync-mode
+;;  :straight (git-sync-mode :host github :repo "justinbarclay/git-sync-mode")
+;;  :config
+;;  (git-sync-global-mode)
+;;  (add-to-list 'git-sync-allow-list '"~/org/roam"))
 #+end_src

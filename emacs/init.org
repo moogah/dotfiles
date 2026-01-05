@@ -122,6 +122,7 @@ Define which modules to load and in what order.
     ("core/defaults"      "Basic Emacs behavior")
     ("core/auth"      "GPG and authinfo setup")
     ("core/avy"      "avy navigation package")
+    ("core/browser-hist"     "Search browser history")
     ("core/ripgrep"      "")
     ("core/ultra-scroll"      "")
     ("core/expand-region"      "")

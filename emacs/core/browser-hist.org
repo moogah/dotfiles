@@ -16,30 +16,19 @@ Enable lexical binding for better closures and variable scoping.
 ;; -*- lexical-binding: t; -*-
 #+end_src
 
-* SQLite Dependency
-Browser-hist requires SQLite support in Emacs since browser history databases are SQLite files.
-
-#+begin_src emacs-lisp
-;; ===============================================================================
-;; SQLite is required for browser-hist
-;; ===============================================================================
-
-(use-package sqlite
-  :straight t)
-#+end_src
-
 * Configuration
 #+begin_src emacs-lisp
-;; ===============================================================================
-;; Configure browser-hist for accessing browser history
-;; ===============================================================================
+  ;; ===============================================================================
+  ;; Configure browser-hist for accessing browser history
+  ;; ===============================================================================
 
-(use-package browser-hist
-  :straight (browser-hist :type git :host github :repo "agzam/browser-hist.el")
-  :config
-  (setq browser-hist-db-paths
-        '((chrome . "/Users/jefffarr/Library/Application Support/Google/Chrome/Default/History")))
-  (setq browser-hist-default-browser 'chrome))
+  (use-package browser-hist
+    :straight (browser-hist :type git :host github :repo "agzam/browser-hist.el")
+    :config
+    (setq browser-hist-db-paths
+          '((chrome . "/Users/jefffarr/Library/Application Support/Google/Chrome/Default/History")
+            (safari . "/Users/jefffarr/Library/Safari/History.db")))
+    (setq browser-hist-default-browser 'safari))
 #+end_src
 
 * Usage

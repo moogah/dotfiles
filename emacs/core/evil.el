@@ -1,4 +1,4 @@
-﻿;; -*- lexical-binding: t; -*-
+;; -*- lexical-binding: t; -*-
 
 ;; ===============================================================================
 ;; Configure Evil mode - Vim emulation for Emacs
@@ -125,6 +125,44 @@
   (evil-define-key 'normal org-mode-map (kbd "<SPC> h") 'org-insert-heading)
   (evil-define-key 'normal org-mode-map (kbd "<SPC> H") 'org-insert-subheading))
 
+;; evil-org-mode provides comprehensive org and org-agenda bindings
+(use-package evil-org
+  :straight t
+  :after org
+  :hook (org-mode . evil-org-mode)
+  :config
+  ;; Enable standard evil-org keybindings for org-mode
+  (evil-org-set-key-theme))
+
+;; Enable evil keybindings for org-agenda (must be after org-agenda loads)
+(with-eval-after-load 'org-agenda
+  (require 'evil-org-agenda)
+  (evil-org-agenda-set-keys)
+  ;; Explicitly ensure j/k work everywhere in agenda, including on headers
+  ;; (evil-define-key 'motion org-agenda-mode-map
+  ;;   "j" 'org-agenda-next-line
+  ;;   "k" 'org-agenda-previous-line
+  ;;   (kbd "C-j") 'org-agenda-goto-date  ; Keep date jump accessible with C-j
+  ;;   "gj" 'org-agenda-next-item
+  ;;   "gk" 'org-agenda-previous-item
+  ;;   "gg" 'evil-goto-first-line
+  ;;   "G" 'evil-goto-line)
+
+  ;; Fix org-super-agenda headers that have local keymaps overriding evil bindings
+  (defun my/fix-evil-in-agenda-headers ()
+    "Remove conflicting keybindings from org-super-agenda header keymaps."
+    (save-excursion
+      (goto-char (point-min))
+      (while (not (eobp))
+        (when-let ((keymap (get-text-property (point) 'keymap)))
+          ;; Remove j and k bindings from local keymap so evil bindings work
+          (define-key keymap "j" nil)
+          (define-key keymap "k" nil))
+        (goto-char (or (next-single-property-change (point) 'keymap) (point-max))))))
+
+  ;; Run after agenda finalization (when org-super-agenda has added headers)
+  (add-hook 'org-agenda-finalize-hook #'my/fix-evil-in-agenda-headers))
+
 ;; Org-roam bindings
 (with-eval-after-load 'org-roam
   (evil-define-key 'normal 'global (kbd "<SPC> n") 'org-roam-node-find)
@@ -133,8 +171,8 @@
 ;; Projectile bindings
 (with-eval-after-load 'projectile
   ;; Global projectile bindings
-  (evil-define-key 'normal 'global (kbd "<SPC> r") 'projectile-ripgrep)
-  (evil-define-key 'normal 'global (kbd "<SPC> f") 'project-find-file)
+  (evil-define-key 'normal 'global (kbd "<SPC> r") 'consult-projectile-ripgrep)
+  (evil-define-key 'normal 'global (kbd "<SPC> f") 'consult-projectile-find-file)
 
   ;; Define prefix key for projectile commands
   (define-prefix-command 'my-projectile-command-map)
