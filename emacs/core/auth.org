@@ -41,6 +41,50 @@ Set up EasyPG and auth-source to handle encrypted credentials.
 (setq epa-pinentry-mode 'loopback)
 #+end_src
 
+* Install and configure gpg
+
+** Install Packages
+
+#+begin_src shell :tangle no
+  brew install gpg
+#+end_src
+
+Install pinentry to allow using keychain to enter the password for gpg
+#+begin_src shell :tangle no
+  brew install pinentry-mac
+#+end_src
+
+Then configure gpg to use pinentry via the config file
+
+~/.gnupg/gpg-agent.conf
+
+with the line: pinentry-program /opt/homebrew/bin/pinentry-mac
+
+#+begin_src shell :tangle no
+  cat ~/.gnupg/gpg-agent.conf
+#+end_src
+
+#+RESULTS:
+: pinentry-program /opt/homebrew/bin/pinentry-mac
+
+** Create gpg key
+
+#+begin_src shell :tangle no
+  gpg --full-generate-key
+#+end_src
+
+** Save passphrase in keychain
+
+To avoid having to enter the passphrase (which will sometimes be a problem with some clients trying to decrypt) we can use this command:
+
+#+begin_src shell :tangle no
+  echo test | gpg -e -r <PUT THE KEY ID HERE> | gpg -d
+#+end_src 
+
+This sends 'test' to the encryption command, and pipes that encrypted result to the decrypt command.  When run on the CLI this will pop-up the pinentry window to enter the passphrase, and there will be a checkbox to save to keychain.
+
+After doing this once, we can run the command again and it will read the passphrase from the keychain instead of prompting for user input
+
 * Usage
 To use GPG encryption in Emacs:
 
