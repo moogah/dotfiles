@@ -1,4 +1,4 @@
-﻿;; -*- lexical-binding: t; -*-
+;; -*- lexical-binding: t; -*-
 
 ;; Ensure we have a consistent org version
 ;; This is needed for compatibility with org-roam and other packages
@@ -274,3 +274,72 @@ in its original tab."
   :config)
   ;; Uncomment to disable async for specific languages
   ;(setq ob-async-no-async-languages-alist '("ipython"))
+
+(defun jf/clipboard-contains-url-p ()
+  "Check if clipboard contains a valid URL (http/https/file).
+Returns the URL string if valid, nil otherwise."
+  (when-let ((text (ignore-errors (current-kill 0 t))))
+    (when (and (stringp text)
+               (not (string-match-p "\n" text))
+               (< (length text) 2000))
+      (cond
+       ((string-match-p "^https?://.+" text) text)
+       ((string-match-p "^file://.+" text) text)
+       (t nil)))))
+
+(defun jf/org-insert-link-dwim ()
+  "Insert org link intelligently.
+If clipboard contains URL, use it and prompt for description.
+Otherwise, search browser history."
+  (interactive)
+  (cond
+   ;; Preserve region-wrapping behavior
+   ((use-region-p)
+    (call-interactively 'org-insert-link))
+
+   ;; Preserve link-editing behavior
+   ((org-in-regexp org-link-any-re)
+    (call-interactively 'org-insert-link))
+
+   ;; Clipboard URL path
+   ((jf/clipboard-contains-url-p)
+    (let* ((url (jf/clipboard-contains-url-p))
+           (description (read-string
+                        (format "Description for %s: "
+                                (if (> (length url) 50)
+                                    (concat (substring url 0 47) "...")
+                                  url))
+                        nil nil "")))
+      (insert (org-link-make-string url description))))
+
+   ;; Browser history fallback
+   (t
+    (jf/org-insert-link-from-browser-hist))))
+
+(defun jf/org-insert-link-from-browser-hist ()
+  "Insert org link by searching browser history."
+  (require 'browser-hist)
+
+  (browser-hist--make-db-copy browser-hist-default-browser nil)
+
+  (unwind-protect
+      (condition-case nil
+          (let* ((completion-styles '(basic partial-completion))
+                 (selected-url
+                  (completing-read "Browser history: "
+                                 #'browser-hist--completion-table))
+                 (rows-raw (browser-hist--send-query nil))
+                 (title (alist-get selected-url rows-raw nil nil #'string=))
+                 (description (read-string
+                              (format "Description for %s: "
+                                      (if (> (length selected-url) 50)
+                                          (concat (substring selected-url 0 47) "...")
+                                        selected-url))
+                              title)))  ; Pre-fill with page title
+            (insert (org-link-make-string selected-url description)))
+        (quit nil))  ; Handle C-g cancellation
+
+    ;; Always cleanup database connection
+    (when browser-hist--db-connection
+      (ignore-errors (sqlite-close browser-hist--db-connection))
+      (setq browser-hist--db-connection nil))))

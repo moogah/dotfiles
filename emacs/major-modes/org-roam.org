@@ -7,6 +7,7 @@
 This file configures Org Roam, a personal knowledge management system for Emacs based on the Zettelkasten method.
 It includes settings for basic functionality, daily notes, capture templates, and Git synchronization.
 
+
 * Basic Configuration
 Setup lexical binding and core dependencies.
 

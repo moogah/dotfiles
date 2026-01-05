@@ -217,7 +217,7 @@ Keybindings specific to Org mode.
     ;; Global org bindings
     (evil-define-key 'normal 'global (kbd "<SPC> e") 'org-babel-execute-src-block)
     (evil-define-key 'normal 'global (kbd "<SPC> s l") 'org-store-link)
-    (evil-define-key 'normal 'global (kbd "<SPC> i l") 'org-insert-link)
+    (evil-define-key 'normal 'global (kbd "<SPC> i l") 'jf/org-insert-link-dwim)
 
     ;; Org mode map specific bindings
     (evil-define-key 'normal org-mode-map (kbd "<SPC> h") 'org-insert-heading)
