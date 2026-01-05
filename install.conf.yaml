@@ -79,7 +79,7 @@
 
 - link:
     ~/.gitconfig:
-      if: '[ `hostname` = Jeffs-MBP ]'
+      if: '[ `hostname` = Mac.home ]'
       path: gitconfig.work
 
 - link:
