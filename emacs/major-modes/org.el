@@ -1,4 +1,4 @@
-;; -*- lexical-binding: t; -*-
+﻿;; -*- lexical-binding: t; -*-
 
 ;; Ensure we have a consistent org version
 ;; This is needed for compatibility with org-roam and other packages
@@ -84,9 +84,18 @@
 ;; Agenda key binding
 (global-set-key (kbd "C-c a") 'org-agenda)
 
-;; Agenda files - recursively find all .org files in ~/org/ directory
-(setq org-agenda-files
-      (directory-files-recursively "~/org/" "\\.org$"))
+;; Function to refresh agenda files - recursively find all .org files in multiple directories
+(defun jf/refresh-org-agenda-files ()
+  "Refresh org-agenda-files by rescanning ~/org/ and ~/src/dotfiles/emacs/ for .org files."
+  (interactive)
+  (setq org-agenda-files
+        (append (directory-files-recursively "~/org/" "\\.org$")
+                (directory-files-recursively "~/src/dotfiles/emacs/" "\\.org$")))
+  (when (called-interactively-p 'interactive)
+    (message "Refreshed org-agenda-files: found %d files" (length org-agenda-files))))
+
+;; Initialize agenda files
+(jf/refresh-org-agenda-files)
 
 ;; Display sorting for TODO items
 
@@ -142,6 +151,16 @@
                        (:name "Everything Else"
                         :anything t
                         :order 99)))))))))
+
+;; Automatically refresh agenda files when entering agenda mode
+(add-hook 'org-agenda-mode-hook 'jf/refresh-org-agenda-files)
+
+;; Refresh after org-roam operations that might create new files
+(with-eval-after-load 'org-roam
+  (add-hook 'org-roam-capture-new-node-hook 'jf/refresh-org-agenda-files))
+
+;; Manual refresh key binding
+(global-set-key (kbd "C-c r") 'jf/refresh-org-agenda-files)
 
 ;; org-ql for powerful agenda queries
 (use-package org-ql

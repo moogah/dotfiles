@@ -145,12 +145,13 @@ Setup for Org agenda views and files.
   ;; Agenda key binding
   (global-set-key (kbd "C-c a") 'org-agenda)
 
-  ;; Function to refresh agenda files - recursively find all .org files in ~/org/ directory
+  ;; Function to refresh agenda files - recursively find all .org files in multiple directories
   (defun jf/refresh-org-agenda-files ()
-    "Refresh org-agenda-files by rescanning ~/org/ directory for .org files."
+    "Refresh org-agenda-files by rescanning ~/org/ and ~/src/dotfiles/emacs/ for .org files."
     (interactive)
     (setq org-agenda-files
-          (directory-files-recursively "~/org/" "\\.org$"))
+          (append (directory-files-recursively "~/org/" "\\.org$")
+                  (directory-files-recursively "~/src/dotfiles/emacs/" "\\.org$")))
     (when (called-interactively-p 'interactive)
       (message "Refreshed org-agenda-files: found %d files" (length org-agenda-files))))
 
