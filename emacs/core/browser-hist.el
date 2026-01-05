@@ -1,4 +1,4 @@
-;; -*- lexical-binding: t; -*-
+﻿;; -*- lexical-binding: t; -*-
 
 ;; ===============================================================================
 ;; Configure browser-hist for accessing browser history
