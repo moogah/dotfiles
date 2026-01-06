@@ -73,38 +73,6 @@ This configuration provides several IDE-like features for Emacs:
 - AI-assisted coding with Copilot
 - Language-specific modes and tools
 
-** Adding New Languages
-To add support for a new programming language:
-
-1. Create a dedicated .org file in the language-modes directory:
-   ```org
-   #+title: Language Name Configuration
-   #+author: Jeff Farr
-   #+property: header-args:emacs-lisp :tangle language-name.el
-   #+auto_tangle: y
-   
-   * Introduction
-   This file configures Language Name support in Emacs.
-   
-   * Basic Configuration
-   #+begin_src emacs-lisp
-   ;; -*- lexical-binding: t; -*-
-   #+end_src
-   
-   * Package Configuration
-   #+begin_src emacs-lisp
-   (use-package language-mode
-     :straight t)
-   #+end_src
-   ```
-
-2. Configure the necessary packages for that language
-3. Add the language to treesit-language-source-alist if applicable
-4. Add a jf/load-module statement in this file:
-   ```emacs-lisp
-   (jf/load-module (expand-file-name "language-modes/language-name.el" jf/emacs-dir))
-   ```
-
 ** Enabling/Disabling Languages
 To enable or disable specific language support, simply comment out or uncomment the corresponding `jf/load-module` line in this file.
 

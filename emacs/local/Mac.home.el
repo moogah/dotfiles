@@ -10,11 +10,13 @@
 (setq browser-hist-default-browser 'chrome)
 
 ;; PostgreSQL connections for this machine
+;; run jf/postgres-register-connections after making changes here.
+
 (setq jf/postgres-connections
       '((pg-local-apollo-container
          :host "localhost"
          :port 5432
-         :database "postgres"
+         :database "oncall"
          :user "postgres"
          :auth-key "pg-local-apollo-container")
         (pg-devnew-rw

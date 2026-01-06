@@ -1,4 +1,4 @@
-﻿;; -*- lexical-binding: t; -*-
+;; -*- lexical-binding: t; -*-
 
 (defvar jf/postgres-connections nil
   "Alist of PostgreSQL connection definitions.
@@ -47,24 +47,27 @@ Returns port number or 5432 if container is not found."
 Returns a plist with :host :port :database :user :password.
 Resolves Docker containers to localhost with appropriate port.
 Fetches password from auth-source."
-  (let* ((conn-plist (cdr (assoc connection-name jf/postgres-connections)))
+  (let* ((conn-name (if (stringp connection-name)
+                        (intern connection-name)
+                      connection-name))
+         (conn-plist (cdr (assoc conn-name jf/postgres-connections)))
          (host (plist-get conn-plist :host))
          (port (or (plist-get conn-plist :port) 5432))
          (database (plist-get conn-plist :database))
          (user (plist-get conn-plist :user))
          (auth-key (or (plist-get conn-plist :auth-key)
                        (if (eq host 'docker)
-                           (format "docker-%s" connection-name)
+                           (format "docker-%s" conn-name)
                          host)))
          (docker-name (plist-get conn-plist :docker-name)))
 
     (unless conn-plist
-      (error "Unknown PostgreSQL connection: %s" connection-name))
+      (error "Unknown PostgreSQL connection: %s" conn-name))
 
     ;; Resolve docker connections
     (when (eq host 'docker)
       (unless docker-name
-        (error "Docker connection %s missing :docker-name" connection-name))
+        (error "Docker connection %s missing :docker-name" conn-name))
       (setq host "localhost")
       (setq port (jf/postgres-get-docker-port docker-name)))
 
@@ -165,6 +168,19 @@ Executes a simple query to verify connectivity."
   (insert "#+end_src\n")
   (forward-line -2)
   (end-of-line))
+
+(defun jf/postgres-refresh-connections ()
+  "Reload machine-specific config and re-register PostgreSQL connections."
+  (interactive)
+  (let ((config-file (expand-file-name
+                      (format "local/%s.el" (system-name))
+                      jf/emacs-dir)))
+    (if (file-exists-p config-file)
+        (progn
+          (load-file config-file)
+          (jf/postgres-register-connections)
+          (message "Refreshed PostgreSQL connections from %s" config-file))
+      (error "Machine-specific config not found: %s" config-file))))
 
 (defun jf/postgres-check-psql-installed ()
   "Verify psql is installed and accessible.
