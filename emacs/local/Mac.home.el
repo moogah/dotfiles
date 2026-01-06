@@ -24,4 +24,22 @@
          :port 5432
          :database "oncall"
          :user "oc_admin_user"
-         :auth-key "pg-devnew-rw")))
+         :auth-key "pg-devnew-rw")
+        (pg-bdrkdev-rw
+         :host "oncall-psql-bdrkdev-20240920163715257100000013.cluster-cto8yse48viq.us-east-2.rds.amazonaws.com"
+         :port 5432
+         :database "oncall"
+         :user "oc_admin_user"
+         :auth-key "pg-bdrkdev-rw")
+        (pg-schedule-prod-rw
+         :host "oncall-psql-prod-read-write.endpoint.proxy-cdvuqeybm7mr.us-east-2.rds.amazonaws.com"
+         :port 5432
+         :database "oncall"
+         :user "oc_admin_user"
+         :auth-key "pg-schedule-prod-rw")
+        (pg-schedule-prod-ro
+         :host "oncall-psql-prod-20240209204443329600000006.cluster-ro-cdvuqeybm7mr.us-east-2.rds.amazonaws.com"
+         :port 5432
+         :database "oncall"
+         :user "oc_admin_user"
+         :auth-key "pg-schedule-prod-ro")))
