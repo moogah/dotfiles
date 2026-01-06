@@ -9,19 +9,11 @@
 
 (setq browser-hist-default-browser 'chrome)
 
-;; PostgreSQL connections for this machine
-;; run jf/postgres-register-connections after making changes here.
+;; PostgreSQL connections - sensitive details stored in ~/.authinfo.gpg
+;; Only connection names and Docker-specific metadata are here.
+;; After updating connections, run: M-x jf/postgres-register-connections
 
 (setq jf/postgres-connections
       '((pg-local-apollo-container
-         :host "localhost"
-         :port 5432
-         :database "oncall"
-         :user "postgres"
-         :auth-key "pg-local-apollo-container")
-        (pg-devnew-rw
-         :host "oncall-psql-devnew-20241205190430184400000002.cluster-cto8yse48viq.us-east-2.rds.amazonaws.com"
-         :port 5432
-         :database "oncall"
-         :user "oc_admin_user"
-         :auth-key "pg-devnew-rw")))
+         :docker-name "postgres")
+        (pg-devnew-rw)))

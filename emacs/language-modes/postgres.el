@@ -25,10 +25,28 @@ Example:
            :user \"postgres\"
            :auth-key \"docker-postgres\")))")
 
-(defun jf/postgres-get-password (auth-key)
-  "Retrieve password for AUTH-KEY from auth-source (~/.authinfo.gpg).
-Returns nil if not found."
-  (auth-source-pick-first-password :host auth-key))
+(defun jf/postgres-get-auth-details (auth-key)
+  "Retrieve all authentication details for AUTH-KEY from auth-source.
+Returns a plist with :user :password :host :port :database, or nil if not found.
+
+Auth-source looks up AUTH-KEY in ~/.authinfo.gpg using the 'machine' field.
+Custom netrc properties (server, database) are preserved in the returned plist.
+AUTH-KEY can be a symbol or string."
+  ;; Convert auth-key to string (auth-source-search requires string for :host)
+  (let ((host-key (if (stringp auth-key) auth-key (symbol-name auth-key))))
+    (when-let* ((auth-info (car (auth-source-search :host host-key :require '(:secret))))
+                (secret (plist-get auth-info :secret))
+                (password (if (functionp secret) (funcall secret) secret)))
+      (let ((port-value (plist-get auth-info :port)))
+        (list :user (plist-get auth-info :user)
+              :password password
+              :host (or (plist-get auth-info :server) "127.0.0.1")
+              :port (if port-value
+                        (if (stringp port-value)
+                            (string-to-number port-value)
+                          port-value)
+                      5432)
+              :database (plist-get auth-info :database))))))
 
 (defun jf/postgres-get-docker-port (container-name)
   "Get the host port mapped to PostgreSQL (5432) in CONTAINER-NAME.
@@ -46,41 +64,40 @@ Returns port number or 5432 if container is not found."
   "Get connection parameters for CONNECTION-NAME.
 Returns a plist with :host :port :database :user :password.
 Resolves Docker containers to localhost with appropriate port.
-Fetches password from auth-source."
+Fetches all details from auth-source."
   (let* ((conn-name (if (stringp connection-name)
                         (intern connection-name)
                       connection-name))
          (conn-plist (cdr (assoc conn-name jf/postgres-connections)))
-         (host (plist-get conn-plist :host))
-         (port (or (plist-get conn-plist :port) 5432))
-         (database (plist-get conn-plist :database))
-         (user (plist-get conn-plist :user))
-         (auth-key (or (plist-get conn-plist :auth-key)
-                       (if (eq host 'docker)
-                           (format "docker-%s" conn-name)
-                         host)))
+         (auth-key (or (plist-get conn-plist :auth-key) conn-name))
          (docker-name (plist-get conn-plist :docker-name)))
 
-    (unless conn-plist
-      (error "Unknown PostgreSQL connection: %s" conn-name))
+    ;; Retrieve details from auth-source
+    (let ((auth-details (jf/postgres-get-auth-details auth-key)))
+      (unless auth-details
+        (error "No auth-source entry found for: %s. Check ~/.authinfo.gpg" auth-key))
 
-    ;; Resolve docker connections
-    (when (eq host 'docker)
-      (unless docker-name
-        (error "Docker connection %s missing :docker-name" conn-name))
-      (setq host "localhost")
-      (setq port (jf/postgres-get-docker-port docker-name)))
+      (let ((host (plist-get auth-details :host))
+            (port (plist-get auth-details :port))
+            (database (plist-get auth-details :database))
+            (user (plist-get auth-details :user))
+            (password (plist-get auth-details :password)))
 
-    ;; Fetch password from auth-source
-    (let ((password (jf/postgres-get-password auth-key)))
-      (unless password
-        (warn "No password found in auth-source for key: %s" auth-key))
+        ;; Handle Docker containers (override host/port from auth-source)
+        ;; Use 127.0.0.1 instead of localhost to force TCP connection (not Unix socket)
+        (when docker-name
+          (setq host "127.0.0.1")
+          (setq port (jf/postgres-get-docker-port docker-name)))
 
-      (list :host host
-            :port port
-            :database database
-            :user user
-            :password password))))
+        ;; Validate required fields
+        (unless (and host database user)
+          (error "Incomplete connection details for %s. Required: server, database, login in .authinfo.gpg" auth-key))
+
+        (list :host host
+              :port port
+              :database database
+              :user user
+              :password password)))))
 
 (defun jf/postgres-build-sql-connection (connection-name)
   "Build sql-connection-alist entry for CONNECTION-NAME.
