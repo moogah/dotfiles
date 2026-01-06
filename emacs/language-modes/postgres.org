@@ -240,6 +240,19 @@ Executes a simple query to verify connectivity."
       (error "Machine-specific config not found: %s" config-file))))
 #+end_src
 
+* CSV File Viewing
+Configure csv-mode for viewing large query result files.
+
+[[https://elpa.gnu.org/packages/csv-mode.html][Documentation]]
+
+#+begin_src emacs-lisp
+(use-package csv-mode
+  :straight t
+  :mode "\\.csv\\'"
+  :config
+  (setq csv-separators '("," ";" "|" "\t")))
+#+end_src
+
 * Error Handling
 Verify that required tools are installed.
 

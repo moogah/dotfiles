@@ -182,6 +182,12 @@ Executes a simple query to verify connectivity."
           (message "Refreshed PostgreSQL connections from %s" config-file))
       (error "Machine-specific config not found: %s" config-file))))
 
+(use-package csv-mode
+  :straight t
+  :mode "\\.csv\\'"
+  :config
+  (setq csv-separators '("," ";" "|" "\t")))
+
 (defun jf/postgres-check-psql-installed ()
   "Verify psql is installed and accessible.
 Returns path to psql or signals an error."
