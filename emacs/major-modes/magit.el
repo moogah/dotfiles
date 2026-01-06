@@ -12,6 +12,10 @@
   ;; Restore window configuration when quitting magit
   (setq magit-bury-buffer-function 'magit-restore-window-configuration))
 
+(use-package magit-pre-commit
+  :straight (:host github :repo "DamianB-BitFlipper/magit-pre-commit.el")
+  :after magit)
+
 ;; ===============================================================================
 ;; GitHub Integration - Browse At Remote
 ;; ===============================================================================

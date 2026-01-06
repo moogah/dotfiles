@@ -27,6 +27,14 @@ Setup lexical binding and core Magit functionality.
   (setq magit-bury-buffer-function 'magit-restore-window-configuration))
 #+end_src
 
+* Better support for pre-commit hooks
+
+#+begin_src emacs-lisp
+  (use-package magit-pre-commit
+    :straight (:host github :repo "DamianB-BitFlipper/magit-pre-commit.el")
+    :after magit)
+#+end_src
+
 * GitHub Integration
 Add functionality to interact with GitHub directly from Emacs.
 
