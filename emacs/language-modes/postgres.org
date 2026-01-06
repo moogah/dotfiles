@@ -44,13 +44,33 @@ Example:
 #+end_src
 
 * Auth-Source Integration
-Functions for secure password retrieval from ~.authinfo.gpg using the auth-source pattern.
+Functions for secure credential retrieval from ~.authinfo.gpg using the auth-source pattern.
+
+The auth-source library supports custom netrc properties beyond the standard fields (machine, login, password, port). We use this to store all connection details including hostnames and database names.
 
 #+begin_src emacs-lisp
-(defun jf/postgres-get-password (auth-key)
-  "Retrieve password for AUTH-KEY from auth-source (~/.authinfo.gpg).
-Returns nil if not found."
-  (auth-source-pick-first-password :host auth-key))
+(defun jf/postgres-get-auth-details (auth-key)
+  "Retrieve all authentication details for AUTH-KEY from auth-source.
+Returns a plist with :user :password :host :port :database, or nil if not found.
+
+Auth-source looks up AUTH-KEY in ~/.authinfo.gpg using the 'machine' field.
+Custom netrc properties (server, database) are preserved in the returned plist.
+AUTH-KEY can be a symbol or string."
+  ;; Convert auth-key to string (auth-source-search requires string for :host)
+  (let ((host-key (if (stringp auth-key) auth-key (symbol-name auth-key))))
+    (when-let* ((auth-info (car (auth-source-search :host host-key :require '(:secret))))
+                (secret (plist-get auth-info :secret))
+                (password (if (functionp secret) (funcall secret) secret)))
+      (let ((port-value (plist-get auth-info :port)))
+        (list :user (plist-get auth-info :user)
+              :password password
+              :host (or (plist-get auth-info :server) "127.0.0.1")
+              :port (if port-value
+                        (if (stringp port-value)
+                            (string-to-number port-value)
+                          port-value)
+                      5432)
+              :database (plist-get auth-info :database))))))
 #+end_src
 
 * Docker Port Resolution
@@ -71,48 +91,49 @@ Returns port number or 5432 if container is not found."
 #+end_src
 
 * Connection Parameter Resolution
-Resolve connection parameters by fetching passwords from auth-source and handling Docker connections.
+Resolve connection parameters by fetching all details from auth-source and handling Docker connections.
+
+All sensitive connection details (host, port, database, user, password) are retrieved from ~/.authinfo.gpg. Only Docker-specific metadata is stored in jf/postgres-connections.
 
 #+begin_src emacs-lisp
 (defun jf/postgres-get-connection-params (connection-name)
   "Get connection parameters for CONNECTION-NAME.
 Returns a plist with :host :port :database :user :password.
 Resolves Docker containers to localhost with appropriate port.
-Fetches password from auth-source."
+Fetches all details from auth-source."
   (let* ((conn-name (if (stringp connection-name)
                         (intern connection-name)
                       connection-name))
          (conn-plist (cdr (assoc conn-name jf/postgres-connections)))
-         (host (plist-get conn-plist :host))
-         (port (or (plist-get conn-plist :port) 5432))
-         (database (plist-get conn-plist :database))
-         (user (plist-get conn-plist :user))
-         (auth-key (or (plist-get conn-plist :auth-key)
-                       (if (eq host 'docker)
-                           (format "docker-%s" conn-name)
-                         host)))
+         (auth-key (or (plist-get conn-plist :auth-key) conn-name))
          (docker-name (plist-get conn-plist :docker-name)))
 
-    (unless conn-plist
-      (error "Unknown PostgreSQL connection: %s" conn-name))
+    ;; Retrieve details from auth-source
+    (let ((auth-details (jf/postgres-get-auth-details auth-key)))
+      (unless auth-details
+        (error "No auth-source entry found for: %s. Check ~/.authinfo.gpg" auth-key))
 
-    ;; Resolve docker connections
-    (when (eq host 'docker)
-      (unless docker-name
-        (error "Docker connection %s missing :docker-name" conn-name))
-      (setq host "localhost")
-      (setq port (jf/postgres-get-docker-port docker-name)))
+      (let ((host (plist-get auth-details :host))
+            (port (plist-get auth-details :port))
+            (database (plist-get auth-details :database))
+            (user (plist-get auth-details :user))
+            (password (plist-get auth-details :password)))
 
-    ;; Fetch password from auth-source
-    (let ((password (jf/postgres-get-password auth-key)))
-      (unless password
-        (warn "No password found in auth-source for key: %s" auth-key))
+        ;; Handle Docker containers (override host/port from auth-source)
+        ;; Use 127.0.0.1 instead of localhost to force TCP connection (not Unix socket)
+        (when docker-name
+          (setq host "127.0.0.1")
+          (setq port (jf/postgres-get-docker-port docker-name)))
 
-      (list :host host
-            :port port
-            :database database
-            :user user
-            :password password))))
+        ;; Validate required fields
+        (unless (and host database user)
+          (error "Incomplete connection details for %s. Required: server, database, login in .authinfo.gpg" auth-key))
+
+        (list :host host
+              :port port
+              :database database
+              :user user
+              :password password)))))
 #+end_src
 
 * SQL Connection Builder
@@ -336,34 +357,44 @@ SELECT tablename FROM pg_tables WHERE schemaname = 'public';
 
 * Configuration Notes
 ** Auth-Source Format
-Store passwords in =~/.authinfo.gpg= with this format:
+Store all connection details in =~/.authinfo.gpg= with custom netrc properties:
 
 #+begin_example
-machine localhost-postgres login postgres password yourpassword
-machine prod-postgres login appuser password secretpass
-machine docker-postgres login postgres password dockerpass
+machine pg-local-dev login postgres password yourpassword port 5432 database myapp_dev
+machine pg-prod login appuser password secretpass port 5432 server prod.rds.amazonaws.com database myapp_prod
+machine pg-docker login postgres password dockerpass port 5432 database testdb
 #+end_example
 
+**Field descriptions**:
+- =machine= - Logical connection name (matches key in jf/postgres-connections)
+- =login= - Database username
+- =password= - Database password
+- =port= - Port number (default 5432)
+- =server= - Actual hostname (for remote connections; use this for RDS endpoints)
+- =database= - Database name
+
+**Notes**:
+- For localhost/Docker connections: omit =server= field (defaults to localhost)
+- For remote connections: use =server= field for the actual hostname
+- Auth-source automatically reads custom fields like =server= and =database=
+
 ** Machine-Specific Connections
-Define connections in your machine-specific config (e.g., =local/Mac.home.el=):
+Define minimal connection metadata in your machine-specific config (e.g., =local/Mac.home.el=):
+
+All sensitive details (host, port, database, user, password) are stored in =~/.authinfo.gpg=. Only connection names and Docker-specific metadata need to be in your config files.
 
 #+begin_src emacs-lisp :tangle no
-;; PostgreSQL connections for this machine
+;; PostgreSQL connections - sensitive details stored in ~/.authinfo.gpg
 (setq jf/postgres-connections
-      '((local-dev
-         :host "localhost"
-         :port 5432
-         :database "myapp_development"
-         :user "postgres"
-         :auth-key "localhost-postgres")
-
-        (docker-postgres
-         :host docker
-         :docker-name "postgres-dev"
-         :database "testdb"
-         :user "postgres"
-         :auth-key "docker-postgres")))
+      '((local-dev)              ; No extra metadata needed
+        (docker-postgres         ; Docker needs container name
+         :docker-name "postgres-dev")
+        (prod-db)))              ; No extra metadata needed
 #+end_src
+
+**Optional properties**:
+- =:docker-name= - Docker container name (required for Docker connections)
+- =:auth-key= - Override the auth-source lookup key (defaults to connection name)
 
 ** Interactive Commands
 - =M-x jf/postgres-connect= - Connect to a database using saved connection
