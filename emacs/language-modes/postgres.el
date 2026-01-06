@@ -169,6 +169,36 @@ Executes a simple query to verify connectivity."
   (forward-line -2)
   (end-of-line))
 
+(defun jf/postgres-connect (connection-name)
+  "Connect to PostgreSQL database using CONNECTION-NAME from jf/postgres-connections.
+Resolves connection parameters (Docker ports, auth-source passwords) and opens SQL buffer."
+  (interactive
+   (list (intern (completing-read "Database connection: "
+                                   (mapcar #'car jf/postgres-connections)
+                                   nil t))))
+  (unless jf/postgres-connections
+    (error "No PostgreSQL connections defined. Set jf/postgres-connections in your config."))
+
+  ;; Get connection parameters
+  (let* ((params (jf/postgres-get-connection-params connection-name))
+         (password (plist-get params :password))
+         (entry (jf/postgres-build-sql-connection connection-name)))
+
+    ;; Remove old entry if present and add fresh one
+    (setq sql-connection-alist
+          (assq-delete-all connection-name sql-connection-alist))
+    (push entry sql-connection-alist)
+
+    ;; Set PGPASSWORD environment variable for this connection
+    (when password
+      (setenv "PGPASSWORD" password))
+
+    ;; Connect using built-in sql-connect
+    (unwind-protect
+        (sql-connect connection-name)
+      ;; Clear PGPASSWORD after connection for security
+      (setenv "PGPASSWORD" nil))))
+
 (defun jf/postgres-refresh-connections ()
   "Reload machine-specific config and re-register PostgreSQL connections."
   (interactive)
