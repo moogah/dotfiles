@@ -1,22 +1,5 @@
-#+title: PostgreSQL Configuration for Org-Babel
-#+author: Jeff Farr
-#+property: header-args:emacs-lisp :tangle postgres.el
-#+auto_tangle: y
+﻿;; -*- lexical-binding: t; -*-
 
-* Introduction
-This file configures PostgreSQL support for Emacs org-babel, enabling SQL queries in org-mode documents with named database connections, secure auth-source credential integration, and support for local, remote, Docker, and cloud-hosted databases.
-
-* Basic Configuration
-Setup lexical binding for better closures and variable scoping.
-
-#+begin_src emacs-lisp
-;; -*- lexical-binding: t; -*-
-#+end_src
-
-* Connection Registry
-Define the connection registry variable that stores database connection configurations.
-
-#+begin_src emacs-lisp
 (defvar jf/postgres-connections nil
   "Alist of PostgreSQL connection definitions.
 Each entry has the form (NAME . PLIST) where PLIST contains:
@@ -41,22 +24,12 @@ Example:
            :database \"testdb\"
            :user \"postgres\"
            :auth-key \"docker-postgres\")))")
-#+end_src
 
-* Auth-Source Integration
-Functions for secure password retrieval from ~.authinfo.gpg using the auth-source pattern.
-
-#+begin_src emacs-lisp
 (defun jf/postgres-get-password (auth-key)
   "Retrieve password for AUTH-KEY from auth-source (~/.authinfo.gpg).
 Returns nil if not found."
   (auth-source-pick-first-password :host auth-key))
-#+end_src
 
-* Docker Port Resolution
-Docker containers may map PostgreSQL's internal port 5432 to different host ports. This function resolves the actual host port.
-
-#+begin_src emacs-lisp
 (defun jf/postgres-get-docker-port (container-name)
   "Get the host port mapped to PostgreSQL (5432) in CONTAINER-NAME.
 Returns port number or 5432 if container is not found."
@@ -68,12 +41,7 @@ Returns port number or 5432 if container is not found."
           (warn "Could not determine port for Docker container: %s. Using default 5432." container-name)
           5432)
       (string-to-number output))))
-#+end_src
 
-* Connection Parameter Resolution
-Resolve connection parameters by fetching passwords from auth-source and handling Docker connections.
-
-#+begin_src emacs-lisp
 (defun jf/postgres-get-connection-params (connection-name)
   "Get connection parameters for CONNECTION-NAME.
 Returns a plist with :host :port :database :user :password.
@@ -110,12 +78,7 @@ Fetches password from auth-source."
             :database database
             :user user
             :password password))))
-#+end_src
 
-* SQL Connection Builder
-Build sql-connection-alist entries for use with org-babel's :dbconnection parameter.
-
-#+begin_src emacs-lisp
 (defun jf/postgres-build-sql-connection (connection-name)
   "Build sql-connection-alist entry for CONNECTION-NAME.
 Returns a connection specification suitable for sql-connection-alist."
@@ -127,12 +90,7 @@ Returns a connection specification suitable for sql-connection-alist."
       (sql-database ,(plist-get params :database))
       (sql-user ,(plist-get params :user))
       (sql-password ,(plist-get params :password)))))
-#+end_src
 
-* Connection Registration
-Register all defined PostgreSQL connections into Emacs' sql-connection-alist.
-
-#+begin_src emacs-lisp
 (defun jf/postgres-register-connections ()
   "Register all jf/postgres-connections into sql-connection-alist.
 This makes them available to org-babel via :dbconnection parameter."
@@ -153,13 +111,7 @@ This makes them available to org-babel via :dbconnection parameter."
 ;; Auto-register connections after loading sql.el
 (with-eval-after-load 'sql
   (jf/postgres-register-connections))
-#+end_src
 
-* Helper Functions
-Utility functions for managing and testing PostgreSQL connections.
-
-** List Connections
-#+begin_src emacs-lisp
 (defun jf/postgres-list-connections ()
   "Display all registered PostgreSQL connections."
   (interactive)
@@ -178,10 +130,7 @@ Utility functions for managing and testing PostgreSQL connections.
           (princ (format "    Host: %s:%s\n" host port))
           (princ (format "    Database: %s\n" database))
           (princ (format "    User: %s\n\n" user)))))))
-#+end_src
 
-** Test Connection
-#+begin_src emacs-lisp
 (defun jf/postgres-test-connection (connection-name)
   "Test PostgreSQL connection CONNECTION-NAME.
 Executes a simple query to verify connectivity."
@@ -203,10 +152,7 @@ Executes a simple query to verify connectivity."
       (if (string-match-p "PostgreSQL" output)
           (message "✓ Connection successful: %s" connection-name)
         (message "✗ Connection failed: %s\n%s" connection-name output)))))
-#+end_src
 
-** Insert Source Block
-#+begin_src emacs-lisp
 (defun jf/postgres-insert-src-block (connection-name)
   "Insert an org-babel SQL source block with CONNECTION-NAME."
   (interactive
@@ -219,12 +165,7 @@ Executes a simple query to verify connectivity."
   (insert "#+end_src\n")
   (forward-line -2)
   (end-of-line))
-#+end_src
 
-* Error Handling
-Verify that required tools are installed.
-
-#+begin_src emacs-lisp
 (defun jf/postgres-check-psql-installed ()
   "Verify psql is installed and accessible.
 Returns path to psql or signals an error."
@@ -236,79 +177,3 @@ Returns path to psql or signals an error."
 ;; Run check on load
 (with-eval-after-load 'sql
   (jf/postgres-check-psql-installed))
-#+end_src
-
-* Usage Examples
-** Basic Query
-Execute a simple query against a named connection:
-
-#+begin_example
-#+begin_src sql :engine postgresql :dbconnection local-dev
-SELECT current_database(), current_user, version();
-#+end_src
-#+end_example
-
-** Query with Results Table
-Return query results as an org-mode table:
-
-#+begin_example
-#+begin_src sql :engine postgresql :dbconnection prod-db :results table
-SELECT id, email, created_at
-FROM users
-WHERE created_at > NOW() - INTERVAL '7 days'
-LIMIT 10;
-#+end_src
-#+end_example
-
-** Docker Container Query
-Query a PostgreSQL database running in a Docker container:
-
-#+begin_example
-#+begin_src sql :engine postgresql :dbconnection docker-postgres
-SELECT tablename FROM pg_tables WHERE schemaname = 'public';
-#+end_src
-#+end_example
-
-* Configuration Notes
-** Auth-Source Format
-Store passwords in =~/.authinfo.gpg= with this format:
-
-#+begin_example
-machine localhost-postgres login postgres password yourpassword
-machine prod-postgres login appuser password secretpass
-machine docker-postgres login postgres password dockerpass
-#+end_example
-
-** Machine-Specific Connections
-Define connections in your machine-specific config (e.g., =local/Mac.home.el=):
-
-#+begin_src emacs-lisp :tangle no
-;; PostgreSQL connections for this machine
-(setq jf/postgres-connections
-      '((local-dev
-         :host "localhost"
-         :port 5432
-         :database "myapp_development"
-         :user "postgres"
-         :auth-key "localhost-postgres")
-
-        (docker-postgres
-         :host docker
-         :docker-name "postgres-dev"
-         :database "testdb"
-         :user "postgres"
-         :auth-key "docker-postgres")))
-#+end_src
-
-** Interactive Commands
-- =M-x jf/postgres-list-connections= - Display all configured connections
-- =M-x jf/postgres-test-connection= - Test a connection
-- =M-x jf/postgres-insert-src-block= - Insert a SQL source block template
-
-* TODO Future Improvements
-- Add query result caching with TTL
-- Implement transaction support (BEGIN/COMMIT/ROLLBACK)
-- Add schema introspection for auto-complete
-- Support AWS RDS IAM authentication
-- Add connection pooling for performance
-- Support for connection profiles (dev/staging/prod)
