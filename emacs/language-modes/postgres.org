@@ -224,6 +224,39 @@ Executes a simple query to verify connectivity."
   (end-of-line))
 #+end_src
 
+** Connect to Database
+#+begin_src emacs-lisp
+(defun jf/postgres-connect (connection-name)
+  "Connect to PostgreSQL database using CONNECTION-NAME from jf/postgres-connections.
+Resolves connection parameters (Docker ports, auth-source passwords) and opens SQL buffer."
+  (interactive
+   (list (intern (completing-read "Database connection: "
+                                   (mapcar #'car jf/postgres-connections)
+                                   nil t))))
+  (unless jf/postgres-connections
+    (error "No PostgreSQL connections defined. Set jf/postgres-connections in your config."))
+
+  ;; Get connection parameters
+  (let* ((params (jf/postgres-get-connection-params connection-name))
+         (password (plist-get params :password))
+         (entry (jf/postgres-build-sql-connection connection-name)))
+
+    ;; Remove old entry if present and add fresh one
+    (setq sql-connection-alist
+          (assq-delete-all connection-name sql-connection-alist))
+    (push entry sql-connection-alist)
+
+    ;; Set PGPASSWORD environment variable for this connection
+    (when password
+      (setenv "PGPASSWORD" password))
+
+    ;; Connect using built-in sql-connect
+    (unwind-protect
+        (sql-connect connection-name)
+      ;; Clear PGPASSWORD after connection for security
+      (setenv "PGPASSWORD" nil))))
+#+end_src
+
 ** Refresh Connections
 #+begin_src emacs-lisp
 (defun jf/postgres-refresh-connections ()
@@ -333,6 +366,7 @@ Define connections in your machine-specific config (e.g., =local/Mac.home.el=):
 #+end_src
 
 ** Interactive Commands
+- =M-x jf/postgres-connect= - Connect to a database using saved connection
 - =M-x jf/postgres-list-connections= - Display all configured connections
 - =M-x jf/postgres-test-connection= - Test a connection
 - =M-x jf/postgres-insert-src-block= - Insert a SQL source block template
@@ -340,7 +374,7 @@ Define connections in your machine-specific config (e.g., =local/Mac.home.el=):
 * TODO Future Improvements
 - Add query result caching with TTL
 - Implement transaction support (BEGIN/COMMIT/ROLLBACK)
-- Add schema introspection for auto-complete
+- DONE Add schema introspection for auto-complete (implemented in postgres-completion.org)
 - Support AWS RDS IAM authentication
 - Add connection pooling for performance
 - Support for connection profiles (dev/staging/prod)
