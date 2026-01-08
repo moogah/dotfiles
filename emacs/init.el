@@ -1,4 +1,4 @@
-;; -*- lexical-binding: t; -*-
+﻿;; -*- lexical-binding: t; -*-
 
 ;; Startup profiling - uncomment to debug startup time
 ;; (defvar jf/init-start-time (current-time))
@@ -7,7 +7,7 @@
 (setq debug-on-error t)
 
 ;; Register shortcut to quickly open this file
-(set-register ?i (cons 'file "~/src/dotfiles/emacs/modular_init.org"))
+(set-register ?i (cons 'file "~/src/dotfiles/emacs/init.org"))
 
 ;; Define root directory
 (defvar jf/emacs-dir (expand-file-name "~/src/dotfiles/emacs/")
@@ -111,8 +111,38 @@
   "List of enabled modules with their paths and descriptions.")
 
 ;; Define machine-specific configurations
-(defvar jf/machine-name (system-name)
-  "The machine's hostname, used to load machine-specific configurations.")
+;; Machine ID system: Uses ~/.machine-id file for stable machine identification
+;; Available machine IDs:
+;;   - apploi-mac: Work MacBook Air
+;;   - personal-mac: Personal MacBook Pro
+;;   - personal-mac-air: Personal MacBook Air
+;; Setup: echo "apploi-mac" > ~/.machine-id
+
+(defun jf/get-machine-id ()
+  "Get stable machine identifier from ~/.machine-id file.
+Returns the machine ID string, or nil if the file doesn't exist.
+Shows a warning message with setup instructions if the file is missing."
+  (let ((machine-id-file (expand-file-name "~/.machine-id")))
+    (if (file-exists-p machine-id-file)
+        (with-temp-buffer
+          (insert-file-contents machine-id-file)
+          (string-trim (buffer-string)))
+      (progn
+        (warn "Machine ID file not found: %s
+
+To set up your machine ID, create the file with one of:
+  - apploi-mac (Work MacBook Air)
+  - personal-mac (Personal MacBook Pro)
+  - personal-mac-air (Personal MacBook Air)
+
+Example: echo \"apploi-mac\" > ~/.machine-id
+
+This ensures stable machine identification even when hostname changes."
+              machine-id-file)
+        nil))))
+
+(defvar jf/machine-name (jf/get-machine-id)
+  "The machine's stable identifier from ~/.machine-id, used to load machine-specific configurations.")
 
 ;; Load all enabled modules
 (dolist (module-spec jf/enabled-modules)

@@ -1,8 +1,8 @@
 ;; -*- lexical-binding: t; -*-
-;; Machine-specific configuration for Mac.home
+;; Machine-specific configuration for apploi-mac (Work MacBook Air)
 
-;; Configure hostname-based daily journal directory
-(setq org-roam-dailies-directory "dailies/Mac.home/")
+;; Configure machine-specific daily journal directory
+(setq org-roam-dailies-directory "dailies/apploi-mac/")
 
 (setq browser-hist-db-paths
       '((chrome . "/Users/jefffarr/Library/Application Support/Google/Chrome/Profile 1/History")))
