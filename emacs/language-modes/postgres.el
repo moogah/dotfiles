@@ -196,6 +196,9 @@ Resolves connection parameters (Docker ports, auth-source passwords) and opens S
   (unless jf/postgres-connections
     (error "No PostgreSQL connections defined. Set jf/postgres-connections in your config."))
 
+  ;; Ensure sql.el is loaded (defines sql-connection-alist)
+  (require 'sql)
+
   ;; Get connection parameters
   (let* ((params (jf/postgres-get-connection-params connection-name))
          (password (plist-get params :password))
