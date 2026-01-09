@@ -67,16 +67,16 @@
     ~/.oh-my-zsh/custom/fzf.zsh: oh-my-zsh/custom/fzf.zsh
 
 # Machine-specific gitconfig
-# Uses ~/.machine-id for stable machine identification
-# Available IDs: apploi-mac, personal-mac, personal-mac-air
+# Uses ~/.machine-role for stable machine role identification
+# Available roles: apploi-mac, personal-mac, personal-mac-air
 - link:
     ~/.gitconfig:
-      if: '[ `bin/get-machine-id.sh` = apploi-mac ]'
+      if: '[ `bin/get-machine-role.sh` = apploi-mac ]'
       path: gitconfig.work
 
 - link:
     ~/.gitconfig:
-      if: '[ `bin/get-machine-id.sh` = personal-mac ] || [ `bin/get-machine-id.sh` = personal-mac-air ]'
+      if: '[ `bin/get-machine-role.sh` = personal-mac ] || [ `bin/get-machine-role.sh` = personal-mac-air ]'
       path: gitconfig.personal
 
 - link:

@@ -147,38 +147,38 @@ Define which modules to load and in what order.
   "List of enabled modules with their paths and descriptions.")
 
 ;; Define machine-specific configurations
-;; Machine ID system: Uses ~/.machine-id file for stable machine identification
-;; Available machine IDs:
+;; Machine Role system: Uses ~/.machine-role file for stable machine role identification
+;; Available roles:
 ;;   - apploi-mac: Work MacBook Air
 ;;   - personal-mac: Personal MacBook Pro
 ;;   - personal-mac-air: Personal MacBook Air
-;; Setup: echo "apploi-mac" > ~/.machine-id
+;; Setup: echo "apploi-mac" > ~/.machine-role
 
-(defun jf/get-machine-id ()
-  "Get stable machine identifier from ~/.machine-id file.
-Returns the machine ID string, or nil if the file doesn't exist.
+(defun jf/get-machine-role ()
+  "Get stable machine role from ~/.machine-role file.
+Returns the machine role string, or nil if the file doesn't exist.
 Shows a warning message with setup instructions if the file is missing."
-  (let ((machine-id-file (expand-file-name "~/.machine-id")))
-    (if (file-exists-p machine-id-file)
+  (let ((machine-role-file (expand-file-name "~/.machine-role")))
+    (if (file-exists-p machine-role-file)
         (with-temp-buffer
-          (insert-file-contents machine-id-file)
+          (insert-file-contents machine-role-file)
           (string-trim (buffer-string)))
       (progn
-        (warn "Machine ID file not found: %s
+        (warn "Machine role file not found: %s
 
-To set up your machine ID, create the file with one of:
+To set up your machine role, create the file with one of:
   - apploi-mac (Work MacBook Air)
   - personal-mac (Personal MacBook Pro)
   - personal-mac-air (Personal MacBook Air)
 
-Example: echo \"apploi-mac\" > ~/.machine-id
+Example: echo \"apploi-mac\" > ~/.machine-role
 
-This ensures stable machine identification even when hostname changes."
-              machine-id-file)
+This ensures stable machine role identification even when hostname changes."
+              machine-role-file)
         nil))))
 
-(defvar jf/machine-name (jf/get-machine-id)
-  "The machine's stable identifier from ~/.machine-id, used to load machine-specific configurations.")
+(defvar jf/machine-role (jf/get-machine-role)
+  "The machine's stable role identifier from ~/.machine-role, used to load machine-specific configurations.")
 #+end_src
 
 * Load Modules
@@ -191,7 +191,7 @@ Load the example module to demonstrate the system.
     (jf/load-module (jf/resolve-module-path module-path))))
 
 ;; Load machine-specific configuration if it exists
-(let ((machine-config (expand-file-name (concat "local/" jf/machine-name ".el") jf/emacs-dir)))
+(let ((machine-config (expand-file-name (concat "local/" jf/machine-role ".el") jf/emacs-dir)))
   (when (file-exists-p machine-config)
     (jf/load-module machine-config)))
 #+end_src

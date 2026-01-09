@@ -222,10 +222,10 @@ Resolves connection parameters (Docker ports, auth-source passwords) and opens S
 (defun jf/postgres-refresh-connections ()
   "Reload machine-specific config and re-register PostgreSQL connections."
   (interactive)
-  (if (null jf/machine-name)
-      (error "Machine ID not set. Please create ~/.machine-id with one of: apploi-mac, personal-mac, personal-mac-air")
+  (if (null jf/machine-role)
+      (error "Machine role not set. Please create ~/.machine-role with one of: apploi-mac, personal-mac, personal-mac-air")
     (let ((config-file (expand-file-name
-                        (format "local/%s.el" jf/machine-name)
+                        (format "local/%s.el" jf/machine-role)
                         jf/emacs-dir)))
       (if (file-exists-p config-file)
           (progn
