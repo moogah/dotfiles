@@ -1,4 +1,5 @@
 ;; -*- lexical-binding: t; -*-
+(require 'cl-lib)
 
 ;;  (use-package shell-maker
 ;;    :straight (shell-maker :type git :host github :repo "xenodium/shell-maker" :files ("shell-maker.el")))
@@ -175,57 +176,70 @@ Returns metadata plist or nil if file doesn't exist."
 NODE-ID is the node identifier, NODE-TYPE is 'message' or 'response',
 FILENAME is the file containing this node's content,
 PREVIEW is a short preview of the content.
-Returns the updated tree (modified in place for nested structures)."
+Returns the updated tree."
   (let ((new-node (list :id node-id
                         :type (symbol-name node-type)
                         :file filename
                         :timestamp (format-time-string "%Y-%m-%dT%H:%M:%SZ")
                         :preview preview
                         :children [])))
-    (if (and (vectorp parent-path) (equal parent-path ["root"]))
+    (if (equal parent-path ["root"])
         ;; Add to root's children
-        (progn
+        (let ((children (plist-get tree :children)))
           (plist-put tree :children
-                     (vconcat (plist-get tree :children) (vector new-node)))
+                     (vconcat children (vector new-node)))
           tree)
-      ;; Navigate to parent and add to its children
-      (jf/gptel--add-node-recursive tree (coerce parent-path 'list) new-node 1)
+      ;; Navigate to parent and add
+      (jf/gptel--add-node-at-path tree (cl-coerce parent-path 'list) new-node 1)
       tree)))
 
-(defun jf/gptel--add-node-recursive (tree path new-node depth)
-  "Recursively find parent node in TREE following PATH and add NEW-NODE.
-DEPTH tracks current position in path (skipping 'root')."
+(defun jf/gptel--add-node-at-path (node path new-child depth)
+  "Navigate to parent node in TREE following PATH and add NEW-CHILD.
+DEPTH tracks current position in path (skipping 'root').
+Mutates tree in place."
   (if (>= depth (length path))
-      ;; Reached parent, add new-node to its children
-      (plist-put tree :children
-                 (vconcat (plist-get tree :children) (vector new-node)))
+      ;; At parent, add child
+      (let ((children (plist-get node :children)))
+        (plist-put node :children
+                   (vconcat children (vector new-child))))
     ;; Navigate deeper
     (let* ((target-id (nth depth path))
-           (children (plist-get tree :children))
-           (child-found nil))
-      (seq-doseq (child children)
-        (when (equal (plist-get child :id) (format "%s" target-id))
-          (setq child-found t)
-          (jf/gptel--add-node-recursive child path new-node (1+ depth))))
-      (unless child-found
-        (error "Could not find node %s in tree" target-id)))))
+           (children (plist-get node :children))
+           (found nil))
+      (cl-dotimes (i (length children))
+        (unless found
+          (let ((child (aref children i)))
+            (when (equal (plist-get child :id) target-id)
+              (jf/gptel--add-node-at-path child path new-child (1+ depth))
+              (setq found t))))))))
+
+(defun jf/gptel--validate-metadata (metadata)
+  "Validate metadata structure. Returns t if valid, nil otherwise."
+  (and (plist-get metadata :session_id)
+       (plist-get metadata :model)
+       (plist-get metadata :backend)
+       (plist-get metadata :tree)
+       (vectorp (plist-get metadata :current_path))))
 
 (defun jf/gptel--find-leaf-nodes (tree &optional path)
   "Find all leaf nodes in TREE.
 Returns list of (path . node) pairs where path is vector of node IDs."
-  (let ((current-path (or path ["root"]))
-        (children (plist-get tree :children))
-        leaves nil)
-    (if (or (null children) (zerop (length children)))
-        ;; This is a leaf
-        (list (cons current-path tree))
+  (let* ((current-path (or path ["root"]))
+         (children (plist-get tree :children)))
+    (if (or (null children)
+            (and (vectorp children) (zerop (length children))))
+        ;; This is a leaf - only return if not the root with no children
+        (if (equal current-path ["root"])
+            nil  ; Empty tree, return empty list
+          (list (cons current-path tree)))
       ;; Recurse into children
-      (seq-mapcat
-       (lambda (child)
-         (jf/gptel--find-leaf-nodes
-          child
-          (vconcat current-path (vector (plist-get child :id)))))
-       children))))
+      (apply #'append
+             (mapcar
+              (lambda (child)
+                (jf/gptel--find-leaf-nodes
+                 child
+                 (vconcat current-path (vector (plist-get child :id)))))
+              (append children nil))))))
 
 (defun jf/gptel--get-conversation-path (metadata)
   "Get the current conversation path from METADATA.
@@ -280,6 +294,53 @@ Returns format 'message-N' or 'message-N-altM' for forks."
 (defvar-local jf/gptel--message-counter 0
   "Counter for message/response pairs in current session.")
 
+(defvar-local jf/gptel--branching-next nil
+  "Flag indicating next message should be a branch.")
+
+(defvar-local jf/gptel--branch-id nil
+  "Branch ID to use for next message when branching.")
+
+(defun jf/gptel--insert-context (context)
+  "Insert CONTEXT (list of message/response plists) with proper formatting.
+Adds text properties, prefixes, and separators."
+  (let ((prompt-prefix (gptel-prompt-prefix-string))
+        (response-prefix (gptel-response-prefix-string))
+        (separator gptel-response-separator))
+    (dolist (item context)
+      (let* ((type (plist-get item :type))
+             (content (plist-get item :content))
+             (is-response (eq type 'response))
+             (prefix (if is-response response-prefix prompt-prefix))
+             (start-pos (point)))
+
+        ;; Insert separator before responses
+        (when is-response
+          (insert separator))
+
+        ;; Insert prefix and content
+        (insert prefix content "\n")
+
+        ;; Add text properties for responses
+        (when is-response
+          (add-text-properties start-pos (point)
+                              '(gptel response rear-nonsticky t)))))))
+
+(defun jf/gptel--restore-backend-model (metadata)
+  "Restore backend and model from METADATA."
+  (let ((backend-name (plist-get metadata :backend))
+        (model-name (plist-get metadata :model)))
+
+    ;; Restore backend
+    (when backend-name
+      (let ((backend (alist-get backend-name gptel--known-backends
+                               nil nil #'equal)))
+        (when backend
+          (setq-local gptel-backend backend))))
+
+    ;; Restore model (convert string to symbol)
+    (when model-name
+      (setq-local gptel-model (intern model-name)))))
+
 (defun jf/gptel--autosave-session (response-start response-end)
   "Automatically save gptel session after LLM response.
 RESPONSE-START and RESPONSE-END mark the response boundaries.
@@ -292,16 +353,13 @@ This function is added to `gptel-post-response-functions'."
           (unless jf/gptel--session-dir
             (jf/gptel--initialize-session))
 
-          ;; Determine message ID (fork or sequential)
+          ;; Determine message ID (branch or sequential)
           (let* ((ext (jf/gptel--get-file-extension))
-                 (msg-id (if (bound-and-true-p jf/gptel--forking-next)
-                             ;; Create fork ID
-                             (prog1
-                                 (jf/gptel--get-next-fork-id
-                                  jf/gptel--session-metadata
-                                  (plist-get jf/gptel--session-metadata :current_path))
-                               ;; Clear fork flag
-                               (setq jf/gptel--forking-next nil))
+                 (msg-id (if (bound-and-true-p jf/gptel--branching-next)
+                             ;; Use predetermined branch ID
+                             (prog1 jf/gptel--branch-id
+                               (setq jf/gptel--branching-next nil)
+                               (setq jf/gptel--branch-id nil))
                            ;; Normal sequential ID
                            (progn
                              (setq jf/gptel--message-counter (1+ jf/gptel--message-counter))
@@ -359,80 +417,203 @@ This function is added to `gptel-post-response-functions'."
     (message "Created session: %s" dirname)))
 
 (defun jf/gptel--extract-last-message (response-start)
-  "Extract the user's last message before RESPONSE-START."
-  ;; Find the last occurrence of gptel-prompt-prefix-string before response-start
+  "Extract user's last message before RESPONSE-START using text properties."
   (save-excursion
     (goto-char response-start)
-    (let ((prompt-start (if (boundp 'gptel-prompt-prefix-string)
-                            (search-backward gptel-prompt-prefix-string nil t)
-                          (previous-single-property-change (point) 'gptel)))
-          (prompt-end response-start))
-      (if prompt-start
-          (buffer-substring (+ prompt-start (if (boundp 'gptel-prompt-prefix-string)
-                                                 (length gptel-prompt-prefix-string)
-                                               0))
-                            prompt-end)
-        ;; Fallback: get last 500 chars before response
-        (buffer-substring (max (point-min) (- response-start 500)) response-start)))))
+    ;; Find start of last user message (previous property change from response)
+    (let ((msg-end response-start)
+          (msg-start (previous-single-property-change response-start 'gptel nil (point-min))))
+      ;; If we're at a response, go back one more to get the user message
+      (when (eq (get-char-property msg-start 'gptel) 'response)
+        (setq msg-end msg-start)
+        (setq msg-start (previous-single-property-change msg-start 'gptel nil (point-min))))
+      ;; Extract and trim
+      (let ((content (buffer-substring-no-properties msg-start msg-end)))
+        (gptel--trim-prefixes content)))))
+
+(defun jf/gptel--get-all-messages ()
+  "Extract all message/response pairs from current buffer.
+Returns list of plists: (:type 'message|'response :content string)."
+  (let (messages (prev-pt (point-max)))
+    (save-excursion
+      (goto-char (point-max))
+      (while (> prev-pt (point-min))
+        (let ((prop-change (previous-single-property-change prev-pt 'gptel nil (point-min))))
+          (when prop-change
+            (let* ((prop (get-char-property prop-change 'gptel))
+                   (content (gptel--trim-prefixes
+                            (buffer-substring-no-properties prop-change prev-pt)))
+                   (type (if (eq prop 'response) 'response 'message)))
+              (when (and content (not (string-empty-p content)))
+                (push (list :type type :content content) messages)))
+            (setq prev-pt prop-change)))))
+    messages))
+
+(defun jf/gptel--get-context-before-point (pt)
+  "Get all message/response pairs before point PT.
+Returns list of plists in chronological order."
+  (let ((context nil)
+        (scan-pt (point-min)))
+    (save-excursion
+      (while (< scan-pt pt)
+        (goto-char scan-pt)
+        (let ((next-change (next-single-property-change scan-pt 'gptel nil pt)))
+          (when next-change
+            (let* ((prop (get-char-property scan-pt 'gptel))
+                   (content (gptel--trim-prefixes
+                            (buffer-substring-no-properties scan-pt next-change)))
+                   (type (if (eq prop 'response) 'response 'message)))
+              (when (and content (not (string-empty-p content)))
+                (push (list :type type :content content) context)))
+            (setq scan-pt next-change))
+          (unless next-change
+            (setq scan-pt pt)))))
+    (nreverse context)))
 
 (defun jf/gptel--update-metadata-tree (msg-id msg-file msg-preview resp-id resp-file resp-preview)
   "Update metadata tree with new message and response nodes."
   (let* ((tree (plist-get jf/gptel--session-metadata :tree))
-         (current-path (plist-get jf/gptel--session-metadata :current_path))
-         ;; Add message node
-         (tree-with-msg (jf/gptel--add-tree-node tree current-path msg-id 'message msg-file msg-preview))
-         ;; Add response node (child of message)
-         (new-msg-path (vconcat current-path (vector msg-id)))
-         (tree-with-resp (jf/gptel--add-tree-node tree-with-msg new-msg-path resp-id 'response resp-file resp-preview))
-         ;; Update current path
-         (new-path (vconcat new-msg-path (vector resp-id))))
+         (current-path (plist-get jf/gptel--session-metadata :current_path)))
 
-    ;; Update metadata
-    (plist-put jf/gptel--session-metadata :tree tree-with-resp)
-    (plist-put jf/gptel--session-metadata :current_path new-path)
+    (message "DEBUG update-tree: msg-id=%s, current-path=%S" msg-id current-path)
+
+    ;; Add message node
+    (jf/gptel--add-tree-node tree current-path msg-id 'message msg-file msg-preview)
+    ;; Add response node (child of message)
+    (let* ((new-msg-path (vconcat current-path (vector msg-id))))
+      (jf/gptel--add-tree-node tree new-msg-path resp-id 'response resp-file resp-preview)
+      ;; Update current path
+      (let ((new-path (vconcat new-msg-path (vector resp-id))))
+        (plist-put jf/gptel--session-metadata :current_path new-path)
+        (message "DEBUG update-tree: new current-path=%S" new-path)))
 
     ;; Write to disk
     (jf/gptel--write-metadata jf/gptel--session-dir jf/gptel--session-metadata)))
 
-(defun jf/gptel-fork-session ()
-  "Mark current position as fork point for next message.
-Next message sent will create a branch (e.g., message-3-alt1)."
+(defun jf/gptel-branch-session ()
+  "Create new branch by selecting which messages to include.
+Presents a list of message/response pairs and lets user choose
+where to branch from."
   (interactive)
   (unless (and jf/gptel--session-dir jf/gptel--session-metadata)
-    (user-error "No active session to fork"))
+    (user-error "No active session to branch"))
 
-  ;; Mark as forked by setting a buffer-local flag
-  (setq-local jf/gptel--forking-next t)
-  (message "Next message will create a new branch"))
+  ;; Get all messages and build candidates
+  (let* ((all-messages (jf/gptel--get-all-messages))
+         (candidates (jf/gptel--build-branch-candidates all-messages))
+         (choice (completing-read "Branch after: " candidates nil t))
+         (choice-index (cdr (assoc choice candidates)))
+         ;; Take first N messages (up to and including the chosen point)
+         (branch-context (seq-take all-messages choice-index))
+         (context-length (length branch-context))
+         ;; Get the parent path
+         (current-path (plist-get jf/gptel--session-metadata :current_path))
+         (desired-path-length (1+ context-length))
+         (actual-path-length (length current-path))
+         (parent-path (if (and (> context-length 0)
+                              (>= actual-path-length desired-path-length))
+                         (seq-subseq current-path 0 desired-path-length)
+                       ["root"]))
+         (next-msg-num (1+ (/ context-length 2)))
+         (branch-id (jf/gptel--get-next-branch-id next-msg-num)))
 
-(defun jf/gptel--get-next-fork-id (metadata parent-path)
-  "Get next fork ID (e.g., 'message-3-alt1') based on existing forks.
-METADATA is the session metadata, PARENT-PATH is where to fork from."
-  (let* ((tree (plist-get metadata :tree))
-         ;; Find parent node
-         (parent-node (jf/gptel--find-node-by-path tree parent-path))
-         (parent-children (plist-get parent-node :children))
-         ;; Get last response number from parent path
-         (last-id (aref parent-path (1- (length parent-path))))
-         (base-num (if (string-match "\\([0-9]+\\)" (format "%s" last-id))
-                       (string-to-number (match-string 1 (format "%s" last-id)))
-                     0))
-         (next-num (1+ base-num))
-         ;; Find existing alts
-         (existing-alts
-          (seq-filter
-           (lambda (child)
-             (string-match (format "message-%d-alt\\([0-9]+\\)" next-num)
-                          (format "%s" (plist-get child :id))))
-           parent-children))
-         (next-alt-num (1+ (length existing-alts))))
-    (format "message-%d-alt%d" next-num next-alt-num)))
+    (message "DEBUG branch: choice=%s, context-length=%d, parent-path=%S"
+             choice context-length parent-path)
+
+    ;; Create new buffer with branch context
+    (jf/gptel--create-branch-buffer branch-context branch-id parent-path)))
+
+(defun jf/gptel--build-branch-candidates (messages)
+  "Build completing-read candidates from MESSAGES list.
+Returns alist of (display-string . message-count)."
+  (let ((candidates '())
+        (count 0))
+    ;; Add option to branch from beginning
+    (push (cons "[Beginning] - Start fresh conversation" 0) candidates)
+
+    ;; Add option for each message/response pair
+    (while (< count (length messages))
+      (let* ((msg (nth count messages))
+             (resp (when (< (1+ count) (length messages))
+                     (nth (1+ count) messages)))
+             (msg-preview (substring (plist-get msg :content) 0
+                                    (min 50 (length (plist-get msg :content)))))
+             (pair-num (/ (+ count 2) 2))
+             (display (if resp
+                         (format "After message %d/response %d: \"%s...\""
+                                pair-num pair-num msg-preview)
+                       (format "After message %d: \"%s...\""
+                              pair-num msg-preview))))
+        (setq count (if resp (+ count 2) (+ count 1)))
+        (push (cons display count) candidates)))
+
+    (nreverse candidates)))
+
+(defun jf/gptel--get-next-branch-id (message-num)
+  "Get next branch ID for MESSAGE-NUM by scanning directory.
+Returns 'message-N' if no branches exist, or 'message-N-altM' for next alt."
+  (let* ((base-pattern (format "message-%d" message-num))
+         (alt-pattern (format "%s-alt\\([0-9]+\\)" base-pattern))
+         (files (directory-files jf/gptel--session-dir nil base-pattern))
+         (max-alt 0))
+    ;; Scan for existing alts
+    (dolist (file files)
+      (when (string-match alt-pattern file)
+        (let ((alt-num (string-to-number (match-string 1 file))))
+          (setq max-alt (max max-alt alt-num)))))
+    (if (> max-alt 0)
+        (format "message-%d-alt%d" message-num (1+ max-alt))
+      ;; Check if base message exists
+      (if (seq-find (lambda (f) (string-match (format "^%s\\." base-pattern) f)) files)
+          (format "message-%d-alt1" message-num)
+        (format "message-%d" message-num)))))
+
+(defun jf/gptel--create-branch-buffer (context branch-id parent-path)
+  "Create new gptel buffer with CONTEXT loaded, ready for branching at BRANCH-ID."
+  (let* ((metadata jf/gptel--session-metadata)
+         (session-id (plist-get metadata :session_id))
+         (buffer-name (format "*gptel-%s-branch-%s*" session-id branch-id))
+         (buf (get-buffer-create buffer-name))
+         (parent-session-dir jf/gptel--session-dir))
+
+    (with-current-buffer buf
+      ;; Set up mode
+      (markdown-mode)
+      (gptel-mode 1)
+
+      ;; Reconstruct conversation with proper formatting
+      (erase-buffer)
+      (jf/gptel--insert-context context)
+
+      ;; Set up session state (shared with parent)
+      (setq jf/gptel--session-dir parent-session-dir)
+      (setq jf/gptel--session-metadata (copy-sequence metadata))
+
+      ;; Update current path to branch parent
+      (plist-put jf/gptel--session-metadata :current_path parent-path)
+      (message "DEBUG branch-buffer: set current-path=%S" parent-path)
+
+      ;; Set message counter for next message
+      (setq jf/gptel--message-counter (/ (length context) 2))
+
+      ;; Mark that next message is a branch
+      (setq-local jf/gptel--branching-next t)
+      (setq-local jf/gptel--branch-id branch-id)
+
+      ;; Restore backend/model
+      (jf/gptel--restore-backend-model metadata)
+
+      (goto-char (point-max))
+      (message "Created branch at %s. Type new message to continue." branch-id))
+
+    ;; Display buffer
+    (switch-to-buffer buf)))
 
 (defun jf/gptel--find-node-by-path (tree path)
   "Find node in TREE by following PATH (vector of node IDs)."
   (if (or (null path) (equal path ["root"]))
       tree
-    (jf/gptel--find-node-recursive tree (coerce path 'list) 1)))
+    (jf/gptel--find-node-recursive tree (cl-coerce path 'list) 1)))
 
 (defun jf/gptel--find-node-recursive (tree path depth)
   "Recursively find node in TREE following PATH at DEPTH."
@@ -476,17 +657,23 @@ Returns alist of (display-string . (session-dir path leaf-node))."
             (dolist (leaf leaves)
               (let* ((path (car leaf))
                      (node (cdr leaf))
-                     (node-id (plist-get node :id))
+                     (depth (1- (length path))) ; subtract root
+                     (last-id (aref path (1- (length path))))
+                     (is-alt (string-match "alt\\([0-9]+\\)" (format "%s" last-id)))
+                     (branch-label (if is-alt
+                                      (format " [alt%s, depth:%d]"
+                                             (match-string 1 (format "%s" last-id))
+                                             depth)
+                                    (format " [main, depth:%d]" depth)))
                      (preview (plist-get node :preview))
-                     (timestamp (plist-get node :timestamp))
-                     (branch-label (if (string-match "alt\\([0-9]+\\)" (format "%s" node-id))
-                                       (format " [branch %s]" (match-string 1 (format "%s" node-id)))
-                                     ""))
-                     (display (format "%-30s%s | %s"
-                                      session-id
-                                      branch-label
-                                      (or preview "..."))))
-                (push (cons display (list :dir dir :path path :node node)) candidates))))))
+                     (display (format "%-35s %-20s | %s"
+                                     session-id
+                                     branch-label
+                                     (if preview
+                                         (substring preview 0 (min 60 (length preview)))
+                                       "..."))))
+                (push (cons display (list :dir dir :path path :node node))
+                      candidates))))))
     (nreverse candidates)))
 
 (defun jf/gptel--open-session-branch (session-info)
@@ -500,79 +687,64 @@ SESSION-INFO is a plist with :dir, :path, and :node."
     (jf/gptel--reconstruct-conversation dir tree path)))
 
 (defun jf/gptel--reconstruct-conversation (session-dir tree path)
-  "Reconstruct conversation by reading files along PATH in TREE.
-Creates a new gptel buffer with the conversation and sets up state."
+  "Reconstruct conversation from root to PATH endpoint in TREE."
   (let* ((metadata (jf/gptel--read-metadata session-dir))
-         (model-name (plist-get metadata :model))
-         (backend-name (plist-get metadata :backend))
          (session-id (plist-get metadata :session_id))
          (buffer-name (format "*gptel-%s*" session-id))
-         (conversation-parts '())
-         ;; Convert path to list of node IDs
-         (node-ids (coerce path 'list)))
+         (context (jf/gptel--load-context-from-path session-dir tree path)))
 
-    ;; Walk the path and collect file contents
-    (jf/gptel--walk-path-and-collect tree node-ids session-dir conversation-parts)
-
-    ;; Create or switch to buffer
     (let ((buf (get-buffer-create buffer-name)))
       (with-current-buffer buf
-        ;; Set major mode (use markdown by default, could be smarter)
         (markdown-mode)
         (gptel-mode 1)
-
-        ;; Clear buffer and insert conversation
         (erase-buffer)
-        (dolist (part (nreverse conversation-parts))
-          (insert part))
+
+        ;; Insert conversation
+        (jf/gptel--insert-context context)
 
         ;; Set up session state
         (setq jf/gptel--session-dir session-dir)
         (setq jf/gptel--session-metadata metadata)
-        ;; Update current path in metadata
         (plist-put jf/gptel--session-metadata :current_path path)
         (jf/gptel--write-metadata session-dir jf/gptel--session-metadata)
 
-        ;; Extract counter from last message
-        (let ((last-msg-id (car (last node-ids))))
-          (when (string-match "\\([0-9]+\\)" (format "%s" last-msg-id))
-            (setq jf/gptel--message-counter
-                  (string-to-number (match-string 1 (format "%s" last-msg-id))))))
+        ;; Set counter from path depth
+        (setq jf/gptel--message-counter (/ (length context) 2))
 
-        ;; Set up gptel backend and model
-        ;; TODO: Restore correct backend/model from metadata
+        ;; Restore backend/model
+        (jf/gptel--restore-backend-model metadata)
 
         (goto-char (point-max)))
 
-      ;; Display buffer
-      (pop-to-buffer buf)
-      (message "Loaded session: %s (at %s)" session-id (car (last node-ids))))))
+      (switch-to-buffer buf)
+      (message "Loaded session: %s" session-id))))
 
-(defun jf/gptel--walk-path-and-collect (tree node-ids session-dir parts-list)
-  "Walk TREE following NODE-IDS and collect file contents from SESSION-DIR.
-Accumulates content in PARTS-LIST."
-  (when (> (length node-ids) 1) ; Skip "root"
-    (jf/gptel--walk-recursive tree (cdr node-ids) session-dir parts-list)))
-
-(defun jf/gptel--walk-recursive (node remaining-ids session-dir parts-list)
-  "Recursively walk NODE following REMAINING-IDS."
-  (when remaining-ids
-    (let* ((target-id (car remaining-ids))
-           (children (plist-get node :children))
-           (found-child nil))
-      (seq-doseq (child children)
-        (when (equal (plist-get child :id) (format "%s" target-id))
-          (setq found-child child)
-          ;; Read this node's file
-          (let ((file (plist-get child :file)))
-            (when file
-              (let ((full-path (expand-file-name file session-dir)))
-                (when (file-exists-p full-path)
-                  (with-temp-buffer
-                    (insert-file-contents full-path)
-                    (push (buffer-string) parts-list))))))
-          ;; Continue to next node
-          (jf/gptel--walk-recursive child (cdr remaining-ids) session-dir parts-list)))))))
+(defun jf/gptel--load-context-from-path (session-dir tree path)
+  "Load message/response pairs from SESSION-DIR following PATH in TREE.
+Returns list of plists suitable for jf/gptel--insert-context."
+  (let ((context '())
+        (node tree))
+    ;; Walk path (skip root at index 0)
+    (cl-loop for i from 1 below (length path)
+             for target-id = (aref path i)
+             do
+             (let ((children (plist-get node :children)))
+               ;; Find matching child
+               (setq node
+                     (seq-find (lambda (child)
+                                 (equal (plist-get child :id) target-id))
+                               children))
+               (when node
+                 (let* ((file (plist-get node :file))
+                        (type (intern (plist-get node :type)))
+                        (full-path (expand-file-name file session-dir))
+                        (content (when (file-exists-p full-path)
+                                  (with-temp-buffer
+                                    (insert-file-contents full-path)
+                                    (buffer-string)))))
+                   (when content
+                     (push (list :type type :content content) context))))))
+    (nreverse context))))
 
 ;; Install auto-save hook
 (with-eval-after-load 'gptel
