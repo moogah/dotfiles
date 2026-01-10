@@ -84,14 +84,6 @@ else
     echo "✗ Homebrew FZF not found"
 fi
 
-echo ""
-echo "=== zsh-histdb ==="
-if [[ -d ~/.oh-my-zsh/custom/plugins/zsh-histdb ]]; then
-    echo "✓ zsh-histdb installed"
-    cd ~/.oh-my-zsh/custom/plugins/zsh-histdb && git log -1 --format="  Commit: %h - %s (%ci)" 2>/dev/null
-else
-    echo "✗ zsh-histdb not installed"
-fi
 #+end_src
 
 #+RESULTS:
@@ -110,10 +102,6 @@ fi
 
 === Homebrew FZF ===
 ✓ Homebrew FZF at: /opt/homebrew/opt/fzf
-
-=== zsh-histdb ===
-✓ zsh-histdb installed
-  Commit: 90a6c10 - Merge pull request #122 from ericbn/history_ignore (2024-04-18 19:02:18 +0100)
 #+end_example
 
 ** Check Dotfiles Symlinks
@@ -169,6 +157,7 @@ ohmyzsh/ohmyzsh path:plugins/macos
 ohmyzsh/ohmyzsh path:plugins/docker
 ohmyzsh/ohmyzsh path:plugins/fzf
 Aloxaf/fzf-tab
+larkery/zsh-histdb
 
 === Installed Plugins (in Antidote cache) ===
 Run 'source ~/.zshrc' first to initialize plugins

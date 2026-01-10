@@ -1,5 +1,5 @@
-# Powerlevel10k theme - must use kind:fpath for themes
-romkatv/powerlevel10k kind:fpath
+# Powerlevel10k theme - loaded first for prompt
+romkatv/powerlevel10k
 
 # Essential productivity plugins
 zsh-users/zsh-autosuggestions
@@ -16,3 +16,6 @@ ohmyzsh/ohmyzsh path:plugins/fzf
 
 # fzf-tab must load after fzf plugin
 Aloxaf/fzf-tab
+
+# Advanced history management with SQLite backend
+larkery/zsh-histdb

@@ -75,17 +75,13 @@ setopt HIST_IGNORE_ALL_DUPS   # Don't save duplicates in history
 
 # zsh-histdb Configuration
 
-# Custom plugin for advanced history management. This is installed separately as a custom plugin.
+# Advanced history management using SQLite backend. This plugin is managed by Antidote.
 
 
 # [[file:zshrc.org::*zsh-histdb Configuration][zsh-histdb Configuration:1]]
-# zsh-histdb is installed as a custom Oh My Zsh plugin
-# Load it after Antidote initializes other plugins
-if [[ -f $HOME/.oh-my-zsh/custom/plugins/zsh-histdb/sqlite-history.zsh ]]; then
-  HISTDB_TABULATE_CMD=(sed -e $'s/\x1f/\t/g')
-  source $HOME/.oh-my-zsh/custom/plugins/zsh-histdb/sqlite-history.zsh
-  autoload -Uz add-zsh-hook
-fi
+# Configure zsh-histdb tabulation command
+# This is loaded by Antidote from the .zsh_plugins.txt configuration
+HISTDB_TABULATE_CMD=(sed -e $'s/\x1f/\t/g')
 # zsh-histdb Configuration:1 ends here
 
 # User Configuration
@@ -415,4 +411,5 @@ export GTAGSLABEL=pygments
 export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
 
 # Add Claude CLI to aliases
+alias claude="/Users/jefffarr/.claude/local/claude"
 # Development Tools Configuration:1 ends here

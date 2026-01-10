@@ -16,8 +16,8 @@ The configuration in this file is tangled to =~/src/dotfiles/zshrc= using Org-mo
 This section defines the plugins to be managed by Antidote, a high-performance ZSH plugin manager.
 
 #+begin_src conf
-# Powerlevel10k theme - must use kind:fpath for themes
-romkatv/powerlevel10k kind:fpath
+# Powerlevel10k theme - loaded first for prompt
+romkatv/powerlevel10k
 
 # Essential productivity plugins
 zsh-users/zsh-autosuggestions
@@ -34,6 +34,9 @@ ohmyzsh/ohmyzsh path:plugins/fzf
 
 # fzf-tab must load after fzf plugin
 Aloxaf/fzf-tab
+
+# Advanced history management with SQLite backend
+larkery/zsh-histdb
 #+end_src
 
 * Powerlevel10k Instant Prompt
@@ -110,16 +113,12 @@ setopt HIST_IGNORE_ALL_DUPS   # Don't save duplicates in history
 
 * zsh-histdb Configuration
 
-Custom plugin for advanced history management. This is installed separately as a custom plugin.
+Advanced history management using SQLite backend. This plugin is managed by Antidote.
 
 #+begin_src sh
-# zsh-histdb is installed as a custom Oh My Zsh plugin
-# Load it after Antidote initializes other plugins
-if [[ -f $HOME/.oh-my-zsh/custom/plugins/zsh-histdb/sqlite-history.zsh ]]; then
-  HISTDB_TABULATE_CMD=(sed -e $'s/\x1f/\t/g')
-  source $HOME/.oh-my-zsh/custom/plugins/zsh-histdb/sqlite-history.zsh
-  autoload -Uz add-zsh-hook
-fi
+# Configure zsh-histdb tabulation command
+# This is loaded by Antidote from the .zsh_plugins.txt configuration
+HISTDB_TABULATE_CMD=(sed -e $'s/\x1f/\t/g')
 #+end_src
 
 * User Configuration
