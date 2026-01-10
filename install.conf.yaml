@@ -12,6 +12,7 @@
     ~/.config/nvim/init.vim: init.vim
     ~/.config/nvim/coc-settings.json: coc-settings.json
     ~/.zshrc: zshrc
+    ~/.zsh_plugins.txt: .zsh_plugins.txt
     ~/.zprofile: zprofile
     ~/.p10k.zsh: p10k.zsh
     ~/.tmux.conf: tmux.conf
@@ -81,11 +82,6 @@
     ~/.gitconfig:
       if: '[ `hostname` = Mac.home ]'
       path: gitconfig.work
-
-- link:
-    ~/.oh-my-zsh/custom/plugins/fzf-tab: oh-my-zsh/custom/plugins/fzf-tab
-    ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions: oh-my-zsh/custom/plugins/zsh-autosuggestions
-    ~/.oh-my-zsh/custom/plugins/zsh-vi-mode: oh-my-zsh/custom/plugins/zsh-vi-mode
 
 - link:
     ~/bin/tangle-org.sh: bin/tangle-org.sh
