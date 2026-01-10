@@ -74,11 +74,19 @@
 
 (defun jf/gptel-launcher ()
   "Launch gptel session with a selected backend and model.
-Prompts for backend:model selection using completing-read with all
-available options from gptel's configuration."
+Prompts for display method, then backend:model selection using
+completing-read with all available options from gptel's configuration."
   (interactive)
-  ;; Build models-alist similar to gptel--infix-provider
-  (let* ((models-alist
+  ;; First, ask where to display the buffer
+  (let* ((display-options '(("Current window" . current)
+                            ("New tab" . tab)
+                            ("Split window" . split)))
+         (display-choice (completing-read "Where to open? "
+                                          (mapcar #'car display-options)
+                                          nil t nil nil "Current window"))
+         (display-method (cdr (assoc display-choice display-options)))
+         ;; Build models-alist similar to gptel--infix-provider
+         (models-alist
           (cl-loop
            for (name . backend) in gptel--known-backends
            nconc (cl-loop for model in (gptel-backend-models backend)
@@ -90,10 +98,23 @@ available options from gptel's configuration."
          (choice (assoc selected models-alist))
          (backend (nth 1 choice))
          (model (nth 2 choice))
-         (buffer-name (format "*gptel-%s*" (replace-regexp-in-string ":" "-" selected))))
-    (pop-to-buffer (gptel buffer-name nil nil t))
-    (setq-local gptel-backend backend)
-    (setq-local gptel-model model)))
+         (buffer-name (format "*gptel-%s*" (replace-regexp-in-string ":" "-" selected)))
+         ;; Create buffer without displaying it (pass nil for interactivep)
+         ;; Note: When interactivep is t, gptel calls (display-buffer) with
+         ;; gptel-display-buffer-action, which would display the buffer before
+         ;; we can control where it goes. By passing nil, we handle all display
+         ;; logic ourselves based on the user's selection.
+         (buffer (gptel buffer-name nil nil nil)))
+    ;; Display buffer based on user's choice
+    (pcase display-method
+      ('split (pop-to-buffer buffer))
+      ('tab (tab-bar-new-tab)
+            (switch-to-buffer buffer))
+      ('current (switch-to-buffer buffer)))
+    ;; Set backend and model as buffer-local
+    (with-current-buffer buffer
+      (setq-local gptel-backend backend)
+      (setq-local gptel-model model))))
 
 ;; Keybinding for gptel launcher
 ;; Direct access with <SPC> l
