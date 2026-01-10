@@ -1,1 +1,4 @@
-*~
+# Machine-specific role file
+# This file should be created locally on each machine with the appropriate machine role
+# Available roles: apploi-mac, personal-mac, personal-mac-air
+.machine-role

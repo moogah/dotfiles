@@ -68,20 +68,17 @@
     ~/.oh-my-zsh/custom/fzf.zsh: oh-my-zsh/custom/fzf.zsh
 
 # Machine-specific gitconfig
+# Uses ~/.machine-role for stable machine role identification
+# Available roles: apploi-mac, personal-mac, personal-mac-air
 - link:
     ~/.gitconfig:
-      if: '[ `hostname` = molokai ]'
-      path: gitconfig.personal
-
-- link:
-    ~/.gitconfig:
-      if: '[ `hostname` = Jeffs-MacBook-Air.local ]'
-      path: gitconfig.personal
-
-- link:
-    ~/.gitconfig:
-      if: '[ `hostname` = Mac.home ]'
+      if: '[ `bin/get-machine-role.sh` = apploi-mac ]'
       path: gitconfig.work
+
+- link:
+    ~/.gitconfig:
+      if: '[ `bin/get-machine-role.sh` = personal-mac ] || [ `bin/get-machine-role.sh` = personal-mac-air ]'
+      path: gitconfig.personal
 
 - link:
     ~/bin/tangle-org.sh: bin/tangle-org.sh

@@ -222,15 +222,17 @@ Resolves connection parameters (Docker ports, auth-source passwords) and opens S
 (defun jf/postgres-refresh-connections ()
   "Reload machine-specific config and re-register PostgreSQL connections."
   (interactive)
-  (let ((config-file (expand-file-name
-                      (format "local/%s.el" (system-name))
-                      jf/emacs-dir)))
-    (if (file-exists-p config-file)
-        (progn
-          (load-file config-file)
-          (jf/postgres-register-connections)
-          (message "Refreshed PostgreSQL connections from %s" config-file))
-      (error "Machine-specific config not found: %s" config-file))))
+  (if (null jf/machine-role)
+      (error "Machine role not set. Please create ~/.machine-role with one of: apploi-mac, personal-mac, personal-mac-air")
+    (let ((config-file (expand-file-name
+                        (format "local/%s.el" jf/machine-role)
+                        jf/emacs-dir)))
+      (if (file-exists-p config-file)
+          (progn
+            (load-file config-file)
+            (jf/postgres-register-connections)
+            (message "Refreshed PostgreSQL connections from %s" config-file))
+        (error "Machine-specific config not found: %s" config-file)))))
 
 (use-package csv-mode
   :straight t

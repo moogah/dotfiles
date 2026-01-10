@@ -7,7 +7,7 @@
 (setq debug-on-error t)
 
 ;; Register shortcut to quickly open this file
-(set-register ?i (cons 'file "~/src/dotfiles/emacs/modular_init.org"))
+(set-register ?i (cons 'file "~/src/dotfiles/emacs/init.org"))
 
 ;; Define root directory
 (defvar jf/emacs-dir (expand-file-name "~/src/dotfiles/emacs/")
@@ -111,8 +111,38 @@
   "List of enabled modules with their paths and descriptions.")
 
 ;; Define machine-specific configurations
-(defvar jf/machine-name (system-name)
-  "The machine's hostname, used to load machine-specific configurations.")
+;; Machine Role system: Uses ~/.machine-role file for stable machine role identification
+;; Available roles:
+;;   - apploi-mac: Work MacBook Air
+;;   - personal-mac: Personal MacBook Pro
+;;   - personal-mac-air: Personal MacBook Air
+;; Setup: echo "apploi-mac" > ~/.machine-role
+
+(defun jf/get-machine-role ()
+  "Get stable machine role from ~/.machine-role file.
+Returns the machine role string, or nil if the file doesn't exist.
+Shows a warning message with setup instructions if the file is missing."
+  (let ((machine-role-file (expand-file-name "~/.machine-role")))
+    (if (file-exists-p machine-role-file)
+        (with-temp-buffer
+          (insert-file-contents machine-role-file)
+          (string-trim (buffer-string)))
+      (progn
+        (warn "Machine role file not found: %s
+
+To set up your machine role, create the file with one of:
+  - apploi-mac (Work MacBook Air)
+  - personal-mac (Personal MacBook Pro)
+  - personal-mac-air (Personal MacBook Air)
+
+Example: echo \"apploi-mac\" > ~/.machine-role
+
+This ensures stable machine role identification even when hostname changes."
+              machine-role-file)
+        nil))))
+
+(defvar jf/machine-role (jf/get-machine-role)
+  "The machine's stable role identifier from ~/.machine-role, used to load machine-specific configurations.")
 
 ;; Load all enabled modules
 (dolist (module-spec jf/enabled-modules)
@@ -120,7 +150,7 @@
     (jf/load-module (jf/resolve-module-path module-path))))
 
 ;; Load machine-specific configuration if it exists
-(let ((machine-config (expand-file-name (concat "local/" jf/machine-name ".el") jf/emacs-dir)))
+(let ((machine-config (expand-file-name (concat "local/" jf/machine-role ".el") jf/emacs-dir)))
   (when (file-exists-p machine-config)
     (jf/load-module machine-config)))
 
