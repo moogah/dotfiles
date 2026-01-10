@@ -78,8 +78,8 @@ Notes:
       :key (lambda () (auth-source-pick-first-password :host "api.anthropic.com"))
       :stream t
       :models '(claude-3-7-sonnet-20250219)
-      :header (lambda () 
-                (let ((key (gptel--get-api-key 
+      :header (lambda ()
+                (let ((key (gptel--get-api-key
                             ;; Explicitly use the same key function as defined above
                             (lambda () (auth-source-pick-first-password :host "api.anthropic.com")))))
                   `(("x-api-key" . ,key)
@@ -88,7 +88,13 @@ Notes:
                     ("anthropic-beta" . "output-128k-2025-02-19")
                     ("anthropic-beta" . "prompt-caching-2024-07-31"))))
       :request-params '(:thinking (:type "enabled" :budget_tokens 2048)
-                        :max_tokens 4096)))
+                        :max_tokens 4096))
+
+    ;; Configure ChatGPT/OpenAI backend
+    (gptel-make-openai "ChatGPT"
+      :key (lambda () (auth-source-pick-first-password :host "api.openai.com"))
+      :stream t
+      :models '(gpt-4o gpt-4o-mini gpt-4-turbo gpt-3.5-turbo)))
 #+end_src
 
 * GPTEL Tools
@@ -116,6 +122,70 @@ Define custom tools and functions that can be used by LLMs to interact with the 
    :category "filesystem")                ; An arbitrary label for grouping
 #+end_src
 
+* GPTEL Session Launchers
+Quick launcher functions for starting dedicated gptel sessions with specific models.
+These functions create or switch to named buffers with pre-configured backends and models.
+
+#+begin_src emacs-lisp
+(defun jf/gptel-gpt4o ()
+  "Launch gptel session with GPT-4o in a dedicated buffer."
+  (interactive)
+  (let ((backend (alist-get "ChatGPT" gptel--known-backends nil nil #'equal))
+        (model 'gpt-4o))
+    (pop-to-buffer (gptel "*gptel-gpt4o*" nil nil t))
+    (setq-local gptel-backend backend)
+    (setq-local gptel-model model)))
+
+(defun jf/gptel-gpt4o-mini ()
+  "Launch gptel session with GPT-4o-mini in a dedicated buffer."
+  (interactive)
+  (let ((backend (alist-get "ChatGPT" gptel--known-backends nil nil #'equal))
+        (model 'gpt-4o-mini))
+    (pop-to-buffer (gptel "*gptel-gpt4o-mini*" nil nil t))
+    (setq-local gptel-backend backend)
+    (setq-local gptel-model model)))
+
+(defun jf/gptel-claude-thinking ()
+  "Launch gptel session with Claude Sonnet (extended thinking) in a dedicated buffer."
+  (interactive)
+  (let ((backend (alist-get "Claude-thinking" gptel--known-backends nil nil #'equal))
+        (model 'claude-3-7-sonnet-20250219))
+    (pop-to-buffer (gptel "*gptel-claude-thinking*" nil nil t))
+    (setq-local gptel-backend backend)
+    (setq-local gptel-model model)))
+
+(defun jf/gptel-perplexity ()
+  "Launch gptel session with Perplexity in a dedicated buffer."
+  (interactive)
+  (let ((backend (alist-get "Perplexity" gptel--known-backends nil nil #'equal))
+        (model 'sonar))
+    (pop-to-buffer (gptel "*gptel-perplexity*" nil nil t))
+    (setq-local gptel-backend backend)
+    (setq-local gptel-model model)))
+
+;; Keybindings for gptel launchers
+;; Uses <SPC> l prefix (l for LLM)
+(with-eval-after-load 'gptel
+  ;; Define prefix command map for LLM launchers
+  (define-prefix-command 'jf/gptel-launcher-map)
+  (evil-define-key 'normal 'global (kbd "<SPC> l") 'jf/gptel-launcher-map)
+
+  ;; Individual launcher bindings
+  (define-key jf/gptel-launcher-map (kbd "4") 'jf/gptel-gpt4o)
+  (define-key jf/gptel-launcher-map (kbd "m") 'jf/gptel-gpt4o-mini)
+  (define-key jf/gptel-launcher-map (kbd "c") 'jf/gptel-claude-thinking)
+  (define-key jf/gptel-launcher-map (kbd "p") 'jf/gptel-perplexity))
+#+end_src
+
+** Usage
+Launch dedicated LLM sessions with:
+- =<SPC> l 4= - GPT-4o (ChatGPT flagship model)
+- =<SPC> l m= - GPT-4o-mini (ChatGPT fast model)
+- =<SPC> l c= - Claude 3.7 Sonnet with extended thinking
+- =<SPC> l p= - Perplexity
+
+Each launcher creates or switches to a dedicated buffer, allowing multiple
+concurrent sessions with different models.
 
 * Elysium
 Setup Elysium, a streamlined interface for using Claude models from Emacs.
