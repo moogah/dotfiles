@@ -300,9 +300,10 @@ Returns format 'message-N' or 'message-N-altM' for forks."
 (defvar-local jf/gptel--branch-id nil
   "Branch ID to use for next message when branching.")
 
-(defun jf/gptel--insert-context (context)
+(defun jf/gptel--insert-context (context &optional include-final-prompt)
   "Insert CONTEXT (list of message/response plists) with proper formatting.
-Adds text properties, prefixes, and separators."
+Adds text properties, prefixes, and separators.
+If INCLUDE-FINAL-PROMPT is non-nil, adds a final prompt prefix for user input."
   (let ((prompt-prefix (gptel-prompt-prefix-string))
         (response-prefix (gptel-response-prefix-string))
         (separator gptel-response-separator))
@@ -323,7 +324,11 @@ Adds text properties, prefixes, and separators."
         ;; Add text properties for responses
         (when is-response
           (add-text-properties start-pos (point)
-                              '(gptel response rear-nonsticky t)))))))
+                              '(gptel response rear-nonsticky t)))))
+
+    ;; Add final prompt prefix if requested
+    (when include-final-prompt
+      (insert "\n\n" prompt-prefix))))
 
 (defun jf/gptel--restore-backend-model (metadata)
   "Restore backend and model from METADATA."
@@ -501,10 +506,15 @@ where to branch from."
   ;; Get all messages and build candidates
   (let* ((all-messages (jf/gptel--get-all-messages))
          (candidates (jf/gptel--build-branch-candidates all-messages))
-         (choice (completing-read "Branch after: " candidates nil t))
+         (choice (completing-read "Branch before: " candidates nil t))
          (choice-index (cdr (assoc choice candidates)))
-         ;; Take first N messages (up to and including the chosen point)
+         ;; Take first N messages (up to but NOT including the chosen point)
          (branch-context (seq-take all-messages choice-index))
+         ;; Get the next message text (the one we're branching before)
+         (next-message-text (when (< choice-index (length all-messages))
+                             (let ((next-msg (nth choice-index all-messages)))
+                               (when (eq (plist-get next-msg :type) 'message)
+                                 (plist-get next-msg :content)))))
          (context-length (length branch-context))
          ;; Get the parent path
          (current-path (plist-get jf/gptel--session-metadata :current_path))
@@ -521,31 +531,31 @@ where to branch from."
              choice context-length parent-path)
 
     ;; Create new buffer with branch context
-    (jf/gptel--create-branch-buffer branch-context branch-id parent-path)))
+    (jf/gptel--create-branch-buffer branch-context branch-id parent-path next-message-text)))
 
 (defun jf/gptel--build-branch-candidates (messages)
   "Build completing-read candidates from MESSAGES list.
-Returns alist of (display-string . message-count)."
+Returns alist of (display-string . message-count).
+Each option represents branching BEFORE that message."
   (let ((candidates '())
         (count 0))
-    ;; Add option to branch from beginning
+    ;; Add option to branch before first message (fresh start)
     (push (cons "[Beginning] - Start fresh conversation" 0) candidates)
 
-    ;; Add option for each message/response pair
+    ;; Add option for each message (branch before this message)
     (while (< count (length messages))
       (let* ((msg (nth count messages))
-             (resp (when (< (1+ count) (length messages))
-                     (nth (1+ count) messages)))
-             (msg-preview (substring (plist-get msg :content) 0
-                                    (min 50 (length (plist-get msg :content)))))
-             (pair-num (/ (+ count 2) 2))
-             (display (if resp
-                         (format "After message %d/response %d: \"%s...\""
-                                pair-num pair-num msg-preview)
-                       (format "After message %d: \"%s...\""
-                              pair-num msg-preview))))
-        (setq count (if resp (+ count 2) (+ count 1)))
-        (push (cons display count) candidates)))
+             (msg-content (plist-get msg :content))
+             (msg-preview (substring msg-content 0
+                                    (min 50 (length msg-content))))
+             (msg-num (/ (+ count 2) 2)))
+        ;; Only add option if this is a message (not response)
+        (when (eq (plist-get msg :type) 'message)
+          (push (cons (format "Before message %d: \"%s...\""
+                             msg-num msg-preview)
+                      count)
+                candidates))
+        (setq count (1+ count))))
 
     (nreverse candidates)))
 
@@ -568,8 +578,9 @@ Returns 'message-N' if no branches exist, or 'message-N-altM' for next alt."
           (format "message-%d-alt1" message-num)
         (format "message-%d" message-num)))))
 
-(defun jf/gptel--create-branch-buffer (context branch-id parent-path)
-  "Create new gptel buffer with CONTEXT loaded, ready for branching at BRANCH-ID."
+(defun jf/gptel--create-branch-buffer (context branch-id parent-path &optional next-message-text)
+  "Create new gptel buffer with CONTEXT loaded, ready for branching at BRANCH-ID.
+If NEXT-MESSAGE-TEXT is provided, insert it as the starting prompt for editing."
   (let* ((metadata jf/gptel--session-metadata)
          (session-id (plist-get metadata :session_id))
          (buffer-name (format "*gptel-%s-branch-%s*" session-id branch-id))
@@ -583,7 +594,11 @@ Returns 'message-N' if no branches exist, or 'message-N-altM' for next alt."
 
       ;; Reconstruct conversation with proper formatting
       (erase-buffer)
-      (jf/gptel--insert-context context)
+      (jf/gptel--insert-context context t) ; t = include final prompt prefix
+
+      ;; If we have next message text, insert it as editable content
+      (when next-message-text
+        (insert next-message-text))
 
       ;; Set up session state (shared with parent)
       (setq jf/gptel--session-dir parent-session-dir)
@@ -604,7 +619,7 @@ Returns 'message-N' if no branches exist, or 'message-N-altM' for next alt."
       (jf/gptel--restore-backend-model metadata)
 
       (goto-char (point-max))
-      (message "Created branch at %s. Type new message to continue." branch-id))
+      (message "Created branch at %s. Edit and send message to continue." branch-id))
 
     ;; Display buffer
     (switch-to-buffer buf)))
