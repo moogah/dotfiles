@@ -1,0 +1,584 @@
+#+TITLE: ZSH Configuration Bootstrap
+#+AUTHOR: Jeff Farr
+#+DATE: 2026-01-10
+#+PROPERTY: header-args:sh :results output :exports both
+
+* Introduction
+
+This document provides a complete, reproducible setup process for the ZSH configuration with Antidote plugin manager. Each section contains executable shell blocks that can be run via =org-babel-execute-src-block= (=C-c C-c=).
+
+** Why This Approach
+
+- **Literate Configuration**: Documentation lives alongside executable code
+- **Reproducibility**: Run these blocks on any new machine to set up the environment
+- **Status Inspection**: Execute inspection blocks to capture current system state
+- **Version Control**: Check in results to track configuration across machines
+- **Comparison**: Use =git diff= to compare configurations between machines
+
+** How to Use This File
+
+1. Open this file in Emacs
+2. Execute any code block by placing cursor in it and pressing =C-c C-c=
+3. Results will be captured inline and can be committed to git
+4. On a new machine, execute blocks in order from top to bottom
+
+* System Inspection
+
+These blocks inspect the current system state and can be re-run anytime to capture status.
+
+** Hostname and OS Information
+
+#+begin_src sh
+echo "Hostname: $(hostname)"
+echo "OS: $(uname -s)"
+echo "OS Version: $(sw_vers -productVersion 2>/dev/null || uname -r)"
+echo "Architecture: $(uname -m)"
+echo "Shell: $SHELL"
+echo "ZSH Version: $(zsh --version)"
+#+end_src
+
+#+RESULTS:
+: Hostname: Mac.home
+: OS: Darwin
+: OS Version: 26.1
+: Architecture: arm64
+: Shell: /bin/zsh
+: ZSH Version: zsh 5.9 (arm64-apple-darwin25.0)
+
+** Check Existing Installations
+
+#+begin_src sh
+echo "=== Antidote ==="
+if [[ -d ~/.antidote ]]; then
+    echo "✓ Antidote installed at: ~/.antidote"
+    cd ~/.antidote && git log -1 --format="  Commit: %h - %s (%ci)" 2>/dev/null
+else
+    echo "✗ Antidote not installed"
+fi
+
+echo ""
+echo "=== Oh My Zsh ==="
+if [[ -d ~/.oh-my-zsh ]]; then
+    echo "✓ Oh My Zsh installed at: ~/.oh-my-zsh"
+    cd ~/.oh-my-zsh && git log -1 --format="  Commit: %h - %s (%ci)" 2>/dev/null
+else
+    echo "✗ Oh My Zsh not installed"
+fi
+
+echo ""
+echo "=== FZF ==="
+if command -v fzf &> /dev/null; then
+    echo "✓ FZF installed: $(fzf --version)"
+    echo "  Location: $(which fzf)"
+else
+    echo "✗ FZF not installed"
+fi
+
+echo ""
+echo "=== Homebrew FZF ==="
+if [[ -d /opt/homebrew/opt/fzf ]]; then
+    echo "✓ Homebrew FZF at: /opt/homebrew/opt/fzf"
+elif [[ -d /usr/local/opt/fzf ]]; then
+    echo "✓ Homebrew FZF at: /usr/local/opt/fzf"
+else
+    echo "✗ Homebrew FZF not found"
+fi
+
+echo ""
+echo "=== zsh-histdb ==="
+if [[ -d ~/.oh-my-zsh/custom/plugins/zsh-histdb ]]; then
+    echo "✓ zsh-histdb installed"
+    cd ~/.oh-my-zsh/custom/plugins/zsh-histdb && git log -1 --format="  Commit: %h - %s (%ci)" 2>/dev/null
+else
+    echo "✗ zsh-histdb not installed"
+fi
+#+end_src
+
+#+RESULTS:
+#+begin_example
+=== Antidote ===
+✓ Antidote installed at: ~/.antidote
+  Commit: 9e09a74 - Merge pull request #232 from mattmc3/v1.9.11 (2025-12-12 19:26:54 -0500)
+
+=== Oh My Zsh ===
+✓ Oh My Zsh installed at: ~/.oh-my-zsh
+  Commit: 871d4b9 - fix(1password)!: remove v1 support (#13507) (2026-01-08 12:02:40 +0100)
+
+=== FZF ===
+✓ FZF installed: 0.67.0 (Homebrew)
+  Location: /opt/homebrew/bin/fzf
+
+=== Homebrew FZF ===
+✓ Homebrew FZF at: /opt/homebrew/opt/fzf
+
+=== zsh-histdb ===
+✓ zsh-histdb installed
+  Commit: 90a6c10 - Merge pull request #122 from ericbn/history_ignore (2024-04-18 19:02:18 +0100)
+#+end_example
+
+** Check Dotfiles Symlinks
+
+#+begin_src sh
+echo "=== Critical Symlinks ==="
+for link in ~/.zshrc ~/.zsh_plugins.txt ~/.p10k.zsh ~/.fzf.zsh; do
+    if [[ -L "$link" ]]; then
+        target=$(readlink "$link")
+        echo "✓ $link -> $target"
+    else
+        echo "✗ $link not symlinked"
+    fi
+done
+#+end_src
+
+#+RESULTS:
+: === Critical Symlinks ===
+: ✓ /Users/jefffarr/.zshrc -> /Users/jefffarr/src/dotfiles/zshrc
+: ✓ /Users/jefffarr/.zsh_plugins.txt -> /Users/jefffarr/src/dotfiles/.zsh_plugins.txt
+: ✓ /Users/jefffarr/.p10k.zsh -> /Users/jefffarr/src/dotfiles/p10k.zsh
+: ✓ /Users/jefffarr/.fzf.zsh -> /Users/jefffarr/src/dotfiles/fzf.zsh
+
+** Check Antidote Plugins
+
+#+begin_src sh
+if [[ -f ~/.zsh_plugins.txt ]]; then
+    echo "=== Configured Plugins (from .zsh_plugins.txt) ==="
+    cat ~/.zsh_plugins.txt | grep -v '^#' | grep -v '^$'
+
+    echo ""
+    echo "=== Installed Plugins (in Antidote cache) ==="
+    if command -v antidote &> /dev/null 2>&1 || [[ -f ~/.antidote/antidote.zsh ]]; then
+        source ~/.antidote/antidote.zsh 2>/dev/null
+        antidote list 2>/dev/null || echo "Run 'source ~/.zshrc' first to initialize plugins"
+    else
+        echo "Antidote not available"
+    fi
+else
+    echo "✗ .zsh_plugins.txt not found"
+fi
+#+end_src
+
+#+RESULTS:
+#+begin_example
+=== Configured Plugins (from .zsh_plugins.txt) ===
+romkatv/powerlevel10k kind:fpath
+zsh-users/zsh-autosuggestions
+zsh-users/zsh-syntax-highlighting
+ohmyzsh/ohmyzsh path:lib
+ohmyzsh/ohmyzsh path:plugins/git
+ohmyzsh/ohmyzsh path:plugins/macos
+ohmyzsh/ohmyzsh path:plugins/docker
+ohmyzsh/ohmyzsh path:plugins/fzf
+Aloxaf/fzf-tab
+
+=== Installed Plugins (in Antidote cache) ===
+Run 'source ~/.zshrc' first to initialize plugins
+#+end_example
+
+** Check Configuration Files
+
+#+begin_src sh
+echo "=== Configuration Files in Dotfiles Repo ==="
+cd ~/src/dotfiles
+for file in zshrc.org zshrc .zsh_plugins.txt p10k.zsh install.conf.yaml .gitmodules; do
+    if [[ -f "$file" ]]; then
+        size=$(wc -c < "$file" | tr -d ' ')
+        lines=$(wc -l < "$file" | tr -d ' ')
+        echo "✓ $file (${lines} lines, ${size} bytes)"
+    else
+        echo "✗ $file missing"
+    fi
+done
+#+end_src
+
+* Installation Steps
+
+These blocks perform the actual installation. Execute them in order on a new machine.
+
+** Step 1: Install Antidote
+
+#+begin_src sh
+if [[ ! -d ~/.antidote ]]; then
+    echo "Installing Antidote..."
+    git clone --depth=1 https://github.com/mattmc3/antidote.git ~/.antidote
+    echo "✓ Antidote installed"
+else
+    echo "✓ Antidote already installed"
+    echo "  To update: cd ~/.antidote && git pull"
+fi
+#+end_src
+
+** Step 2: Install Oh My Zsh
+
+#+begin_src sh
+if [[ ! -d ~/.oh-my-zsh ]]; then
+    echo "Installing Oh My Zsh..."
+    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+    echo "✓ Oh My Zsh installed"
+else
+    echo "✓ Oh My Zsh already installed"
+    echo "  To update: omz update"
+fi
+#+end_src
+
+** Step 3: Install FZF
+
+#+begin_src sh
+if ! command -v fzf &> /dev/null; then
+    echo "Installing FZF via Homebrew..."
+    if command -v brew &> /dev/null; then
+        brew install fzf
+        echo "✓ FZF installed"
+    else
+        echo "✗ Homebrew not found. Install Homebrew first or install FZF manually."
+        exit 1
+    fi
+else
+    echo "✓ FZF already installed: $(fzf --version)"
+fi
+#+end_src
+
+** Step 4: Install zsh-histdb (Optional)
+
+#+begin_src sh
+if [[ ! -d ~/.oh-my-zsh/custom/plugins/zsh-histdb ]]; then
+    echo "Installing zsh-histdb..."
+    git clone https://github.com/larkery/zsh-histdb \
+        ~/.oh-my-zsh/custom/plugins/zsh-histdb
+    echo "✓ zsh-histdb installed"
+else
+    echo "✓ zsh-histdb already installed"
+    echo "  To update: cd ~/.oh-my-zsh/custom/plugins/zsh-histdb && git pull"
+fi
+#+end_src
+
+** Step 5: Tangle Configuration Files
+
+#+begin_src sh
+if [[ -f ~/src/dotfiles/bin/tangle-org.sh ]]; then
+    echo "Tangling zshrc.org..."
+    ~/src/dotfiles/bin/tangle-org.sh ~/src/dotfiles/zshrc.org
+    echo "✓ Configuration files generated"
+    echo "  Generated: zshrc, .zsh_plugins.txt"
+else
+    echo "⚠ Tangle script not found. Manual tangling required."
+    echo "  Open zshrc.org in Emacs and run: C-c C-v t (org-babel-tangle)"
+fi
+#+end_src
+
+** Step 6: Run Dotbot to Create Symlinks
+
+#+begin_src sh
+echo "Running dotbot to create symlinks..."
+cd ~/src/dotfiles
+./install
+echo "✓ Symlinks created"
+#+end_src
+
+** Step 7: Initialize Antidote Plugins
+
+#+begin_src sh
+echo "Initializing Antidote plugins..."
+# Source antidote and load plugins
+source ~/.antidote/antidote.zsh
+antidote load ~/src/dotfiles/.zsh_plugins.txt
+
+echo "✓ Plugins initialized"
+echo ""
+echo "Installed plugins:"
+antidote list
+#+end_src
+
+* Verification
+
+These blocks verify the installation was successful.
+
+** Verify Core Components
+
+#+begin_src sh
+echo "=== Verification Checklist ==="
+
+errors=0
+
+# Check Antidote
+if [[ -d ~/.antidote ]] && [[ -f ~/.antidote/antidote.zsh ]]; then
+    echo "✓ Antidote installed"
+else
+    echo "✗ Antidote missing or incomplete"
+    ((errors++))
+fi
+
+# Check Oh My Zsh
+if [[ -d ~/.oh-my-zsh ]] && [[ -f ~/.oh-my-zsh/oh-my-zsh.sh ]]; then
+    echo "✓ Oh My Zsh installed"
+else
+    echo "✗ Oh My Zsh missing or incomplete"
+    ((errors++))
+fi
+
+# Check FZF
+if command -v fzf &> /dev/null; then
+    echo "✓ FZF installed and in PATH"
+else
+    echo "✗ FZF not found in PATH"
+    ((errors++))
+fi
+
+# Check symlinks
+for link in ~/.zshrc ~/.zsh_plugins.txt ~/.p10k.zsh; do
+    if [[ -L "$link" ]] && [[ -e "$link" ]]; then
+        echo "✓ $link symlinked correctly"
+    else
+        echo "✗ $link not symlinked or broken"
+        ((errors++))
+    fi
+done
+
+# Check configuration files exist
+if [[ -f ~/src/dotfiles/zshrc ]] && [[ -f ~/src/dotfiles/.zsh_plugins.txt ]]; then
+    echo "✓ Configuration files generated"
+else
+    echo "✗ Configuration files missing (run tangle step)"
+    ((errors++))
+fi
+
+echo ""
+if [[ $errors -eq 0 ]]; then
+    echo "✅ All checks passed!"
+    echo ""
+    echo "Next steps:"
+    echo "  1. Open a new terminal or run: source ~/.zshrc"
+    echo "  2. Verify no error messages appear"
+    echo "  3. Run verification checks below"
+else
+    echo "❌ $errors error(s) found. Review installation steps above."
+fi
+#+end_src
+
+** Verify Shell Startup (No Errors)
+
+#+begin_src sh
+echo "Testing shell startup for errors..."
+echo ""
+zsh -c "source ~/.zshrc" 2>&1 | grep -iE "(error|warn|fail|not found)" || echo "✓ No errors detected in shell startup"
+#+end_src
+
+** Verify Plugins Loaded
+
+#+begin_src sh
+echo "=== Verifying Plugins ==="
+source ~/.antidote/antidote.zsh
+antidote load ~/src/dotfiles/.zsh_plugins.txt
+
+plugin_count=$(antidote list | wc -l | tr -d ' ')
+echo "Loaded $plugin_count plugins:"
+antidote list
+#+end_src
+
+** Verify Features Work
+
+#+begin_src sh
+echo "=== Feature Verification ==="
+
+# Check Powerlevel10k
+if [[ -n "$POWERLEVEL9K_VERSION" ]] || [[ -n "$POWERLEVEL10K_VERSION" ]]; then
+    echo "✓ Powerlevel10k theme active"
+else
+    echo "⚠ Powerlevel10k theme may not be loaded"
+fi
+
+# Check autosuggestions
+if [[ -n "$ZSH_AUTOSUGGEST_STRATEGY" ]]; then
+    echo "✓ zsh-autosuggestions configured"
+else
+    echo "⚠ zsh-autosuggestions not configured"
+fi
+
+# Check syntax highlighting
+if (( $+functions[_zsh_highlight] )); then
+    echo "✓ zsh-syntax-highlighting loaded"
+else
+    echo "⚠ zsh-syntax-highlighting not loaded"
+fi
+
+# Check fzf-tab
+if (( $+functions[fzf-tab-complete] )); then
+    echo "✓ fzf-tab loaded"
+else
+    echo "⚠ fzf-tab not loaded"
+fi
+
+# Check FZF integration
+if command -v fzf &> /dev/null; then
+    echo "✓ FZF command available"
+else
+    echo "✗ FZF command not available"
+fi
+
+# Check Oh My Zsh environment
+if [[ -n "$ZSH" ]]; then
+    echo "✓ Oh My Zsh environment configured (ZSH=$ZSH)"
+else
+    echo "⚠ Oh My Zsh environment not configured"
+fi
+#+end_src
+
+* Maintenance
+
+These blocks help maintain and update the configuration.
+
+** Update All Components
+
+#+begin_src sh
+echo "=== Updating All Components ==="
+
+echo "Updating Antidote..."
+if [[ -d ~/.antidote ]]; then
+    cd ~/.antidote && git pull
+    echo "✓ Antidote updated"
+fi
+
+echo ""
+echo "Updating Oh My Zsh..."
+if [[ -d ~/.oh-my-zsh ]]; then
+    cd ~/.oh-my-zsh && git pull
+    echo "✓ Oh My Zsh updated"
+fi
+
+echo ""
+echo "Updating Antidote plugins..."
+source ~/.antidote/antidote.zsh
+antidote update
+echo "✓ Plugins updated"
+
+echo ""
+echo "Updating FZF (if installed via Homebrew)..."
+if command -v brew &> /dev/null; then
+    brew upgrade fzf 2>/dev/null || echo "FZF already up to date"
+fi
+
+echo ""
+echo "Updating zsh-histdb..."
+if [[ -d ~/.oh-my-zsh/custom/plugins/zsh-histdb ]]; then
+    cd ~/.oh-my-zsh/custom/plugins/zsh-histdb && git pull
+    echo "✓ zsh-histdb updated"
+fi
+
+echo ""
+echo "✓ All updates complete. Restart shell to apply changes."
+#+end_src
+
+** Re-tangle Configuration
+
+#+begin_src sh
+echo "Re-tangling zshrc.org..."
+~/src/dotfiles/bin/tangle-org.sh ~/src/dotfiles/zshrc.org
+echo "✓ Configuration regenerated"
+echo ""
+echo "Generated files:"
+ls -lh ~/src/dotfiles/zshrc ~/src/dotfiles/.zsh_plugins.txt
+#+end_src
+
+** Clear Antidote Cache
+
+#+begin_src sh
+echo "Clearing Antidote plugin cache..."
+rm -f ~/.zsh_plugins.zsh
+echo "✓ Cache cleared"
+echo ""
+echo "The cache will be regenerated on next shell startup."
+#+end_src
+
+** Clear ZSH Completion Cache
+
+#+begin_src sh
+echo "Clearing ZSH completion cache..."
+rm -f ~/.zcompdump*
+echo "✓ Completion cache cleared"
+echo ""
+echo "Completions will be rebuilt on next shell startup."
+#+end_src
+
+* Troubleshooting
+
+** Check for Common Issues
+
+#+begin_src sh
+echo "=== Common Issues Check ==="
+
+# Check for broken symlinks
+echo "Checking for broken symlinks in home directory..."
+broken_links=$(find ~ -maxdepth 1 -type l ! -exec test -e {} \; -print 2>/dev/null)
+if [[ -n "$broken_links" ]]; then
+    echo "⚠ Broken symlinks found:"
+    echo "$broken_links"
+else
+    echo "✓ No broken symlinks found"
+fi
+
+echo ""
+# Check if .zshrc has errors
+echo "Checking for syntax errors in .zshrc..."
+zsh -n ~/.zshrc 2>&1 || echo "✓ No syntax errors"
+
+echo ""
+# Check FZF_BASE is set correctly
+echo "Checking FZF_BASE configuration..."
+if [[ -n "$FZF_BASE" ]]; then
+    if [[ -d "$FZF_BASE" ]]; then
+        echo "✓ FZF_BASE is set and directory exists: $FZF_BASE"
+    else
+        echo "✗ FZF_BASE is set but directory doesn't exist: $FZF_BASE"
+    fi
+else
+    echo "⚠ FZF_BASE is not set (Oh My Zsh fzf plugin may warn)"
+fi
+
+echo ""
+# Check compinit issues
+echo "Checking for compinit issues..."
+compaudit 2>/dev/null | head -10 || echo "✓ No compinit issues detected"
+#+end_src
+
+** View Recent Error Messages
+
+#+begin_src sh
+echo "Testing shell startup and capturing any error/warning messages..."
+echo ""
+zsh -i -c "echo 'Shell started successfully'" 2>&1 | head -20
+#+end_src
+
+* Notes
+
+** Configuration Philosophy
+
+This setup uses:
+- **Antidote**: Modern, fast plugin manager for ZSH
+- **Oh My Zsh**: Popular framework providing useful plugins and functions
+- **Literate Configuration**: Org-mode documents as source of truth
+- **Dotbot**: Symlink management for dotfiles
+- **Git**: Version control for all configuration
+
+** Key Design Decisions
+
+1. **Antidote installed to =~/.antidote=**: Not in dotfiles repo to keep it clean
+2. **Plugin config in =.zsh_plugins.txt=**: Single declarative file for all plugins
+3. **Org-mode source of truth**: =zshrc.org= tangles to both =zshrc= and =.zsh_plugins.txt=
+4. **Static loading**: Antidote generates =.zsh_plugins.zsh= for fast startup
+5. **Oh My Zsh kept external**: Standard installation at =~/.oh-my-zsh=
+
+** File Locations
+
+- Configuration source: =~/src/dotfiles/zshrc.org=
+- Generated shell config: =~/src/dotfiles/zshrc= → =~/.zshrc=
+- Plugin definitions: =~/src/dotfiles/.zsh_plugins.txt= → =~/.zsh_plugins.txt=
+- Theme config: =~/src/dotfiles/p10k.zsh= → =~/.p10k.zsh=
+- Antidote: =~/.antidote/=
+- Oh My Zsh: =~/.oh-my-zsh/=
+- Plugin cache: =~/.zsh_plugins.zsh= (generated)
+
+** Additional Resources
+
+- [[https://antidote.sh/][Antidote Documentation]]
+- [[https://github.com/ohmyzsh/ohmyzsh][Oh My Zsh GitHub]]
+- [[https://github.com/romkatv/powerlevel10k][Powerlevel10k GitHub]]
+- [[https://github.com/junegunn/fzf][FZF GitHub]]

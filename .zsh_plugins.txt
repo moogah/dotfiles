@@ -1,0 +1,18 @@
+# Powerlevel10k theme - must use kind:fpath for themes
+romkatv/powerlevel10k kind:fpath
+
+# Essential productivity plugins
+zsh-users/zsh-autosuggestions
+zsh-users/zsh-syntax-highlighting
+
+# Oh My Zsh core library (provides git functions, etc.)
+ohmyzsh/ohmyzsh path:lib
+
+# Oh My Zsh plugins
+ohmyzsh/ohmyzsh path:plugins/git
+ohmyzsh/ohmyzsh path:plugins/macos
+ohmyzsh/ohmyzsh path:plugins/docker
+ohmyzsh/ohmyzsh path:plugins/fzf
+
+# fzf-tab must load after fzf plugin
+Aloxaf/fzf-tab

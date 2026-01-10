@@ -12,73 +12,46 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
 fi
 # Powerlevel10k Instant Prompt:1 ends here
 
-# Basic Setup
+# Antidote Initialization
 
-# Path to the Oh My Zsh installation and theme selection.
-
-
-# [[file:zshrc.org::*Basic Setup][Basic Setup:1]]
-# If you come from bash you might have to change your $PATH.
-# export PATH=$HOME/bin:/usr/local/bin:$PATH
-
-# Path to your oh-my-zsh installation.
-export ZSH="/Users/jefffarr/.oh-my-zsh"
-
-# Set name of the theme to load --- if set to "random", it will
-# load a random theme each time oh-my-zsh is loaded, in which case,
-# to know which specific one was loaded, run: echo $RANDOM_THEME
-# See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
-ZSH_THEME="powerlevel10k/powerlevel10k"
-
-# Set list of themes to pick from when loading at random
-# Setting this variable when ZSH_THEME=random will cause zsh to load
-# a theme from this variable instead of looking in ~/.oh-my-zsh/themes/
-# If set to an empty array, this variable will have no effect.
-# ZSH_THEME_RANDOM_CANDIDATES=( "robbyrussell" "agnoster" )
-# Basic Setup:1 ends here
-
-# Shell Behavior Options
-
-# Configuration options that control how ZSH behaves.
+# Initialize Antidote plugin manager and load all configured plugins.
 
 
-# [[file:zshrc.org::*Shell Behavior Options][Shell Behavior Options:1]]
-# Uncomment the following line to use case-sensitive completion.
-# CASE_SENSITIVE="true"
+# [[file:zshrc.org::*Antidote Initialization][Antidote Initialization:1]]
+# Set up Oh My Zsh environment variables
+# These need to be set before loading Oh My Zsh plugins
+export ZSH="${HOME}/.oh-my-zsh"
+export ZSH_CACHE_DIR="${ZSH}/cache"
 
-# Uncomment the following line to use hyphen-insensitive completion.
-# Case-sensitive completion must be off. _ and - will be interchangeable.
-# HYPHEN_INSENSITIVE="true"
+# Create cache directory if it doesn't exist
+[[ -d "$ZSH_CACHE_DIR/completions" ]] || mkdir -p "$ZSH_CACHE_DIR/completions"
 
-# Uncomment the following line to disable bi-weekly auto-update checks.
-# DISABLE_AUTO_UPDATE="true"
+# Set FZF_BASE for Oh My Zsh fzf plugin
+# Check common installation locations
+if [[ -d "${HOME}/.fzf" ]]; then
+  export FZF_BASE="${HOME}/.fzf"
+elif [[ -d "/opt/homebrew/opt/fzf" ]]; then
+  export FZF_BASE="/opt/homebrew/opt/fzf"
+elif [[ -d "/usr/local/opt/fzf" ]]; then
+  export FZF_BASE="/usr/local/opt/fzf"
+fi
 
-# Uncomment the following line to automatically update without prompting.
-# DISABLE_UPDATE_PROMPT="true"
+# Initialize the completion system BEFORE loading plugins
+# This is required for Oh My Zsh plugins that register completions
+autoload -Uz compinit
+if [[ -n ${ZDOTDIR}/.zcompdump(#qN.mh+24) ]]; then
+  compinit
+else
+  compinit -C
+fi
 
-# Uncomment the following line to change how often to auto-update (in days).
-# export UPDATE_ZSH_DAYS=13
+# Source Antidote
+source ${ZDOTDIR:-~}/.antidote/antidote.zsh
 
-# Uncomment the following line if pasting URLs and other text is messed up.
-# DISABLE_MAGIC_FUNCTIONS=true
-
-# Uncomment the following line to disable colors in ls.
-# DISABLE_LS_COLORS="true"
-
-# Uncomment the following line to disable auto-setting terminal title.
-# DISABLE_AUTO_TITLE="true"
-
-# Uncomment the following line to enable command auto-correction.
-# ENABLE_CORRECTION="true"
-
-# Uncomment the following line to display red dots whilst waiting for completion.
-# COMPLETION_WAITING_DOTS="true"
-
-# Uncomment the following line if you want to disable marking untracked files
-# under VCS as dirty. This makes repository status check for large repositories
-# much, much faster.
-# DISABLE_UNTRACKED_FILES_DIRTY="true"
-# Shell Behavior Options:1 ends here
+# Initialize plugins using static loading
+# Antidote will automatically regenerate the static file when .zsh_plugins.txt changes
+antidote load ${ZDOTDIR:-~}/src/dotfiles/.zsh_plugins.txt
+# Antidote Initialization:1 ends here
 
 # History Configuration
 
@@ -100,39 +73,20 @@ setopt HIST_FIND_NO_DUPS      # Don't display duplicates when searching history
 setopt HIST_IGNORE_ALL_DUPS   # Don't save duplicates in history
 # History Configuration:1 ends here
 
-# Plugins
+# zsh-histdb Configuration
+
+# Custom plugin for advanced history management. This is installed separately as a custom plugin.
 
 
-HISTDB_TABULATE_CMD=(sed -e $'s/\x1f/\t/g')
-source $HOME/.oh-my-zsh/custom/plugins/zsh-histdb/sqlite-history.zsh
-autoload -Uz add-zsh-hook
-
-# Enable Oh My Zsh plugins to extend functionality.
-
-
-# [[file:zshrc.org::*Plugins][Plugins:1]]
-# Would you like to use another custom folder than $ZSH/custom?
-# ZSH_CUSTOM=/path/to/new-custom-folder
-
-# Which plugins would you like to load?
-# Standard plugins can be found in ~/.oh-my-zsh/plugins/*
-# Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
-# Example format: plugins=(rails git textmate ruby lighthouse)
-# Add wisely, as too many plugins slow down shell startup.
-plugins=(
-  git                # Git integration and shortcuts
-  macos              # macOS-specific commands and functions
-  docker             # Docker commands and autocomplete
-  fzf                # Fuzzy finder integration
-  # Important: fzf-tab must be loaded after fzf but before zsh-autosuggestions
-  fzf-tab            # Enhanced tab completion with fzf
-  zsh-autosuggestions # Command suggestions based on history
-  zsh-syntax-highlighting # Syntax highlighting for commands
-  # zsh-vi-mode disabled to prevent key binding conflicts with fzf
-)
-
-source $ZSH/oh-my-zsh.sh
-# Plugins:1 ends here
+# [[file:zshrc.org::*zsh-histdb Configuration][zsh-histdb Configuration:1]]
+# zsh-histdb is installed as a custom Oh My Zsh plugin
+# Load it after Antidote initializes other plugins
+if [[ -f $HOME/.oh-my-zsh/custom/plugins/zsh-histdb/sqlite-history.zsh ]]; then
+  HISTDB_TABULATE_CMD=(sed -e $'s/\x1f/\t/g')
+  source $HOME/.oh-my-zsh/custom/plugins/zsh-histdb/sqlite-history.zsh
+  autoload -Uz add-zsh-hook
+fi
+# zsh-histdb Configuration:1 ends here
 
 # User Configuration
 
@@ -245,11 +199,6 @@ function clean-known-hosts() {
 }
 # SSH Management Functions:1 ends here
 
-# command to hopefully unfreeze emacs if it stops responding to user input
-function unfreeze_emacs() {
-  pkill -SIGUSR2 emacs
-}
-
 # Shell Options
 
 # Additional settings to configure shell behavior.
@@ -271,18 +220,15 @@ zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
 # set -o vi
 # Shell Options:1 ends here
 
-# Theme Configuration
+# Powerlevel10k Configuration
 
-# Settings for the Powerlevel10k theme.
+# Load the Powerlevel10k theme configuration. The theme itself is loaded by Antidote.
 
 
-# [[file:zshrc.org::*Theme Configuration][Theme Configuration:1]]
-# Power Level 10k Configuration
-source /usr/local/opt/powerlevel10k/powerlevel10k.zsh-theme
-
+# [[file:zshrc.org::*Powerlevel10k Configuration][Powerlevel10k Configuration:1]]
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
-# Theme Configuration:1 ends here
+# Powerlevel10k Configuration:1 ends here
 
 # Configuration
 
@@ -320,16 +266,6 @@ bindkey "^[[1;3C" forward-word # Alt+Right arrow to accept word
 
 
 # [[file:zshrc.org::*Configuration][Configuration:1]]
-# Properly initialize the completion system for fzf-tab on iTerm
-# This ensures a clean, complete initialization on each session
-# Force compinit to ignore insecure directories to prevent warnings
-autoload -Uz compinit
-if [[ -n ${ZDOTDIR}/.zcompdump(#qN.mh+24) ]]; then
-  compinit
-else
-  compinit -C
-fi
-
 # Advanced FZF configuration with zsh-autosuggestions compatibility
 # Extended FZF options for better visual presentation
 export FZF_DEFAULT_OPTS="--height 40% --layout=reverse --border --info=inline --marker='✓' --pointer='▶' --prompt='❯ '"
@@ -444,16 +380,6 @@ bindkey '^I' fzf-tab-complete
 # Use TAB for enhanced completion with fzf-tab
 # Configuration:1 ends here
 
-# Syntax Highlighting
-
-# Enable syntax highlighting for commands. Must be loaded after sourcing Oh My Zsh.
-
-
-# [[file:zshrc.org::*Syntax Highlighting][Syntax Highlighting:1]]
-# Source the zsh-syntax-highlighting plugin
-source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
-# Syntax Highlighting:1 ends here
-
 # FZF Integration
 
 # Fuzzy finder integration for improved file and history search.
@@ -487,8 +413,6 @@ export GTAGSLABEL=pygments
 
 # Set postgres lib in path
 export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
-alias claude="/Users/jefffarr/.claude/local/claude"
 
 # Add Claude CLI to aliases
-#alias claude="/Users/jefffarr/.claude/local/claude"
 # Development Tools Configuration:1 ends here
