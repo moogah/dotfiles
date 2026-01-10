@@ -746,6 +746,76 @@ If NEXT-MESSAGE-TEXT is provided, insert it as the starting prompt for editing."
 
 ** Session Browser
 
+*** Test Browse Function in Isolation
+
+#+begin_src emacs-lisp :tangle no
+;; Test the browse-sessions function structure
+(defun jf/gptel-browse-sessions-test ()
+  "Browse and open saved gptel sessions from directory.
+Shows leaf nodes (endpoints) of each branch."
+  (interactive)
+  (let* ((sessions-dir (expand-file-name jf/gptel-sessions-directory))
+         (session-dirs (when (file-directory-p sessions-dir)
+                         (seq-filter #'file-directory-p
+                                    (directory-files sessions-dir t "^[^.]"))))
+         (candidates (jf/gptel--build-session-candidates session-dirs)))
+
+    (message "DEBUG browse: candidates=%S" candidates)
+    (message "DEBUG browse: candidates type=%s" (type-of candidates))
+
+    (if (null candidates)
+        (message "No gptel sessions found in %s" sessions-dir)
+      (let* ((choice-list (mapcar #'car candidates)))
+        (message "DEBUG browse: choice-list=%S" choice-list
+        (let* ((choice (completing-read "Open session branch: " choice-list nil t))
+               (session-info (cdr (assoc choice candidates))))
+          (message "DEBUG browse: selected=%s, info=%S" choice session-info)
+          (jf/gptel--open-session-branch session-info))))))
+#+end_src
+
+#+RESULTS:
+: jf/gptel-browse-sessions-test
+
+*** Test Build Candidates Function
+
+#+begin_src emacs-lisp :tangle no
+;; Count parens in this function
+(defun jf/gptel--build-session-candidates-test (session-dirs)
+  "Build list of session branch candidates from SESSION-DIRS.
+Returns alist of (display-string . (session-dir path leaf-node))."
+  (let (candidates)                                           ; open 1
+    (dolist (dir session-dirs)                                ; open 2
+      (let ((metadata (jf/gptel--read-metadata dir)))         ; open 3
+        (when metadata                                        ; open 4
+          (let* ((tree (plist-get metadata :tree))            ; open 5
+                 (leaves (jf/gptel--find-leaf-nodes tree))
+                 (session-id (plist-get metadata :session_id)))
+            ;; Add candidate for each leaf
+            (dolist (leaf leaves)                             ; open 6
+              (let* ((path (car leaf))                        ; open 7
+                     (node (cdr leaf))
+                     (depth (1- (length path)))
+                     (last-id (aref path (1- (length path))))
+                     (is-alt (string-match "alt\\([0-9]+\\)" (format "%s" last-id)))
+                     (branch-label (if is-alt
+                                      (format " [alt%s, depth:%d]"
+                                             (match-string 1 (format "%s" last-id))
+                                             depth)
+                                    (format " [main, depth:%d]" depth)))
+                     (preview (plist-get node :preview))
+                     (display (format "%-35s %-20s | %s"
+                                     session-id
+                                     branch-label
+                                     (if preview
+                                         (substring preview 0 (min 60 (length preview)))
+                                       "..."))))
+                (push (cons display (list :dir dir :path path :node node))
+                      candidates)))))))                       ; close 7,6,5,4,3,2 = 6 closes needed!
+    (nreverse candidates)))                                   ; close 1 = 1 close
+#+end_src
+
+*** Actual Browse Function
+
 #+begin_src emacs-lisp
 (defun jf/gptel-browse-sessions ()
   "Browse and open saved gptel sessions from directory.
@@ -757,11 +827,17 @@ Shows leaf nodes (endpoints) of each branch."
                                     (directory-files sessions-dir t "^[^.]"))))
          (candidates (jf/gptel--build-session-candidates session-dirs)))
 
+    (message "DEBUG browse: candidates=%S" candidates)
+    (message "DEBUG browse: candidates type=%s" (type-of candidates))
+
     (if (null candidates)
         (message "No gptel sessions found in %s" sessions-dir)
-      (let* ((choice (completing-read "Open session branch: " (mapcar #'car candidates) nil t))
-             (session-info (cdr (assoc choice candidates))))
-        (jf/gptel--open-session-branch session-info)))))
+      (let* ((choice-list (mapcar #'car candidates)))
+        (message "DEBUG browse: choice-list=%S" choice-list)
+        (let* ((choice (completing-read "Open session branch: " choice-list nil t))
+               (session-info (cdr (assoc choice candidates))))
+          (message "DEBUG browse: selected=%s, info=%S" choice session-info)
+          (jf/gptel--open-session-branch session-info))))))
 
 (defun jf/gptel--build-session-candidates (session-dirs)
   "Build list of session branch candidates from SESSION-DIRS.
@@ -793,7 +869,7 @@ Returns alist of (display-string . (session-dir path leaf-node))."
                                          (substring preview 0 (min 60 (length preview)))
                                        "..."))))
                 (push (cons display (list :dir dir :path path :node node))
-                      candidates))))))
+                      candidates)))))))
     (nreverse candidates)))
 
 (defun jf/gptel--open-session-branch (session-info)
@@ -819,8 +895,8 @@ SESSION-INFO is a plist with :dir, :path, and :node."
         (gptel-mode 1)
         (erase-buffer)
 
-        ;; Insert conversation
-        (jf/gptel--insert-context context)
+        ;; Insert conversation with final prompt
+        (jf/gptel--insert-context context t)
 
         ;; Set up session state
         (setq jf/gptel--session-dir session-dir)

@@ -652,11 +652,17 @@ Shows leaf nodes (endpoints) of each branch."
                                     (directory-files sessions-dir t "^[^.]"))))
          (candidates (jf/gptel--build-session-candidates session-dirs)))
 
+    (message "DEBUG browse: candidates=%S" candidates)
+    (message "DEBUG browse: candidates type=%s" (type-of candidates))
+
     (if (null candidates)
         (message "No gptel sessions found in %s" sessions-dir)
-      (let* ((choice (completing-read "Open session branch: " (mapcar #'car candidates) nil t))
-             (session-info (cdr (assoc choice candidates))))
-        (jf/gptel--open-session-branch session-info)))))
+      (let* ((choice-list (mapcar #'car candidates)))
+        (message "DEBUG browse: choice-list=%S" choice-list)
+        (let* ((choice (completing-read "Open session branch: " choice-list nil t))
+               (session-info (cdr (assoc choice candidates))))
+          (message "DEBUG browse: selected=%s, info=%S" choice session-info)
+          (jf/gptel--open-session-branch session-info))))))
 
 (defun jf/gptel--build-session-candidates (session-dirs)
   "Build list of session branch candidates from SESSION-DIRS.
@@ -688,7 +694,7 @@ Returns alist of (display-string . (session-dir path leaf-node))."
                                          (substring preview 0 (min 60 (length preview)))
                                        "..."))))
                 (push (cons display (list :dir dir :path path :node node))
-                      candidates))))))
+                      candidates)))))))
     (nreverse candidates)))
 
 (defun jf/gptel--open-session-branch (session-info)
@@ -714,8 +720,8 @@ SESSION-INFO is a plist with :dir, :path, and :node."
         (gptel-mode 1)
         (erase-buffer)
 
-        ;; Insert conversation
-        (jf/gptel--insert-context context)
+        ;; Insert conversation with final prompt
+        (jf/gptel--insert-context context t)
 
         ;; Set up session state
         (setq jf/gptel--session-dir session-dir)
