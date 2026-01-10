@@ -72,54 +72,33 @@
                :description "The content to write to the file"))
  :category "filesystem")                ; An arbitrary label for grouping
 
-(defun jf/gptel-gpt4o ()
-  "Launch gptel session with GPT-4o in a dedicated buffer."
+(defun jf/gptel-launcher ()
+  "Launch gptel session with a selected backend and model.
+Prompts for backend:model selection using completing-read with all
+available options from gptel's configuration."
   (interactive)
-  (let ((backend (alist-get "ChatGPT" gptel--known-backends nil nil #'equal))
-        (model 'gpt-4o))
-    (pop-to-buffer (gptel "*gptel-gpt4o*" nil nil t))
+  ;; Build models-alist similar to gptel--infix-provider
+  (let* ((models-alist
+          (cl-loop
+           for (name . backend) in gptel--known-backends
+           nconc (cl-loop for model in (gptel-backend-models backend)
+                          collect (list (concat name ":" (gptel--model-name model))
+                                        backend model))))
+         (selected (completing-read "Select model: "
+                                     (mapcar #'car models-alist)
+                                     nil t))
+         (choice (assoc selected models-alist))
+         (backend (nth 1 choice))
+         (model (nth 2 choice))
+         (buffer-name (format "*gptel-%s*" (replace-regexp-in-string ":" "-" selected))))
+    (pop-to-buffer (gptel buffer-name nil nil t))
     (setq-local gptel-backend backend)
     (setq-local gptel-model model)))
 
-(defun jf/gptel-gpt4o-mini ()
-  "Launch gptel session with GPT-4o-mini in a dedicated buffer."
-  (interactive)
-  (let ((backend (alist-get "ChatGPT" gptel--known-backends nil nil #'equal))
-        (model 'gpt-4o-mini))
-    (pop-to-buffer (gptel "*gptel-gpt4o-mini*" nil nil t))
-    (setq-local gptel-backend backend)
-    (setq-local gptel-model model)))
-
-(defun jf/gptel-claude-thinking ()
-  "Launch gptel session with Claude Sonnet (extended thinking) in a dedicated buffer."
-  (interactive)
-  (let ((backend (alist-get "Claude-thinking" gptel--known-backends nil nil #'equal))
-        (model 'claude-3-7-sonnet-20250219))
-    (pop-to-buffer (gptel "*gptel-claude-thinking*" nil nil t))
-    (setq-local gptel-backend backend)
-    (setq-local gptel-model model)))
-
-(defun jf/gptel-perplexity ()
-  "Launch gptel session with Perplexity in a dedicated buffer."
-  (interactive)
-  (let ((backend (alist-get "Perplexity" gptel--known-backends nil nil #'equal))
-        (model 'sonar))
-    (pop-to-buffer (gptel "*gptel-perplexity*" nil nil t))
-    (setq-local gptel-backend backend)
-    (setq-local gptel-model model)))
-
-;; Keybindings for gptel launchers
-;; Uses <SPC> l prefix (l for LLM)
+;; Keybinding for gptel launcher
+;; Direct access with <SPC> l
 (with-eval-after-load 'gptel
-  ;; Define prefix command map for LLM launchers
-  (define-prefix-command 'jf/gptel-launcher-map)
-  (evil-define-key 'normal 'global (kbd "<SPC> l") 'jf/gptel-launcher-map)
-
-  ;; Individual launcher bindings
-  (define-key jf/gptel-launcher-map (kbd "4") 'jf/gptel-gpt4o)
-  (define-key jf/gptel-launcher-map (kbd "m") 'jf/gptel-gpt4o-mini)
-  (define-key jf/gptel-launcher-map (kbd "c") 'jf/gptel-claude-thinking)
-  (define-key jf/gptel-launcher-map (kbd "p") 'jf/gptel-perplexity))
+  (evil-define-key 'normal 'global (kbd "<SPC> l") 'jf/gptel-launcher))
 
 (use-package elysium
   :straight (:host github :repo "lanceberge/elysium" :branch "main" :files ("*.el")))

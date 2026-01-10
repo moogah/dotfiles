@@ -123,69 +123,48 @@ Define custom tools and functions that can be used by LLMs to interact with the 
 #+end_src
 
 * GPTEL Session Launchers
-Quick launcher functions for starting dedicated gptel sessions with specific models.
-These functions create or switch to named buffers with pre-configured backends and models.
+Quick launcher function for starting dedicated gptel sessions with any configured model.
+Uses completing-read to select from all available backends and models.
 
 #+begin_src emacs-lisp
-(defun jf/gptel-gpt4o ()
-  "Launch gptel session with GPT-4o in a dedicated buffer."
+(defun jf/gptel-launcher ()
+  "Launch gptel session with a selected backend and model.
+Prompts for backend:model selection using completing-read with all
+available options from gptel's configuration."
   (interactive)
-  (let ((backend (alist-get "ChatGPT" gptel--known-backends nil nil #'equal))
-        (model 'gpt-4o))
-    (pop-to-buffer (gptel "*gptel-gpt4o*" nil nil t))
+  ;; Build models-alist similar to gptel--infix-provider
+  (let* ((models-alist
+          (cl-loop
+           for (name . backend) in gptel--known-backends
+           nconc (cl-loop for model in (gptel-backend-models backend)
+                          collect (list (concat name ":" (gptel--model-name model))
+                                        backend model))))
+         (selected (completing-read "Select model: "
+                                     (mapcar #'car models-alist)
+                                     nil t))
+         (choice (assoc selected models-alist))
+         (backend (nth 1 choice))
+         (model (nth 2 choice))
+         (buffer-name (format "*gptel-%s*" (replace-regexp-in-string ":" "-" selected))))
+    (pop-to-buffer (gptel buffer-name nil nil t))
     (setq-local gptel-backend backend)
     (setq-local gptel-model model)))
 
-(defun jf/gptel-gpt4o-mini ()
-  "Launch gptel session with GPT-4o-mini in a dedicated buffer."
-  (interactive)
-  (let ((backend (alist-get "ChatGPT" gptel--known-backends nil nil #'equal))
-        (model 'gpt-4o-mini))
-    (pop-to-buffer (gptel "*gptel-gpt4o-mini*" nil nil t))
-    (setq-local gptel-backend backend)
-    (setq-local gptel-model model)))
-
-(defun jf/gptel-claude-thinking ()
-  "Launch gptel session with Claude Sonnet (extended thinking) in a dedicated buffer."
-  (interactive)
-  (let ((backend (alist-get "Claude-thinking" gptel--known-backends nil nil #'equal))
-        (model 'claude-3-7-sonnet-20250219))
-    (pop-to-buffer (gptel "*gptel-claude-thinking*" nil nil t))
-    (setq-local gptel-backend backend)
-    (setq-local gptel-model model)))
-
-(defun jf/gptel-perplexity ()
-  "Launch gptel session with Perplexity in a dedicated buffer."
-  (interactive)
-  (let ((backend (alist-get "Perplexity" gptel--known-backends nil nil #'equal))
-        (model 'sonar))
-    (pop-to-buffer (gptel "*gptel-perplexity*" nil nil t))
-    (setq-local gptel-backend backend)
-    (setq-local gptel-model model)))
-
-;; Keybindings for gptel launchers
-;; Uses <SPC> l prefix (l for LLM)
+;; Keybinding for gptel launcher
+;; Direct access with <SPC> l
 (with-eval-after-load 'gptel
-  ;; Define prefix command map for LLM launchers
-  (define-prefix-command 'jf/gptel-launcher-map)
-  (evil-define-key 'normal 'global (kbd "<SPC> l") 'jf/gptel-launcher-map)
-
-  ;; Individual launcher bindings
-  (define-key jf/gptel-launcher-map (kbd "4") 'jf/gptel-gpt4o)
-  (define-key jf/gptel-launcher-map (kbd "m") 'jf/gptel-gpt4o-mini)
-  (define-key jf/gptel-launcher-map (kbd "c") 'jf/gptel-claude-thinking)
-  (define-key jf/gptel-launcher-map (kbd "p") 'jf/gptel-perplexity))
+  (evil-define-key 'normal 'global (kbd "<SPC> l") 'jf/gptel-launcher))
 #+end_src
 
 ** Usage
-Launch dedicated LLM sessions with:
-- =<SPC> l 4= - GPT-4o (ChatGPT flagship model)
-- =<SPC> l m= - GPT-4o-mini (ChatGPT fast model)
-- =<SPC> l c= - Claude 3.7 Sonnet with extended thinking
-- =<SPC> l p= - Perplexity
+Launch a dedicated LLM session with:
+- =<SPC> l= - Opens a prompt to select from all configured backends and models
+- Or run =M-x jf/gptel-launcher=
 
-Each launcher creates or switches to a dedicated buffer, allowing multiple
-concurrent sessions with different models.
+The launcher displays all available models in the format =Backend:model-name= (e.g.,
+=ChatGPT:gpt-4o=, =Claude-thinking:claude-3-7-sonnet-20250219=, etc.). Each selection
+creates or switches to a dedicated buffer named =*gptel-Backend-model*=, allowing
+multiple concurrent sessions with different models.
 
 * Elysium
 Setup Elysium, a streamlined interface for using Claude models from Emacs.
