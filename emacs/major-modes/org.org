@@ -319,6 +319,14 @@ in its original tab."
 :CATEGORY: gtd
 :END:
 
+***** TODO Figure out how to refresh list of files read for agenda always
+:PROPERTIES:
+:CREATED:  [2026-01-09 Fri 21:27]
+:CATEGORY: gtd
+:END:
+
+current approach doesn't see new files after the recursive list is loaded when emacs starts
+
 ** Capture Templates
 Configure templates for quickly capturing notes and tasks.
 

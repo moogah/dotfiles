@@ -37,6 +37,26 @@ Configure Xenodium's ChatGPT shell for a conversational interface with OpenAI mo
 * GPTEL
 Configure gptel, a versatile LLM client with support for multiple models and providers.
 
+** Authentication Setup
+This configuration uses =.authinfo.gpg= to securely store API keys. Create or edit
+=~/.authinfo.gpg= with entries in the following format:
+
+#+begin_example
+machine api.openai.com login apikey password YOUR_OPENAI_API_KEY
+machine api.anthropic.com login apikey password YOUR_ANTHROPIC_API_KEY
+machine api.perplexity.ai login apikey password YOUR_PERPLEXITY_API_KEY
+#+end_example
+
+Notes:
+- Each entry should be on a single line
+- The =machine= field corresponds to the =:host= parameter in the config
+- The =login= field can be any value (commonly "apikey" for API services)
+- The =password= field contains your actual API key
+- Save the file and GPG will encrypt it automatically if it has the =.gpg= extension
+- You may need to enter your GPG passphrase when Emacs first accesses the file
+
+** GPTEL Configuration
+
 #+begin_src emacs-lisp
   (use-package gptel
     :straight t
