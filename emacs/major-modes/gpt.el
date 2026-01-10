@@ -121,5 +121,133 @@ completing-read with all available options from gptel's configuration."
 (with-eval-after-load 'gptel
   (evil-define-key 'normal 'global (kbd "<SPC> l") 'jf/gptel-launcher))
 
+;; Configuration for gptel session auto-save
+(defcustom jf/gptel-autosave-enabled t
+  "Whether to automatically save gptel sessions after each response."
+  :type 'boolean
+  :group 'gptel)
+
+(defcustom jf/gptel-sessions-directory "~/gptel-sessions/"
+  "Directory for storing gptel sessions.
+Will be created if it doesn't exist."
+  :type 'directory
+  :group 'gptel)
+
+(defcustom jf/gptel-session-filename-format "%Y%m%d-%H%M%S"
+  "Format string for timestamp portion of gptel session filenames.
+Uses `format-time-string' syntax."
+  :type 'string
+  :group 'gptel)
+
+(defun jf/gptel--sanitize-model-name (model)
+  "Sanitize MODEL symbol for use in filename.
+Converts to lowercase, replaces special chars with hyphens."
+  (let ((name (symbol-name model)))
+    (replace-regexp-in-string
+     "-+" "-"  ; collapse multiple hyphens
+     (replace-regexp-in-string
+      "[^a-z0-9-]" "-"  ; replace special chars
+      (downcase name)))))
+
+(defun jf/gptel--generate-session-filename ()
+  "Generate filename for current gptel session.
+Format: TIMESTAMP-MODELNAME.EXT (extension based on major-mode)"
+  (let* ((timestamp (format-time-string jf/gptel-session-filename-format))
+         (model-name (jf/gptel--sanitize-model-name gptel-model))
+         (extension (cond
+                     ((derived-mode-p 'org-mode) "org")
+                     ((derived-mode-p 'markdown-mode) "md")
+                     (t "txt"))))
+    (format "%s-%s.%s" timestamp model-name extension)))
+
+(defun jf/gptel--autosave-session (response-start response-end)
+  "Automatically save gptel session after LLM response.
+RESPONSE-START and RESPONSE-END mark the response boundaries.
+This function is added to `gptel-post-response-functions'."
+  (when (and jf/gptel-autosave-enabled
+             gptel-mode)
+    (condition-case err
+        (if buffer-file-name
+            ;; Existing session - just save
+            (save-buffer)
+          ;; New ephemeral session - create file
+          (let* ((filename (jf/gptel--generate-session-filename))
+                 (sessions-dir (expand-file-name jf/gptel-sessions-directory))
+                 (full-path (expand-file-name filename sessions-dir)))
+            ;; Ensure directory exists
+            (make-directory sessions-dir t)
+            ;; Set buffer-file-name and save
+            (setq buffer-file-name full-path)
+            (set-visited-file-modtime)
+            (set-buffer-modified-p t)
+            (save-buffer)
+            (message "gptel session saved: %s" (file-name-nondirectory full-path))))
+      (file-error
+       (message "gptel autosave failed: %s" (error-message-string err)))
+      (error
+       (message "gptel autosave error: %s" (error-message-string err))))))
+
+(defun jf/gptel--get-session-preview (file)
+  "Extract preview text from gptel session FILE.
+Returns first ~80 chars of user prompt content."
+  (condition-case nil
+      (with-temp-buffer
+        (insert-file-contents file nil 0 1000)  ; Read first 1000 chars
+        (goto-char (point-min))
+        ;; Skip properties and directives
+        (while (and (not (eobp))
+                    (or (looking-at "^:")
+                        (looking-at "^#\\+")))
+          (forward-line 1))
+        ;; Get next non-empty line
+        (while (and (not (eobp)) (looking-at "^[[:space:]]*$"))
+          (forward-line 1))
+        (let ((start (point))
+              (end (line-end-position)))
+          (buffer-substring start (min end (+ start 80)))))
+    (error "...")))
+
+(defun jf/gptel-browse-sessions ()
+  "Browse and open saved gptel sessions from directory."
+  (interactive)
+  (let* ((sessions-dir (expand-file-name jf/gptel-sessions-directory))
+         (files (when (file-directory-p sessions-dir)
+                  (directory-files sessions-dir t "\\.\(org\\|md\\|txt\\)$")))
+         ;; Sort by modification time, most recent first
+         (sorted-files (sort files
+                             (lambda (a b)
+                               (time-less-p (file-attribute-modification-time (file-attributes b))
+                                            (file-attribute-modification-time (file-attributes a))))))
+         (candidates
+          (mapcar
+           (lambda (file)
+             (let* ((filename (file-name-nondirectory file))
+                    ;; Parse filename: TIMESTAMP-MODEL.org
+                    (parts (split-string (file-name-sans-extension filename) "-"))
+                    (timestamp (if (>= (length parts) 2)
+                                   (concat (nth 0 parts) "-" (nth 1 parts))
+                                 (nth 0 parts)))
+                    (model (if (>= (length parts) 3)
+                               (mapconcat 'identity (nthcdr 2 parts) "-")
+                             "unknown"))
+                    (preview (jf/gptel--get-session-preview file))
+                    (display (format "%-17s | %-20s | %s"
+                                     timestamp model preview)))
+               (cons display file)))
+           sorted-files)))
+
+    (if (null candidates)
+        (message "No gptel sessions found in %s" sessions-dir)
+      (let* ((choice (completing-read "Open gptel session: " candidates nil t))
+             (file (cdr (assoc choice candidates))))
+        (find-file file)))))
+
+;; Install auto-save hook
+(with-eval-after-load 'gptel
+  (add-hook 'gptel-post-response-functions #'jf/gptel--autosave-session))
+
+;; TODO: Add keybinding for jf/gptel-browse-sessions
+;; For now, access via M-x jf/gptel-browse-sessions
+
 (use-package elysium
   :straight (:host github :repo "lanceberge/elysium" :branch "main" :files ("*.el")))
