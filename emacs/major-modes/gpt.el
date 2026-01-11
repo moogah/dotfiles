@@ -56,6 +56,7 @@
 ;; Load individual tool modules
 (jf/load-module (expand-file-name "major-modes/gpt-tools/filesystem-tools.el" jf/emacs-dir))
 (jf/load-module (expand-file-name "major-modes/gpt-tools/meta-tools.el" jf/emacs-dir))
+(jf/load-module (expand-file-name "major-modes/gpt-tools/community-tools.el" jf/emacs-dir))
 
 (defun jf/gptel-launcher ()
   "Launch gptel session with a selected backend and model.
@@ -749,7 +750,7 @@ Returns list of plists suitable for jf/gptel--insert-context."
                                     (buffer-string)))))
                    (when content
                      (push (list :type type :content content) context))))))
-    (nreverse context))))
+    (nreverse context)))
 
 ;; Install auto-save hook
 (with-eval-after-load 'gptel

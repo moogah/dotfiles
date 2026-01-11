@@ -98,6 +98,27 @@ Notes:
       :models '(gpt-4o gpt-4o-mini gpt-4-turbo gpt-3.5-turbo)))
 #+end_src
 
+** DEBUG: Isolated Paren Test
+
+Testing the Claude-thinking config in isolation with paren counting.
+
+#+begin_src emacs-lisp :tangle no
+;; Test just the :header lambda in isolation
+(lambda ()                                                        ; open 1
+  (let ((key (gptel--get-api-key                                 ; open 2, 3
+              (lambda () (auth-source-pick-first-password        ; open 4
+                          :host "api.anthropic.com")))))         ; close 4, 3
+    `(("x-api-key" . ,key)                                       ; open backquote list
+      ("anthropic-version" . "2023-06-01")
+      ("anthropic-beta" . "pdfs-2024-09-25")
+      ("anthropic-beta" . "output-128k-2025-02-19")
+      ("anthropic-beta" . "prompt-caching-2024-07-31"))))        ; close backquote, 2, 1
+                                                                  ; ^ Should have 3 close parens
+#+end_src
+
+#+RESULTS:
+: #[nil ((let ((key (gptel--get-api-key (lambda nil (auth-source-pick-first-password :host "api.anthropic.com"))))) `(("x-api-key" \, key) ("anthropic-version" . "2023-06-01") ("anthropic-beta" . "pdfs-2024-09-25") ("anthropic-beta" . "output-128k-2025-02-19") ("anthropic-beta" . "prompt-caching-2024-07-31")))) nil]
+
 * GPTEL Tools
 Define custom tools and functions that can be used by LLMs to interact with the Emacs environment.
 
@@ -108,6 +129,7 @@ Each category of tools is configured in its own file.
 ;; Load individual tool modules
 (jf/load-module (expand-file-name "major-modes/gpt-tools/filesystem-tools.el" jf/emacs-dir))
 (jf/load-module (expand-file-name "major-modes/gpt-tools/meta-tools.el" jf/emacs-dir))
+(jf/load-module (expand-file-name "major-modes/gpt-tools/community-tools.el" jf/emacs-dir))
 #+end_src
 
 * GPTEL Session Launchers
@@ -859,7 +881,7 @@ Returns list of plists suitable for jf/gptel--insert-context."
                                     (buffer-string)))))
                    (when content
                      (push (list :type type :content content) context))))))
-    (nreverse context))))
+    (nreverse context)))
 #+end_src
 
 ** Hook Installation
