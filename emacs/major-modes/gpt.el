@@ -773,6 +773,3 @@ Returns list of plists suitable for jf/gptel--insert-context."
 
 ;; TODO: Add keybinding for jf/gptel-browse-sessions
 ;; For now, access via M-x jf/gptel-browse-sessions
-
-(use-package elysium
-  :straight (:host github :repo "lanceberge/elysium" :branch "main" :files ("*.el")))
