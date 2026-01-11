@@ -53,25 +53,9 @@
     :stream t
     :models '(gpt-4o gpt-4o-mini gpt-4-turbo gpt-3.5-turbo)))
 
-(gptel-make-tool
- :name "create_file"                    ; javascript-style  snake_case name
- :function (lambda (path filename content)   ; the function that runs
-             (let ((full-path (expand-file-name filename path)))
-               (with-temp-buffer
-                 (insert content)
-                 (write-file full-path))
-               (format "Created file %s in %s" filename path)))
- :description "Create a new file with the specified content"
- :args (list '(:name "path"             ; a list of argument specifications
-               :type string
-               :description "The directory where to create the file")
-             '(:name "filename"
-               :type string
-               :description "The name of the file to create")
-             '(:name "content"
-               :type string
-               :description "The content to write to the file"))
- :category "filesystem")                ; An arbitrary label for grouping
+;; Load individual tool modules
+(jf/load-module (expand-file-name "major-modes/gpt-tools/filesystem-tools.el" jf/emacs-dir))
+(jf/load-module (expand-file-name "major-modes/gpt-tools/meta-tools.el" jf/emacs-dir))
 
 (defun jf/gptel-launcher ()
   "Launch gptel session with a selected backend and model.

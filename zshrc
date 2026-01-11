@@ -1,4 +1,4 @@
-﻿# Powerlevel10k Instant Prompt
+# Powerlevel10k Instant Prompt
 
 # Powerlevel10k's instant prompt makes the shell appear instantly, rendering the UI elements while other startup operations happen in the background.
 
