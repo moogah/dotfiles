@@ -74,7 +74,19 @@ find emacs/ -name "*.org" -exec ./bin/tangle-org.sh {} \;
 | Committing only `.org` | `.el` out of sync, breaks config | Commit both `.org` and `.el` |
 | Forgetting to tangle | Changes in `.org` not applied | Save (auto-tangle) or run `C-c C-v t` |
 | Missing `#+auto_tangle: y` | Manual tangling required | Add header to `.org` file |
+| Property line not activated | Tangling fails silently | Press `C-c C-c` on `#+PROPERTY` line |
 | Syntax errors in org blocks | Tangle fails silently | Use Claude Code hook for validation |
+
+## Troubleshooting
+
+When auto-tangling or manual tangling fails, see [troubleshooting-tangling.md](references/troubleshooting-tangling.md) for:
+- Systematic debugging process
+- Common issues and solutions (especially property activation with `C-c C-c`)
+- Understanding multiple tangle directives and precedence
+- Path resolution (relative vs absolute)
+- Header arguments syntax reference
+
+**Quick fix for most issues**: Press `C-c C-c` on the `#+PROPERTY: header-args` line to activate it.
 
 ## Syntax Protection
 
