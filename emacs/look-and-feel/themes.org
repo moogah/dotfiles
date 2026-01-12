@@ -61,6 +61,24 @@ Set the active theme.
 ;;(set-background-color "black")
 #+end_src
 
+* Distinguished Theme Customizations
+Override magit faces for better contrast with dark, subtle backgrounds.
+
+#+begin_src emacs-lisp
+;; Customize magit faces for distinguished-theme
+;; Uses the theme's dark color palette for subtle highlighting
+(custom-theme-set-faces
+ 'distinguished
+ '(magit-section-highlight ((t (:background "#151311"))))
+ '(magit-diff-hunk-heading ((t (:background "#252321" :foreground "#969385"))))
+ '(magit-diff-hunk-heading-highlight ((t (:background "#252321" :foreground "#f0fef0"))))
+ '(magit-diff-context-highlight ((t (:background "#000000"))))
+ '(magit-diff-added ((t (:foreground "#a4ac64" :background "#000000"))))
+ '(magit-diff-added-highlight ((t (:foreground "#a4ac64" :background "#151311"))))
+ '(magit-diff-removed ((t (:foreground "#d47c59" :background "#000000"))))
+ '(magit-diff-removed-highlight ((t (:foreground "#d47c59" :background "#151311")))))
+#+end_src
+
 * Custom Theme Tweaks
 Custom adjustments to the active theme (currently commented out).
 
