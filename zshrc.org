@@ -3,12 +3,35 @@
 #+PROPERTY: header-args:sh :tangle ~/src/dotfiles/zshrc :comments both
 #+auto_tangle: y
 
-
 * Introduction
 
 This document contains my ZSH shell configuration. ZSH is a powerful shell with many features beyond the standard Bash shell, including improved tab completion, spelling correction, path expansion, and theming.
 
 The configuration in this file is tangled to =~/src/dotfiles/zshrc= using Org-mode's tangle functionality. This file also tangles =.zsh_plugins.txt= which defines the plugins managed by Antidote.
+
+* Prerequisites and Installation
+
+** Oh-My-Zsh Installation
+
+Oh-My-Zsh is required as a dependency for many of the plugins we use through Antidote.
+If not already installed, install it with:
+
+#+begin_src sh :tangle no
+# Install Oh-My-Zsh (run this manually if not installed)
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+#+end_src
+
+Note: The installation script is set to =:tangle no= so it doesn't execute on every shell startup.
+Run this manually once to install oh-my-zsh to =~/.oh-my-zsh=.
+
+** Antidote Installation
+
+Antidote is a high-performance ZSH plugin manager. Install it with Homebrew:
+
+#+begin_src sh :tangle no
+  # Install Antidote (run this manually if not installed)
+  git clone --depth=1 https://github.com/mattmc3/antidote.git ${ZDOTDIR:-~}/.antidote
+#+end_src
 
 * Antidote Plugin Configuration
 :PROPERTIES:
@@ -504,9 +527,12 @@ export NVM_DIR="$HOME/.nvm"
 Settings for various development tools.
 
 #+begin_src sh
-# Configure gtags to use pygments backend
-export GTAGSLABEL=pygments
+  # Configure gtags to use pygments backend
+  export GTAGSLABEL=pygments
 
-# Set postgres lib in path
-export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
+  # Set postgres lib in path
+  export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
+
+  # Set claude bin in path
+  export PATH="$HOME/.local/bin:$PATH"
 #+end_src
