@@ -1,4 +1,4 @@
-﻿# Powerlevel10k Instant Prompt
+# Powerlevel10k Instant Prompt
 
 # Powerlevel10k's instant prompt makes the shell appear instantly, rendering the UI elements while other startup operations happen in the background.
 
@@ -419,4 +419,7 @@ export GTAGSLABEL=pygments
 
 # Set postgres lib in path
 export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
+
+# Set claude bin in path
+export PATH="$HOME/.local/bin:$PATH"
 # Development Tools Configuration:1 ends here

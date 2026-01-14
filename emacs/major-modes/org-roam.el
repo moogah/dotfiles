@@ -9,7 +9,7 @@
 ;; ===============================================================================
 
 (use-package org-roam
-  :straight (org-roam :host github :repo "org-roam/org-roam" :tag "v2.2.2")
+  :straight (org-roam :host github :repo "org-roam/org-roam" :tag "v2.3.1")
   :bind (("C-c n f" . org-roam-node-find)
          ("C-c n i" . org-roam-node-insert)
          ("C-c n c" . org-roam-capture)
