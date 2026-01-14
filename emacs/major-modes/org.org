@@ -338,7 +338,7 @@ in its original tab."
 :CATEGORY: gtd
 :END:
 
-***** TODO Figure out how to refresh list of files read for agenda always
+***** DONE Figure out how to refresh list of files read for agenda always
 :PROPERTIES:
 :CREATED:  [2026-01-09 Fri 21:27]
 :CATEGORY: gtd
