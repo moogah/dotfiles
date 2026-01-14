@@ -1,8 +1,10 @@
 {
-  "enableAllProjectMcpServers": false,
   "permissions": {
     "allow": [
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(./bin/tangle-org.sh:*)",
+      "Bash(/Applications/Emacs.app/Contents/MacOS/Emacs:*)"
     ]
-  }
+  },
+  "enableAllProjectMcpServers": false
 }

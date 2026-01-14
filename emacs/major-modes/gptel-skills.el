@@ -49,7 +49,7 @@ Each entry is a plist with keys:
   :description   - Description for completion/help (string)
   :path          - Full path to SKILL.md file (string) [markdown only]
   :dir           - Skill directory path (string) [markdown only]
-  :id            - Node ID (string) [org-roam only]
+  :file          - Full path to .org skill file (string) [org-roam only]
   :source        - Source type: 'markdown or 'org-roam (symbol)
   :injection-mode - Where to inject: system|context|user|auto (symbol)
   :loaded        - Whether content has been loaded (boolean)
@@ -286,9 +286,7 @@ Added to gptel-prompt-transform-functions. FSM is the state machine."
                                  ;; Org-roam skills - use roam loader
                                  ((and (eq source 'org-roam)
                                        (featurep 'gptel-skills-roam))
-                                  (jf/gptel-skills-roam--load-content
-                                   (plist-get metadata :id)
-                                   "body"))
+                                  (jf/gptel-skills-roam--load-content skill-name))
                                  (t nil))))
                   (when content
                     (plist-put metadata :loaded t)
@@ -445,6 +443,15 @@ markdown and org-roam skills."
               (puthash name metadata jf/gptel-skills--registry)
               (setq md-count (1+ md-count)))))))
 
+    ;; Try to load org-roam skills module if not already loaded
+    (unless (featurep 'gptel-skills-roam)
+      (let ((roam-skills-file (expand-file-name "gptel-skills-roam.el"
+                                                 (file-name-directory (or load-file-name
+                                                                         buffer-file-name)))))
+        (when (file-exists-p roam-skills-file)
+          (message "Loading org-roam skills from: %s" roam-skills-file)
+          (load roam-skills-file nil t))))
+
     ;; Discover and register org-roam skills
     (message "Checking org-roam skills: featurep=%s enabled=%s"
              (featurep 'gptel-skills-roam)
@@ -454,16 +461,16 @@ markdown and org-roam skills."
     (when (and (featurep 'gptel-skills-roam)
                (boundp 'jf/gptel-skills-roam-enabled)
                jf/gptel-skills-roam-enabled)
-      (let ((node-ids (jf/gptel-skills-roam--discover))
+      (let ((skill-files (jf/gptel-skills-roam--discover-files))
             (roam-count 0))
-        (message "Node IDs discovered: %s" node-ids)
-        (dolist (node-id node-ids)
-          (let ((metadata (jf/gptel-skills-roam--parse-metadata node-id)))
-            (message "Metadata for %s: %s" node-id metadata)
+        (message "Skill files discovered: %s" skill-files)
+        (dolist (file skill-files)
+          (let ((metadata (jf/gptel-skills-roam--parse-file-metadata file)))
             (when metadata
-              (let ((title (plist-get metadata :title)))
-                ;; Use title as key in unified registry
-                (puthash title metadata jf/gptel-skills--registry)
+              (let ((skill-name (plist-get metadata :name)))
+                (message "Loaded org-roam skill: %s from %s" skill-name file)
+                ;; Use skill name as key in unified registry
+                (puthash skill-name metadata jf/gptel-skills--registry)
                 (setq roam-count (1+ roam-count))))))
         (message "Loaded %d org-roam skill(s)" roam-count)))
 
