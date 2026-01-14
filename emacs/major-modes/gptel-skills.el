@@ -202,7 +202,7 @@ If BUFFER is nil, uses current buffer."
 (defun jf/gptel-skills--update-overlays (&optional _beg _end _len)
   "Update overlays and active skills list based on current @mentions.
 Designed to be called from after-change-functions."
-  (when (and (derived-mode-p 'gptel-mode)
+  (when (and (bound-and-true-p gptel-mode)  ; gptel-mode is a minor mode
              (hash-table-p jf/gptel-skills--registry)
              (> (hash-table-count jf/gptel-skills--registry) 0))
     ;; Remove all existing overlays
@@ -227,7 +227,7 @@ Designed to be called from after-change-functions."
 (defun jf/gptel-skills--completion-at-point ()
   "Provide completion for @skill mentions.
 Integrates with completion-at-point-functions."
-  (when (and (derived-mode-p 'gptel-mode)
+  (when (and (bound-and-true-p gptel-mode)  ; gptel-mode is a minor mode
              (> (hash-table-count jf/gptel-skills--registry) 0))
     (let* ((prefix (regexp-quote jf/gptel-skills-mention-prefix))
            (bounds (bounds-of-thing-at-point 'symbol))
@@ -255,9 +255,9 @@ Integrates with completion-at-point-functions."
   "Main prompt transform function for injecting skills.
 Detects @mentions, loads content, determines injection mode, and injects.
 Added to gptel-prompt-transform-functions. FSM is the state machine."
-  (when (and (> (hash-table-count jf/gptel-skills--registry) 0)
-             jf/gptel-skills--active)
-    ;; Detect mentions in current prompt buffer
+  (when (> (hash-table-count jf/gptel-skills--registry) 0)
+    ;; Always detect mentions directly - don't rely on jf/gptel-skills--active
+    ;; since that depends on overlays which might not be set up yet
     (let ((mentions (jf/gptel-skills--detect-mentions)))
       (when mentions
         (dolist (mention mentions)
@@ -426,7 +426,7 @@ Clears cache, re-scans directory, and updates registry."
       ;; Update overlays in all gptel buffers
       (dolist (buf (buffer-list))
         (with-current-buffer buf
-          (when (derived-mode-p 'gptel-mode)
+          (when (bound-and-true-p gptel-mode)  ; gptel-mode is a minor mode
             (jf/gptel-skills--update-overlays)))))))
 
 (defun jf/gptel-skills-describe (skill-name)
@@ -452,7 +452,19 @@ Clears cache, re-scans directory, and updates registry."
   "Initialize the skills system.
 Called automatically when this module is loaded."
   (when (file-directory-p (expand-file-name jf/gptel-skills-directory))
-    (jf/gptel-skills-reload)))
+    (jf/gptel-skills-reload)
+
+    ;; Setup hooks for existing gptel buffers
+    (dolist (buf (buffer-list))
+      (with-current-buffer buf
+        (when (bound-and-true-p gptel-mode)  ; gptel-mode is a minor mode
+          ;; Install buffer-local hooks
+          (add-hook 'after-change-functions
+                    #'jf/gptel-skills--update-overlays nil t)
+          (add-hook 'completion-at-point-functions
+                    #'jf/gptel-skills--completion-at-point nil t)
+          ;; Initial overlay update
+          (jf/gptel-skills--update-overlays))))))
 
 ;; Initialize skills and setup hooks when gptel is loaded
 (with-eval-after-load 'gptel
