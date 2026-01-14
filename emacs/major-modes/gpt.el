@@ -24,12 +24,12 @@
   (gptel-make-perplexity "Perplexity"
     :key (lambda () (auth-source-pick-first-password :host "api.perplexity.ai"))
     :stream t)
-  
+
   ;; Configure Anthropic backend for Claude Sonnet
   (gptel-make-anthropic "Claude"
     :stream t
     :key (lambda () (auth-source-pick-first-password :host "api.anthropic.com")))
-  
+
   ;; Configure Anthropic backend for Claude 3.7 Sonnet with thinking mode
   (gptel-make-anthropic "Claude-thinking"
     :key (lambda () (auth-source-pick-first-password :host "api.anthropic.com"))
@@ -57,6 +57,10 @@
 (jf/load-module (expand-file-name "major-modes/gpt-tools/filesystem-tools.el" jf/emacs-dir))
 (jf/load-module (expand-file-name "major-modes/gpt-tools/meta-tools.el" jf/emacs-dir))
 (jf/load-module (expand-file-name "major-modes/gpt-tools/community-tools.el" jf/emacs-dir))
+(jf/load-module (expand-file-name "major-modes/gpt-tools/org-roam-tools.el" jf/emacs-dir))
+
+;; Load skills system
+(jf/load-module (expand-file-name "major-modes/gptel-skills.el" jf/emacs-dir))
 
 (defun jf/gptel-launcher ()
   "Launch gptel session with a selected backend and model.

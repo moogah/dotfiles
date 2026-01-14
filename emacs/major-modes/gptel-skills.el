@@ -1,0 +1,296 @@
+;; -*- lexical-binding: t; -*-
+(require 'cl-lib)
+(require 'gptel nil t)
+
+(defgroup gptel-skills nil
+  "Skills system for gptel."
+  :group 'gptel
+  :prefix "jf/gptel-skills-")
+
+(defcustom jf/gptel-skills-directory "~/.claude/skills"
+  "Directory containing Claude Code skills.
+Skills should be organized as SKILL-NAME/SKILL.md."
+  :type 'directory
+  :group 'gptel-skills)
+
+(defcustom jf/gptel-skills-verbose nil
+  "When non-nil, print verbose messages during skill loading."
+  :type 'boolean
+  :group 'gptel-skills)
+
+(defvar jf/gptel-skills--registry (make-hash-table :test 'equal)
+  "Hash table mapping skill names to metadata plists.
+
+Each entry is a plist with keys:
+  :name          - Skill name (string)
+  :description   - Description for menu display (string)
+  :path          - Full path to SKILL.md file (string)
+  :dir           - Skill directory path (string)
+  :loaded        - Whether content has been loaded (boolean)
+  :content       - Cached skill content (string or nil)
+  :user-invocable - Whether skill appears in menu (boolean, default t)")
+
+(defvar jf/gptel-skills--original-directives nil
+  "Backup of original gptel-directives before skills were added.
+Used for cleanup when reloading skills.")
+
+(defun jf/gptel-skills--discover ()
+  "Scan skills directory and return list of SKILL.md file paths.
+Returns list of absolute paths to SKILL.md files."
+  (let ((skills-dir (expand-file-name jf/gptel-skills-directory)))
+    (when (file-directory-p skills-dir)
+      (let ((skill-files '()))
+        (dolist (entry (directory-files skills-dir t "^[^.]" t))
+          (when (file-directory-p entry)
+            (let ((skill-file (expand-file-name "SKILL.md" entry)))
+              (when (file-exists-p skill-file)
+                (push skill-file skill-files)))))
+        (nreverse skill-files)))))
+
+(defun jf/gptel-skills--parse-metadata (skill-path)
+  "Parse YAML frontmatter from SKILL.md at SKILL-PATH.
+Returns plist with :name, :description, :path, :dir, :user-invocable.
+Returns nil if parsing fails."
+  (condition-case err
+      (with-temp-buffer
+        (insert-file-contents skill-path)
+        (goto-char (point-min))
+
+        ;; Check for YAML frontmatter delimiter
+        (if (not (looking-at "^---[ \t]*$"))
+            (progn
+              (when jf/gptel-skills-verbose
+                (message "Warning: No YAML frontmatter in %s" skill-path))
+              nil)
+
+          ;; Parse YAML frontmatter
+          (forward-line 1)
+          (let ((yaml-start (point))
+                (yaml-end nil)
+                (metadata '()))
+
+            ;; Find end of frontmatter
+            (when (re-search-forward "^---[ \t]*$" nil t)
+              (setq yaml-end (match-beginning 0))
+
+              ;; Parse name and description
+              (goto-char yaml-start)
+              (when (re-search-forward "^name:[ \t]+\\(.+\\)$" yaml-end t)
+                (setq metadata (plist-put metadata :name (string-trim (match-string 1)))))
+
+              (goto-char yaml-start)
+              (when (re-search-forward "^description:[ \t]+\\(.+\\)$" yaml-end t)
+                (setq metadata (plist-put metadata :description (string-trim (match-string 1)))))
+
+              (goto-char yaml-start)
+              (when (re-search-forward "^user-invocable:[ \t]+\\(true\\|false\\)$" yaml-end t)
+                (setq metadata (plist-put metadata :user-invocable
+                                          (string= (match-string 1) "true"))))
+
+              ;; Add path and directory
+              (setq metadata (plist-put metadata :path skill-path))
+              (setq metadata (plist-put metadata :dir (file-name-directory skill-path)))
+
+              ;; Set defaults
+              (unless (plist-get metadata :name)
+                (setq metadata (plist-put metadata :name
+                                          (file-name-base (directory-file-name
+                                                          (file-name-directory skill-path))))))
+              (unless (plist-get metadata :description)
+                (setq metadata (plist-put metadata :description
+                                          (plist-get metadata :name))))
+              (unless (plist-member metadata :user-invocable)
+                (setq metadata (plist-put metadata :user-invocable t)))
+
+              ;; Initialize loading state
+              (setq metadata (plist-put metadata :loaded nil))
+              (setq metadata (plist-put metadata :content nil))
+
+              metadata))))
+    (error
+     (message "Error parsing skill metadata from %s: %s" skill-path (error-message-string err))
+     nil)))
+
+(defun jf/gptel-skills--parse-content (skill-path)
+  "Read full SKILL.md content from SKILL-PATH, excluding YAML frontmatter.
+Returns content as string, or nil on error."
+  (condition-case err
+      (with-temp-buffer
+        (insert-file-contents skill-path)
+        (goto-char (point-min))
+
+        ;; Skip YAML frontmatter if present
+        (when (looking-at "^---[ \t]*$")
+          (forward-line 1)
+          (when (re-search-forward "^---[ \t]*$" nil t)
+            (forward-line 1)))
+
+        ;; Return rest of buffer
+        (buffer-substring-no-properties (point) (point-max)))
+    (error
+     (message "Error reading skill content from %s: %s" skill-path (error-message-string err))
+     nil)))
+
+(defun jf/gptel-skills--load-resource (skill-dir resource-file)
+  "Load additional resource file from SKILL-DIR.
+RESOURCE-FILE is relative filename (e.g., 'REFERENCE.md').
+Returns content as string, or nil if file doesn't exist."
+  (let ((resource-path (expand-file-name resource-file skill-dir)))
+    (when (file-exists-p resource-path)
+      (condition-case err
+          (with-temp-buffer
+            (insert-file-contents resource-path)
+            (buffer-string))
+        (error
+         (message "Error loading resource %s: %s" resource-path (error-message-string err))
+         nil)))))
+
+(defun jf/gptel-skills--lazy-loader (skill-name)
+  "Return a function that lazily loads SKILL-NAME content.
+The returned function loads and caches skill content on first call,
+then returns cached content on subsequent calls.
+This matches gptel's directive function pattern."
+  (lambda ()
+    (let ((metadata (gethash skill-name jf/gptel-skills--registry)))
+      (unless metadata
+        (error "Skill not found: %s" skill-name))
+
+      ;; Load content if not already loaded
+      (unless (plist-get metadata :loaded)
+        (let ((content (jf/gptel-skills--parse-content (plist-get metadata :path))))
+          (when content
+            (plist-put metadata :loaded t)
+            (plist-put metadata :content content)
+            (puthash skill-name metadata jf/gptel-skills--registry)
+            (when jf/gptel-skills-verbose
+              (message "Loaded skill: %s (%d chars)"
+                       skill-name (length content))))))
+
+      ;; Return content
+      (or (plist-get metadata :content)
+          (format "Error: Could not load skill content for %s" skill-name)))))
+
+(defun jf/gptel-skills--register-as-directive (skill-metadata)
+  "Register SKILL-METADATA as a gptel directive.
+Adds entry to gptel-directives using lazy loading."
+  (let* ((name (plist-get skill-metadata :name))
+         (name-symbol (intern name))
+         (loader (jf/gptel-skills--lazy-loader name)))
+
+    ;; Add to gptel-directives (avoid duplicates)
+    (setq gptel-directives
+          (cons (cons name-symbol loader)
+                (assq-delete-all name-symbol gptel-directives)))
+
+    (when jf/gptel-skills-verbose
+      (message "Registered skill as directive: %s" name))))
+
+(defun jf/gptel-skills-reload ()
+  "Reload all skills from directory.
+Clears cache, re-scans directory, and updates gptel-directives."
+  (interactive)
+
+  ;; Clear registry
+  (clrhash jf/gptel-skills--registry)
+
+  ;; Discover skills
+  (let ((skill-files (jf/gptel-skills--discover)))
+    (if (null skill-files)
+        (message "No skills found in %s" jf/gptel-skills-directory)
+
+      ;; Parse and register each skill
+      (dolist (skill-file skill-files)
+        (let ((metadata (jf/gptel-skills--parse-metadata skill-file)))
+          (when metadata
+            (let ((name (plist-get metadata :name)))
+              ;; Store in registry
+              (puthash name metadata jf/gptel-skills--registry)
+
+              ;; Register as directive
+              (jf/gptel-skills--register-as-directive metadata)))))
+
+      (message "Loaded %d skill(s) from %s"
+               (hash-table-count jf/gptel-skills--registry)
+               jf/gptel-skills-directory))))
+
+(defun jf/gptel-skills--menu-entries ()
+  "Generate transient menu entries for skills.
+Returns list of transient command definitions for user-invocable skills."
+  (let ((entries '())
+        (key-index 0)
+        (keys "abcdefghijklmnopqrstuvwxyz0123456789"))
+
+    ;; Collect all user-invocable skills
+    (maphash
+     (lambda (name metadata)
+       (when (plist-get metadata :user-invocable)
+         (let* ((key (if (< key-index (length keys))
+                        (substring keys key-index (1+ key-index))
+                      (format "%d" key-index)))
+                (description (plist-get metadata :description))
+                (name-symbol (intern name)))
+
+           ;; Create transient entry
+           ;; Format: (key description command)
+           (push (list key
+                      description
+                      `(lambda ()
+                         (interactive)
+                         (gptel-system-prompt ',name-symbol)))
+                 entries)
+
+           (setq key-index (1+ key-index)))))
+     jf/gptel-skills--registry)
+
+    (nreverse entries)))
+
+(defun jf/gptel-skills-transient-setup ()
+  "Setup transient menu integration for skills.
+Currently a placeholder - skills appear in standard directive menu."
+  ;; TODO: Add custom transient menu section for skills
+  ;; This would require advising or extending gptel-transient.el
+  nil)
+
+(defun jf/gptel-skills-list ()
+  "Display list of available skills in a buffer."
+  (interactive)
+  (let ((buf (get-buffer-create "*GPTel Skills*")))
+    (with-current-buffer buf
+      (erase-buffer)
+      (insert "Available GPTel Skills\n")
+      (insert "======================\n\n")
+
+      (if (zerop (hash-table-count jf/gptel-skills--registry))
+          (insert "No skills found. Check jf/gptel-skills-directory.\n")
+
+        (maphash
+         (lambda (name metadata)
+           (insert (format "* %s\n" name))
+           (insert (format "  Description: %s\n" (plist-get metadata :description)))
+           (insert (format "  Path: %s\n" (plist-get metadata :path)))
+           (insert (format "  Loaded: %s\n" (if (plist-get metadata :loaded) "yes" "no")))
+           (insert (format "  User-invocable: %s\n\n"
+                          (if (plist-get metadata :user-invocable) "yes" "no"))))
+         jf/gptel-skills--registry))
+
+      (goto-char (point-min))
+      (help-mode))
+    (display-buffer buf)))
+
+(defun jf/gptel-skills-setup ()
+  "Initialize the skills system.
+Called automatically when this module is loaded."
+  (when (and (boundp 'gptel-directives)
+             (file-directory-p (expand-file-name jf/gptel-skills-directory)))
+    (jf/gptel-skills-reload)))
+
+;; Initialize skills when gptel is loaded
+(with-eval-after-load 'gptel
+  (jf/gptel-skills-setup))
+
+;; If gptel is already loaded, initialize now
+(when (featurep 'gptel)
+  (jf/gptel-skills-setup))
+
+(provide 'gptel-skills)
+;;; gptel-skills.el ends here
