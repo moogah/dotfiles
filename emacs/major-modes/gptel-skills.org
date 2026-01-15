@@ -11,12 +11,26 @@ from =~/.claude/skills/= that provide context, guidelines, and reference materia
 
 ** Architecture Overview
 
-Skills work through explicit mention and dynamic injection:
+The skills system operates in four phases, each serving a specific purpose in the
+@mention-to-injection pipeline:
 
-1. **Discovery** (initialization): Scan skills directory, parse metadata with lazy loading
-2. **Mention Detection** (typing): Detect =@skill-name= syntax, add visual overlays
-3. **Dynamic Injection** (sending): Hook into =gptel-prompt-transform-functions=, inject based on mode
-4. **Progressive Disclosure** (optional): Auto-load referenced resources
+1. **Discovery** (initialization): Scan skills directory (=~/.claude/skills/= for markdown,
+   =~/.org-roam/skills/= for org-roam), parse metadata (name, description, injection-mode)
+   with lazy loading. Both skill types are unified in a single registry.
+
+2. **Mention Detection** (typing): As you type in gptel buffers, the system detects
+   =@skill-name= patterns, validates against the registry, and creates visual overlays
+   with help-echo descriptions. Updates buffer-local active skills list.
+
+3. **Dynamic Injection** (sending): When you press =C-c RET= to send, hooks into
+   =gptel-prompt-transform-functions= to:
+   - Load skill content (if not cached)
+   - Determine injection mode (system/context/user via heuristics or explicit setting)
+   - Inject content into appropriate location
+   - Strip @mentions from visible prompt
+
+4. **Progressive Disclosure** (optional): Load additional resources referenced within
+   skills (currently basic support via =jf/gptel-skills--load-resource=)
 
 ** Key Features
 
@@ -31,12 +45,81 @@ Skills work through explicit mention and dynamic injection:
 #+begin_example
 User types in gptel buffer:
 "Help me write elisp @writing-elisp"
-                       ^^^^^^^^^^^^^^ <- overlay appears
+                       ^^^^^^^^^^^^^^ <- overlay appears (green underline + description on hover)
 
 User sends (C-c RET):
-→ Skill content injected as system message
-→ @mention stripped from prompt
-→ LLM receives prompt with skill guidance
+→ Transform hook detects @writing-elisp
+→ Loads skill content (lazy, cached after first load)
+→ Analyzes content → determines injection-mode='system (behavioral guidance)
+→ Appends to gptel--system-message:
+  "\n\n## Skill: writing-elisp\n\n[skill content with elisp best practices]"
+→ Strips @mention from prompt (makes invisible)
+→ Request sent to LLM with enhanced system message
+
+Result: LLM receives behavioral guidance about elisp without @mention clutter
+#+end_example
+
+** System Architecture Diagram
+
+#+begin_example
+┌───────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                         GPTEL SKILLS SYSTEM                                            │
+└───────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+INITIALIZATION (Phase 1: Discovery)
+┌─────────────────────────────────────┐     ┌─────────────────────────────────────┐
+│ ~/.claude/skills/*/SKILL.md         │     │ ~/.org-roam/skills/*.org            │
+│ (Markdown skills)                   │     │ (Org-roam skills)                   │
+└────────────┬────────────────────────┘     └────────────┬────────────────────────┘
+             │                                            │
+             │ jf/gptel-skills--discover()               │ jf/gptel-skills-roam--discover-files()
+             │ jf/gptel-skills--parse-metadata()         │ jf/gptel-skills-roam--parse-file-metadata()
+             │                                            │
+             └────────────────┬───────────────────────────┘
+                              ↓
+                 ┌────────────────────────────────────────────┐
+                 │  jf/gptel-skills--registry (hash table)    │
+                 │  Keys: skill-name (string)                 │
+                 │  Values: metadata plist                    │
+                 │    :name :description :injection-mode      │
+                 │    :path/:file :source :loaded :content    │
+                 └────────────────────────────────────────────┘
+
+USER INTERACTION (Phase 2: Mention Detection & Visual Feedback)
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│  GPTEL BUFFER (with gptel-mode enabled)                                                             │
+│  ┌───────────────────────────────────────────────────────────────────────────────────────────────┐ │
+│  │ User prompt: "Help me write elisp @writing-elisp"                                             │ │
+│  │                                     ^^^^^^^^^^^^^^^^                                           │ │
+│  │                                     │ Overlay with face + help-echo                           │ │
+│  └───────────────────────────────────────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────┘
+                                            ↑
+                                            │
+                        ┌───────────────────┴────────────────────┐
+                        │ after-change-functions hook            │
+                        │ jf/gptel-skills--update-overlays()     │
+                        │   ├─ detect mentions                   │
+                        │   ├─ create overlays                   │
+                        │   └─ update jf/gptel-skills--active    │
+                        └────────────────────────────────────────┘
+
+SENDING REQUEST (Phase 3: Dynamic Injection)
+User presses C-c RET (gptel-send)
+             ↓
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│ gptel-prompt-transform-functions hook                                                  │
+│ jf/gptel-skills--transform-inject(fsm)                                                 │
+│   ├─ Detect mentions                                                                   │
+│   ├─ Load content (lazy, with caching)                                                 │
+│   ├─ Determine injection mode (auto detection or explicit)                             │
+│   │   ├─ system:  Content prepended to gptel--system-message                           │
+│   │   ├─ context: Content placed in temp buffer, added to gptel-context list           │
+│   │   └─ user:    Content inserted at top of prompt buffer                             │
+│   └─ Strip @mentions (make invisible)                                                  │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+             ↓
+        Request sent to LLM with skill content injected
 #+end_example
 
 * Configuration
@@ -119,6 +202,63 @@ Each entry is a plist with keys:
 (defvar-local jf/gptel-skills--overlays nil
   "List of skill mention overlays in current buffer.")
 #+end_src
+
+** Component Relationships Diagram
+
+#+begin_example
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                   COMPONENT RELATIONSHIP DIAGRAM                                     │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+CORE DATA STRUCTURES
+┌───────────────────────────────────────────────┐
+│ jf/gptel-skills--registry (hash table)        │
+│   Populated by:                               │
+│   • jf/gptel-skills--discover()               │
+│   • jf/gptel-skills--parse-metadata()         │
+│   • jf/gptel-skills-roam--discover-files()    │
+│   • jf/gptel-skills-roam--parse-file-metadata()│
+│                                                │
+│   Queried by:                                  │
+│   • jf/gptel-skills--detect-mentions()        │
+│   • jf/gptel-skills--completion-at-point()    │
+│   • jf/gptel-skills--transform-inject()       │
+│                                                │
+│   Modified by:                                 │
+│   • jf/gptel-skills--transform-inject()       │
+│     (loads content, updates :loaded/:content) │
+└───────────────────────────────────────────────┘
+                    ↓
+┌───────────────────────────────────────────────┐
+│ jf/gptel-skills--active (buffer-local list)   │
+│   Updated by:                                  │
+│   • jf/gptel-skills--update-overlays()        │
+│                                                │
+│   Used by:                                     │
+│   • jf/gptel-skills-list-active()             │
+└───────────────────────────────────────────────┘
+                    ↓
+┌───────────────────────────────────────────────┐
+│ jf/gptel-skills--overlays (buffer-local list) │
+│   Updated by:                                  │
+│   • jf/gptel-skills--add-overlay()            │
+│   • jf/gptel-skills--update-overlays()        │
+│                                                │
+│   Cleared by:                                  │
+│   • jf/gptel-skills-clear-mentions()          │
+│   • jf/gptel-skills-reload()                  │
+└───────────────────────────────────────────────┘
+
+HOOK INTEGRATION
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│ gptel-mode enabled                                                                     │
+│   ├─ gptel-mode-hook                                                                   │
+│   │   ├─ after-change-functions ← jf/gptel-skills--update-overlays()                  │
+│   │   └─ completion-at-point-functions ← jf/gptel-skills--completion-at-point()       │
+│   │                                                                                     │
+│   └─ gptel-prompt-transform-functions ← jf/gptel-skills--transform-inject(fsm)        │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+#+end_example
 
 * Discovery and Parsing (Phase 1)
 
@@ -358,7 +498,142 @@ Integrates with completion-at-point-functions."
                            (t ""))))))))))
 #+end_src
 
+** Injection Strategy Decision Tree
+
+#+begin_example
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                             INJECTION MODE DETERMINATION FLOWCHART                                   │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+jf/gptel-skills--transform-inject()
+            ↓
+    Get skill metadata from registry
+            ↓
+    ┌───────────────────────┐
+    │ Injection mode set?   │
+    └───────┬───────────────┘
+            │
+   ┌────────┴────────┐
+   │                 │
+  YES               NO (mode = 'auto)
+   │                 │
+   │                 ↓
+   │     jf/gptel-skills--determine-injection-mode(metadata, content)
+   │                 │
+   │        ┌────────┴───────────────────────────────────────┐
+   │        │ Content starts with:                           │
+   │        │ "You are", "When", "Always", "Never"?          │
+   │        └────┬───────────────────────────────────────┬───┘
+   │            YES                                      NO
+   │             │                                        │
+   │             ↓                                        ↓
+   │          'system                        ┌──────────────────────────┐
+   │                                         │ Content has code blocks, │
+   │                                         │ tables, or >1000 chars?  │
+   │                                         └────┬─────────────────┬───┘
+   │                                             YES               NO
+   │                                              │                 │
+   │                                              ↓                 ↓
+   │                                          'context      ┌──────────────┐
+   │                                                        │ Numbered     │
+   │                                                        │ list "1."?   │
+   │                                                        └───┬──────┬───┘
+   │                                                           YES    NO
+   │                                                            │      │
+   │                                                            ↓      ↓
+   │                                                          'user  'system
+   │                                                                   │
+   └───────────────────────────────────────────────────────────────────┘
+                                    ↓
+                    jf/gptel-skills--inject-content(content, mode, skill-name)
+                                    │
+          ┌─────────────────────────┼─────────────────────────┐
+          │                         │                          │
+      mode='system             mode='context              mode='user
+          │                         │                          │
+          ↓                         ↓                          ↓
+   Append to               Create temp buffer          Insert at buffer start
+   gptel--system-message   Add to gptel-context        with "## Reference:" header
+   with "## Skill:" header
+#+end_example
+
 * Dynamic Injection (Phase 3)
+
+** Understanding the Transform Hook and FSM
+
+The gptel-skills system integrates with gptel through the =gptel-prompt-transform-functions=
+hook, which provides a powerful extension point for modifying requests before they're sent
+to the LLM.
+
+*** What is the FSM?
+
+FSM is a finite state machine object (gptel-fsm) created by =gptel-request.el= that tracks
+the complete lifecycle of an LLM request. It's passed to all transform functions to provide:
+
+- Access to request metadata via =(gptel-fsm-info fsm)=
+- Context about where the request originated
+- Information about the target backend and model
+- The temporary buffer containing the prompt text
+
+*** Hook Execution Context
+
+When =gptel-prompt-transform-functions= runs:
+
+1. A temporary buffer is created containing the prompt text
+2. The hook runs IN THIS TEMP BUFFER with point at the end of the prompt
+3. Buffer-local variables from the originating buffer are accessible
+4. Transform functions can modify the temp buffer content
+5. Transform functions can modify buffer-local variables like:
+   - =gptel--system-message= (prepend to system instructions)
+   - =gptel-context= (add additional context buffers/files)
+
+*** FSM Info Structure
+
+The FSM contains a plist accessible via =(gptel-fsm-info fsm)=:
+
+| Key | Type | Description |
+|-----|------|-------------|
+| =:buffer= | buffer | Original gptel buffer where request was initiated |
+| =:backend= | gptel-backend | Active LLM backend (Anthropic, OpenAI, etc) |
+| =:data= | buffer | Temporary buffer containing prompt text to send |
+| =:position= | integer | Position in original buffer |
+| =:stream= | boolean | Whether streaming is enabled |
+| =:system= | string | System message for this request |
+
+*** Transform Function Contract
+
+Transform functions in =gptel-prompt-transform-functions= can be:
+
+*Synchronous* (1 argument):
+#+begin_src emacs-lisp
+(defun my-transform (fsm)
+  "Transform function that runs and completes immediately."
+  ;; Modify temp buffer or variables
+  ;; No return value needed
+  )
+#+end_src
+
+*Asynchronous* (2 arguments):
+#+begin_src emacs-lisp
+(defun my-async-transform (callback fsm)
+  "Transform function that may need to wait for external operations."
+  ;; Do async work
+  ;; Call (funcall callback) when done
+  )
+#+end_src
+
+*** What jf/gptel-skills--transform-inject Does
+
+1. Detects @mentions in the temp buffer
+2. Loads skill content (lazy loading with caching)
+3. Determines injection mode (system/context/user)
+4. Modifies the appropriate variable:
+   - System mode: Appends to =gptel--system-message=
+   - Context mode: Creates temp buffer, adds to =gptel-context=
+   - User mode: Inserts content at top of temp buffer
+5. Strips @mentions from the temp buffer (makes them invisible)
+
+The transform function does NOT return anything - it modifies state in place.
 
 ** Transform Inject
 
@@ -442,6 +717,93 @@ Returns symbol: system, context, or user."
    (t 'system)))
 #+end_src
 
+*** Injection Mode Determination: Detailed Explanation
+
+When a skill's =injection-mode= is set to =auto=, the system analyzes the content
+to determine the best placement. This section explains the heuristics and reasoning.
+
+**** The Three Injection Modes
+
+| Mode | Target | Use Case |
+|------|--------|----------|
+| =system= | =gptel--system-message= | Behavioral guidelines, persona definition, general rules |
+| =context= | =gptel-context= buffers | Reference material, code examples, documentation |
+| =user= | Prompt buffer (top) | Immediate instructions, step-by-step procedures |
+
+**** Detection Heuristics (in order of precedence)
+
+**1. Behavioral Directives → system**
+
+Content starting with imperative behavioral language goes to system message:
+
+Examples:
+#+begin_example
+"You are an expert in Emacs Lisp..."           → system
+"When writing elisp, always use..."            → system
+"Always prefer higher-order functions..."      → system
+"Never use eval unless absolutely necessary"   → system
+#+end_example
+
+*Rationale*: These define HOW the LLM should behave across the conversation.
+They're meta-instructions about approach, not specific to the current query.
+
+**2. Large Reference Material → context**
+
+Content with substantial reference material goes to context buffers:
+
+Examples:
+#+begin_example
+"```elisp\n(defun foo ()...```"               → context (code blocks)
+"| Function | Description |\n|---|---|"       → context (tables)
+"[5000 character API reference]"              → context (>1000 chars)
+#+end_example
+
+*Rationale*: Large reference material works better as separate context that
+the LLM can reference. Keeps system message focused and avoids cluttering
+the user prompt.
+
+**3. Procedural Steps → user**
+
+Content with numbered procedures goes to top of user prompt:
+
+Examples:
+#+begin_example
+"1. First, analyze the problem\n2. Then..." → user
+"1. Create the function\n2. Add tests"      → user
+#+end_example
+
+*Rationale*: Step-by-step procedures are immediate instructions for THIS query.
+They should appear as part of the user's request, not as system behavior.
+
+**4. Default → system**
+
+Brief guidance text without specific markers:
+
+Examples:
+#+begin_example
+"Use proper error handling"                  → system (default)
+"Prefer immutable data structures"           → system (default)
+#+end_example
+
+*Rationale*: General guidance without strong signals defaults to behavioral
+instruction (system message) as the safest placement.
+
+**** Edge Cases and Override
+
+Users can override auto-detection by setting =injection-mode= explicitly:
+
+#+begin_example
+---
+name: my-skill
+injection-mode: context  # Force context mode regardless of content
+---
+#+end_example
+
+This is useful when:
+- Auto-detection chooses wrong mode for your use case
+- You want consistent behavior regardless of content changes
+- You have specific integration requirements
+
 ** Inject Content
 
 #+begin_src emacs-lisp
@@ -477,6 +839,90 @@ MODE is symbol: system, context, or user."
        (insert content)
        (insert "\n\n---\n\n")))))
 #+end_src
+
+*** Injection Examples: Before and After
+
+This section shows concrete examples of how skill content is injected for each mode.
+
+**** System Mode Injection
+
+**Scenario**: Skill contains behavioral guidelines
+
+Before injection:
+#+begin_example
+gptel--system-message = "You are a helpful assistant"
+#+end_example
+
+After =jf/gptel-skills--inject-content= with mode='system:
+#+begin_example
+gptel--system-message = "You are a helpful assistant
+
+## Skill: writing-elisp
+
+Always use lexical binding. Prefer higher-order functions.
+Use cl-lib instead of deprecated cl package. Include docstrings
+for all public functions."
+#+end_example
+
+**Result**: Behavioral guidance is appended to system message, influencing all
+responses in the conversation.
+
+**** Context Mode Injection
+
+**Scenario**: Skill contains large reference material or code examples
+
+Before injection:
+#+begin_example
+gptel-context = (buffer1 buffer2)
+#+end_example
+
+After =jf/gptel-skills--inject-content= with mode='context:
+#+begin_example
+gptel-context = (buffer1 buffer2 *gptel-skill-writing-elisp*)
+
+Contents of *gptel-skill-writing-elisp* buffer:
+# Skill: writing-elisp
+
+```elisp
+(defun example-function ()
+  (let* ((x 1) (y 2))
+    (+ x y)))
+```
+
+Common patterns:
+| Pattern | Example | Use case |
+|---------|---------|----------|
+| ...
+#+end_example
+
+**Result**: Reference material is sent as separate context buffer, allowing LLM
+to reference it without cluttering system message or user prompt.
+
+**** User Mode Injection
+
+**Scenario**: Skill contains immediate procedural instructions
+
+Buffer content before injection:
+#+begin_example
+"Help me write elisp @writing-elisp"
+#+end_example
+
+After =jf/gptel-skills--inject-content= with mode='user:
+#+begin_example
+"## Reference: writing-elisp
+
+1. Start with lexical binding declaration
+2. Add docstrings to public functions
+3. Use cl-lib for advanced features
+4. Test incrementally
+
+---
+
+Help me write elisp @writing-elisp"
+#+end_example
+
+**Result**: Procedural steps appear at top of user prompt as immediate
+instructions for this specific query.
 
 ** Strip Mentions
 

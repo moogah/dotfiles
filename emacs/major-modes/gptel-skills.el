@@ -263,6 +263,18 @@ Integrates with completion-at-point-functions."
                            ((eq source 'markdown) "md")
                            (t ""))))))))))
 
+(defun my-transform (fsm)
+  "Transform function that runs and completes immediately."
+  ;; Modify temp buffer or variables
+  ;; No return value needed
+  )
+
+(defun my-async-transform (callback fsm)
+  "Transform function that may need to wait for external operations."
+  ;; Do async work
+  ;; Call (funcall callback) when done
+  )
+
 (defun jf/gptel-skills--transform-inject (fsm)
   "Main prompt transform function for injecting skills.
 Detects @mentions, loads content, determines injection mode, and injects.

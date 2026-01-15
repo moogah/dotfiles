@@ -1,3 +1,17 @@
+M-x jf/gptel-skills-roam-create-skill
+  Skill title: writing-elisp
+  Skill description: Guide for writing valid Emacs Lisp
+  Injection mode: system
+
+;; Invalidate single skill
+(jf/gptel-skills-roam--invalidate-cache "writing-elisp")
+
+;; Invalidate all caches
+(jf/gptel-skills-roam--invalidate-all-caches)
+
+;; Full reload (re-discovers and clears caches)
+(jf/gptel-skills-reload)
+
 ;; -*- lexical-binding: t; -*-
 (require 'cl-lib)
 (require 'org-roam)
