@@ -47,6 +47,7 @@ Setup lexical binding and dependencies.
 ;; -*- lexical-binding: t; -*-
 (require 'cl-lib)
 (require 'gptel nil t)
+(require 'gptel-skills-roam nil t)
 #+end_src
 
 ** Customization Variables
@@ -99,11 +100,15 @@ If nil, mentions are kept in the prompt (visible to LLM)."
 (defvar jf/gptel-skills--registry (make-hash-table :test 'equal)
   "Hash table mapping skill names to metadata plists.
 
+This registry contains both markdown (.md) and org-roam skills.
+
 Each entry is a plist with keys:
   :name          - Skill name (string)
   :description   - Description for completion/help (string)
-  :path          - Full path to SKILL.md file (string)
-  :dir           - Skill directory path (string)
+  :path          - Full path to SKILL.md file (string) [markdown only]
+  :dir           - Skill directory path (string) [markdown only]
+  :file          - Full path to .org skill file (string) [org-roam only]
+  :source        - Source type: 'markdown or 'org-roam (symbol)
   :injection-mode - Where to inject: system|context|user|auto (symbol)
   :loaded        - Whether content has been loaded (boolean)
   :content       - Cached skill content (string or nil)")
@@ -178,9 +183,10 @@ Returns nil if parsing fails."
               (when (re-search-forward "^injection-mode:[ \t]+\\(system\\|context\\|user\\|auto\\)$" yaml-end t)
                 (setq metadata (plist-put metadata :injection-mode (intern (match-string 1)))))
 
-              ;; Add path and directory
+              ;; Add path, directory, and source
               (setq metadata (plist-put metadata :path skill-path))
               (setq metadata (plist-put metadata :dir (file-name-directory skill-path)))
+              (setq metadata (plist-put metadata :source 'markdown))
 
               ;; Set defaults
               (unless (plist-get metadata :name)
@@ -342,8 +348,14 @@ Integrates with completion-at-point-functions."
               (lambda (candidate)
                 (let* ((skill-name (substring candidate (length jf/gptel-skills-mention-prefix)))
                        (metadata (gethash skill-name jf/gptel-skills--registry))
-                       (mode (plist-get metadata :injection-mode)))
-                  (format " (%s)" mode))))))))
+                       (mode (plist-get metadata :injection-mode))
+                       (source (plist-get metadata :source)))
+                  (format " (%s %s)"
+                          (or mode 'auto)
+                          (cond
+                           ((eq source 'org-roam) "org-roam")
+                           ((eq source 'markdown) "md")
+                           (t ""))))))))))
 #+end_src
 
 * Dynamic Injection (Phase 3)
@@ -366,25 +378,38 @@ Added to gptel-prompt-transform-functions. FSM is the state machine."
             (when metadata
               ;; Load content if not already loaded
               (unless (plist-get metadata :loaded)
-                (let ((content (jf/gptel-skills--parse-content (plist-get metadata :path))))
+                (let* ((source (plist-get metadata :source))
+                       (content (cond
+                                 ;; Markdown skills - use existing parser
+                                 ((eq source 'markdown)
+                                  (jf/gptel-skills--parse-content (plist-get metadata :path)))
+                                 ;; Org-roam skills - read file directly
+                                 ((eq source 'org-roam)
+                                  (let ((file (plist-get metadata :file)))
+                                    (when (and file (file-exists-p file))
+                                      (with-temp-buffer
+                                        (insert-file-contents file)
+                                        (buffer-string)))))
+                                 (t nil))))
                   (when content
                     (plist-put metadata :loaded t)
                     (plist-put metadata :content content)
                     (puthash skill-name metadata jf/gptel-skills--registry))))
 
               ;; Get content and determine injection mode
-              (let* ((content (plist-get metadata :content))
-                     (mode-specified (plist-get metadata :injection-mode))
-                     (mode (if (eq mode-specified 'auto)
-                              (jf/gptel-skills--determine-injection-mode metadata content)
-                            mode-specified)))
+              (let ((content (plist-get metadata :content)))
+                (when content
+                  (let* ((mode-specified (plist-get metadata :injection-mode))
+                         (mode (if (eq mode-specified 'auto)
+                                  (jf/gptel-skills--determine-injection-mode metadata content)
+                                mode-specified)))
 
-                (when (and content mode)
-                  (when jf/gptel-skills-verbose
-                    (message "Injecting skill: %s (mode: %s)" skill-name mode))
+                    (when mode
+                      (when jf/gptel-skills-verbose
+                        (message "Injecting skill: %s (mode: %s)" skill-name mode))
 
-                  ;; Inject based on mode
-                  (jf/gptel-skills--inject-content content mode skill-name))))))
+                      ;; Inject based on mode
+                      (jf/gptel-skills--inject-content content mode skill-name))))))))
 
         ;; Strip @mentions if configured
         (when jf/gptel-skills-strip-mentions
@@ -530,34 +555,71 @@ Prompts for skill using completing-read."
 
 #+begin_src emacs-lisp
 (defun jf/gptel-skills-reload ()
-  "Reload all skills from directory.
-Clears cache, re-scans directory, and updates registry."
+  "Reload all skills from directory and org-roam.
+Clears cache, re-scans directory, and updates registry with both
+markdown and org-roam skills."
   (interactive)
 
   ;; Clear registry
   (clrhash jf/gptel-skills--registry)
 
-  ;; Discover skills
-  (let ((skill-files (jf/gptel-skills--discover)))
+  ;; Discover markdown skills
+  (let ((skill-files (jf/gptel-skills--discover))
+        (md-count 0))
     (if (null skill-files)
-        (message "No skills found in %s" jf/gptel-skills-directory)
+        (message "No markdown skills found in %s" jf/gptel-skills-directory)
 
-      ;; Parse and register each skill
+      ;; Parse and register each markdown skill
       (dolist (skill-file skill-files)
         (let ((metadata (jf/gptel-skills--parse-metadata skill-file)))
           (when metadata
             (let ((name (plist-get metadata :name)))
-              (puthash name metadata jf/gptel-skills--registry)))))
+              (puthash name metadata jf/gptel-skills--registry)
+              (setq md-count (1+ md-count)))))))
 
-      (message "Loaded %d skill(s) from %s"
-               (hash-table-count jf/gptel-skills--registry)
-               jf/gptel-skills-directory)
+    ;; Try to load org-roam skills module if not already loaded
+    (unless (featurep 'gptel-skills-roam)
+      (let ((roam-skills-file (expand-file-name "gptel-skills-roam.el"
+                                                 (file-name-directory (or load-file-name
+                                                                         buffer-file-name)))))
+        (when (file-exists-p roam-skills-file)
+          (message "Loading org-roam skills from: %s" roam-skills-file)
+          (load roam-skills-file nil t))))
 
-      ;; Update overlays in all gptel buffers
-      (dolist (buf (buffer-list))
-        (with-current-buffer buf
-          (when (bound-and-true-p gptel-mode)  ; gptel-mode is a minor mode
-            (jf/gptel-skills--update-overlays)))))))
+    ;; Discover and register org-roam skills
+    (message "Checking org-roam skills: featurep=%s enabled=%s"
+             (featurep 'gptel-skills-roam)
+             (if (boundp 'jf/gptel-skills-roam-enabled)
+                 jf/gptel-skills-roam-enabled
+               "unbound"))
+    (when (and (featurep 'gptel-skills-roam)
+               (boundp 'jf/gptel-skills-roam-enabled)
+               jf/gptel-skills-roam-enabled)
+      (let ((skill-files (jf/gptel-skills-roam--discover-files))
+            (roam-count 0))
+        (message "Skill files discovered: %s" skill-files)
+        (dolist (file skill-files)
+          (let ((metadata (jf/gptel-skills-roam--parse-file-metadata file)))
+            (when metadata
+              (let ((skill-name (plist-get metadata :name)))
+                (message "Loaded org-roam skill: %s from %s" skill-name file)
+                ;; Use skill name as key in unified registry
+                (puthash skill-name metadata jf/gptel-skills--registry)
+                (setq roam-count (1+ roam-count))))))
+        (message "Loaded %d org-roam skill(s)" roam-count)))
+
+    (message "Loaded %d skill(s) total (%d markdown, %d org-roam)"
+             (hash-table-count jf/gptel-skills--registry)
+             md-count
+             (if (and (featurep 'gptel-skills-roam) jf/gptel-skills-roam-enabled)
+                 (- (hash-table-count jf/gptel-skills--registry) md-count)
+               0)))
+
+  ;; Update overlays in all gptel buffers
+  (dolist (buf (buffer-list))
+    (with-current-buffer buf
+      (when (bound-and-true-p gptel-mode)  ; gptel-mode is a minor mode
+        (jf/gptel-skills--update-overlays)))))
 #+end_src
 
 ** Describe Skill
