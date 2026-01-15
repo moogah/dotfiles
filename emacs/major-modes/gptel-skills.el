@@ -283,10 +283,13 @@ Added to gptel-prompt-transform-functions. FSM is the state machine."
                                  ;; Markdown skills - use existing parser
                                  ((eq source 'markdown)
                                   (jf/gptel-skills--parse-content (plist-get metadata :path)))
-                                 ;; Org-roam skills - use roam loader
-                                 ((and (eq source 'org-roam)
-                                       (featurep 'gptel-skills-roam))
-                                  (jf/gptel-skills-roam--load-content skill-name))
+                                 ;; Org-roam skills - read file directly
+                                 ((eq source 'org-roam)
+                                  (let ((file (plist-get metadata :file)))
+                                    (when (and file (file-exists-p file))
+                                      (with-temp-buffer
+                                        (insert-file-contents file)
+                                        (buffer-string)))))
                                  (t nil))))
                   (when content
                     (plist-put metadata :loaded t)
@@ -294,18 +297,19 @@ Added to gptel-prompt-transform-functions. FSM is the state machine."
                     (puthash skill-name metadata jf/gptel-skills--registry))))
 
               ;; Get content and determine injection mode
-              (let* ((content (plist-get metadata :content))
-                     (mode-specified (plist-get metadata :injection-mode))
-                     (mode (if (eq mode-specified 'auto)
-                              (jf/gptel-skills--determine-injection-mode metadata content)
-                            mode-specified)))
+              (let ((content (plist-get metadata :content)))
+                (when content
+                  (let* ((mode-specified (plist-get metadata :injection-mode))
+                         (mode (if (eq mode-specified 'auto)
+                                  (jf/gptel-skills--determine-injection-mode metadata content)
+                                mode-specified)))
 
-                (when (and content mode)
-                  (when jf/gptel-skills-verbose
-                    (message "Injecting skill: %s (mode: %s)" skill-name mode))
+                    (when mode
+                      (when jf/gptel-skills-verbose
+                        (message "Injecting skill: %s (mode: %s)" skill-name mode))
 
-                  ;; Inject based on mode
-                  (jf/gptel-skills--inject-content content mode skill-name))))))
+                      ;; Inject based on mode
+                      (jf/gptel-skills--inject-content content mode skill-name))))))))
 
         ;; Strip @mentions if configured
         (when jf/gptel-skills-strip-mentions
