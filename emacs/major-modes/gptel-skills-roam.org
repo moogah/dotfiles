@@ -167,7 +167,7 @@ In gptel buffer, type:
 "Help me with my config @emacs-literate-programming"
 
 Press C-c RET to send.
-The skill content is injected based on its injection mode.
+The skill content is injected into the system message.
 #+end_example
 
 No difference from user perspective - org-roam vs markdown is transparent.

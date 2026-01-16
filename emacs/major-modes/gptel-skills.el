@@ -75,7 +75,7 @@ Returns list of absolute paths to SKILL.md files."
 
 (defun jf/gptel-skills--parse-metadata (skill-path)
   "Parse YAML frontmatter from SKILL.md at SKILL-PATH.
-Returns plist with :name, :description, :injection-mode, :path, :dir.
+Returns plist with :name, :description, :path, :dir.
 Returns nil if parsing fails."
   (condition-case err
       (with-temp-buffer
@@ -313,13 +313,15 @@ Added to gptel-prompt-transform-functions. FSM is the state machine."
   "Inject CONTENT for SKILL-NAME into system message.
 All skills are now injected as system-level behavioral guidelines."
   ;; Append to system message
-  (setq-local gptel--system-message
-              (if gptel--system-message
-                  (concat gptel--system-message
-                          (format "\n\n## Skill: %s\n\n" skill-name)
-                          content)
-                (concat (format "## Skill: %s\n\n" skill-name)
-                        content))))
+  ;; Use setq instead of setq-local - we're in a temp buffer and need to ensure
+  ;; the value propagates correctly to gptel's request
+  (setq gptel--system-message
+        (if (and (boundp 'gptel--system-message) gptel--system-message)
+            (concat gptel--system-message
+                    (format "\n\n## Skill: %s\n\n" skill-name)
+                    content)
+          (concat (format "## Skill: %s\n\n" skill-name)
+                  content))))
 
 (defun jf/gptel-skills--strip-mentions ()
   "Remove or hide @mentions from prompt buffer.
