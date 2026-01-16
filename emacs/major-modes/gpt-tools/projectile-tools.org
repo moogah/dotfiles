@@ -279,3 +279,307 @@ it can still be used for file creation operations."
                :description "Project directory context (defaults to current)"))
  :category "projectile")
 #+end_src
+
+* Project Search Tools
+
+** search_project_content
+Find all files in the project containing a specific string or pattern.
+
+#+begin_src emacs-lisp
+(gptel-make-tool
+ :name "search_project_content"
+ :function (lambda (directory search-term &optional file-pattern)
+             (let ((project-root (projectile-project-root directory)))
+               (if (not project-root)
+                   (format "No project found at %s. Use list_known_projects to discover available projects." directory)
+                 (condition-case err
+                     (let* ((files (projectile-files-with-string search-term project-root file-pattern))
+                            (count (length files))
+                            (result (if (zerop count)
+                                        (format "No files found containing '%s'%s in project %s"
+                                                search-term
+                                                (if file-pattern (format " matching pattern '%s'" file-pattern) "")
+                                                project-root)
+                                      (format "Found %d file%s containing '%s'%s:\n\n%s"
+                                              count
+                                              (if (= count 1) "" "s")
+                                              search-term
+                                              (if file-pattern (format " matching pattern '%s'" file-pattern) "")
+                                              (mapconcat #'identity files "\n")))))
+                       (gptel-projectile--result-limit result))
+                   (error (format "Error searching project: %s" (error-message-string err)))))))
+ :description "Find all files containing a specific string or pattern.
+
+This is the PRIMARY search tool for finding where code is defined or used in a project.
+It searches file contents (not just filenames) and returns a list of matching files.
+
+CRITICAL: This is much more efficient than reading every file. Use this tool when you need to:
+- Find where a function/class/variable is defined
+- Find all usages of a specific symbol
+- Search for specific patterns in code
+- Locate examples of specific code patterns
+
+Arguments:
+- directory: Project directory path (required). Use list_known_projects to discover projects.
+- search_term: String to search for (required). Can be a function name, class name, error message, etc.
+- file_pattern: Optional glob pattern to filter files (e.g., '*.el' for Elisp, '*.py' for Python, '*.{js,ts}' for JavaScript/TypeScript)
+
+Returns a list of file paths (relative to project root) containing the search term.
+If no matches found, returns a clear message.
+
+Example queries:
+- search_project_content('/path/to/project', 'defun my-function')
+- search_project_content('/path/to/project', 'import pandas', '*.py')
+- search_project_content('/path/to/project', 'TODO', '*.{el,org}')
+
+The search uses ripgrep, ag, or grep (fastest available) and respects .gitignore rules."
+ :args (list '(:name "directory"
+               :type string
+               :description "Project directory path. Use list_known_projects to discover available projects.")
+             '(:name "search_term"
+               :type string
+               :description "String to search for in file contents")
+             '(:name "file_pattern"
+               :type string
+               :optional t
+               :description "Optional glob pattern to filter files (e.g., '*.el', '*.py', '*.{js,ts}')"))
+ :category "projectile")
+#+end_src
+
+* Test Discovery Tools
+
+** list_test_files
+Get all test files in the project based on project type conventions.
+
+#+begin_src emacs-lisp
+(gptel-make-tool
+ :name "list_test_files"
+ :function (lambda (directory &optional limit)
+             (let ((project-root (projectile-project-root directory)))
+               (if (not project-root)
+                   (format "No project found at %s. Use list_known_projects to discover available projects." directory)
+                 (let* ((all-files (projectile-project-files project-root))
+                        (test-files (projectile-test-files all-files))
+                        (file-limit (or limit 100))
+                        (total-count (length test-files))
+                        (display-files (seq-take test-files (min file-limit total-count))))
+                   (if (zerop total-count)
+                       (format "No test files found in project %s.\n\nThis could mean:\n- Project has no tests yet\n- Test files don't follow naming conventions\n- Project type not detected correctly (check get_project_info)" project-root)
+                     (let ((result (format "Found %d test file%s in project %s:\n\n%s%s"
+                                           total-count
+                                           (if (= total-count 1) "" "s")
+                                           project-root
+                                           (mapconcat #'identity display-files "\n")
+                                           (if (> total-count file-limit)
+                                               (format "\n\n[Showing %d of %d test files. Increase limit to see more.]" file-limit total-count)
+                                             ""))))
+                       (gptel-projectile--result-limit result)))))))
+ :description "Get all test files in the project.
+
+This tool identifies test files based on project-specific naming conventions and patterns.
+It understands different testing frameworks and languages automatically.
+
+Use this tool when you need to:
+- Understand test coverage in a project
+- Find all tests to review or modify
+- Identify testing patterns and structure
+- Assess project quality (test count vs implementation files)
+
+How it works:
+- Detects project type (Ruby, Python, Java, JavaScript, etc.)
+- Uses type-specific test file patterns (e.g., '*_test.py', 'test_*.py', '*Test.java', '*.test.js')
+- Checks test directory conventions (e.g., 'test/', 'tests/', '__tests__/')
+- Returns files identified as tests
+
+Arguments:
+- directory: Project directory path (required). Use list_known_projects to discover projects.
+- limit: Max test files to return (default 100). Increase for large test suites.
+
+Returns a list of test file paths relative to project root.
+If no tests found, provides guidance on possible reasons.
+
+Common test patterns by language:
+- Python: test_*.py, *_test.py in tests/ directory
+- Ruby: *_spec.rb, *_test.rb in spec/ or test/ directory
+- JavaScript: *.test.js, *.spec.js in __tests__/ or alongside source
+- Java: *Test.java in src/test/java/
+- Go: *_test.go alongside source files"
+ :args (list '(:name "directory"
+               :type string
+               :description "Project directory path. Use list_known_projects to discover available projects.")
+             '(:name "limit"
+               :type integer
+               :optional t
+               :description "Max test files to return (default 100)"))
+ :category "projectile")
+#+end_src
+
+** find_related_test
+Find the test file(s) for a specific implementation file.
+
+#+begin_src emacs-lisp
+(gptel-make-tool
+ :name "find_related_test"
+ :function (lambda (directory file-path)
+             (let ((project-root (projectile-project-root directory)))
+               (if (not project-root)
+                   (format "No project found at %s. Use list_known_projects to discover available projects." directory)
+                 (let* ((absolute-path (if (file-name-absolute-p file-path)
+                                          file-path
+                                        (expand-file-name file-path project-root)))
+                        (relative-path (file-relative-name absolute-path project-root)))
+                   (condition-case err
+                       (let ((test-files (projectile--related-files absolute-path :test)))
+                         (if (null test-files)
+                             (format "No test file found for %s\n\nPossible reasons:\n- No test exists yet for this file\n- Test naming convention not followed\n- File is already a test file\n- Project type not correctly detected\n\nUse list_test_files to see all tests in the project." relative-path)
+                           (format "Test file%s for %s:\n\n%s"
+                                   (if (> (length test-files) 1) "s" "")
+                                   relative-path
+                                   (mapconcat (lambda (f) (file-relative-name f project-root)) test-files "\n"))))
+                     (error (format "Error finding test for %s: %s" relative-path (error-message-string err))))))))
+ :description "Find the test file(s) for a specific implementation file.
+
+This tool finds the corresponding test file for an implementation file based on
+project conventions and naming patterns. It's the inverse of finding implementation from test.
+
+Use this tool when you need to:
+- Find the test for a specific source file
+- Check if a file has test coverage
+- Navigate from implementation to its tests
+- Understand test organization for a specific module
+
+How it works:
+- Takes an implementation file path (relative or absolute)
+- Uses project-type-specific rules to find matching test
+- Checks multiple possible test locations and naming patterns
+- Returns test file path(s) or explains why none found
+
+Arguments:
+- directory: Project directory path (required). Use list_known_projects to discover projects.
+- file_path: Path to implementation file (required). Can be relative to project root or absolute.
+
+Returns the test file path(s) relative to project root.
+If no test found, provides helpful guidance.
+
+Examples:
+- find_related_test('/path/to/project', 'src/utils/parser.py') → finds 'tests/utils/test_parser.py'
+- find_related_test('/path/to/project', 'lib/api.rb') → finds 'spec/lib/api_spec.rb'
+- find_related_test('/path/to/project', 'components/Button.tsx') → finds 'components/Button.test.tsx'
+
+Common patterns:
+- Python: src/foo/bar.py → tests/foo/test_bar.py or tests/foo/bar_test.py
+- Ruby: lib/foo.rb → spec/lib/foo_spec.rb
+- JavaScript: src/Component.js → src/Component.test.js or __tests__/Component.test.js
+- Java: src/main/java/Foo.java → src/test/java/FooTest.java"
+ :args (list '(:name "directory"
+               :type string
+               :description "Project directory path. Use list_known_projects to discover available projects.")
+             '(:name "file_path"
+               :type string
+               :description "Path to implementation file (relative to project root or absolute)"))
+ :category "projectile")
+#+end_src
+
+* File Relationship Tools
+
+** find_related_files
+Find all semantically related files (tests, implementations, headers, etc.) for a given file.
+
+#+begin_src emacs-lisp
+(gptel-make-tool
+ :name "find_related_files"
+ :function (lambda (directory file-path &optional relationship-type)
+             (let ((project-root (projectile-project-root directory)))
+               (if (not project-root)
+                   (format "No project found at %s. Use list_known_projects to discover available projects." directory)
+                 (let* ((absolute-path (if (file-name-absolute-p file-path)
+                                          file-path
+                                        (expand-file-name file-path project-root)))
+                        (relative-path (file-relative-name absolute-path project-root)))
+                   (condition-case err
+                       (if relationship-type
+                           ;; Specific relationship type requested
+                           (let* ((rel-keyword (intern (concat ":" relationship-type)))
+                                  (related (projectile--related-files absolute-path rel-keyword)))
+                             (if (null related)
+                                 (format "No %s files found for %s" relationship-type relative-path)
+                               (format "%s file%s for %s:\n\n%s"
+                                       (capitalize relationship-type)
+                                       (if (> (length related) 1) "s" "")
+                                       relative-path
+                                       (mapconcat (lambda (f) (file-relative-name f project-root)) related "\n"))))
+                         ;; All relationships
+                         (let* ((kinds (projectile--related-files-kinds absolute-path))
+                                (results '()))
+                           (dolist (kind kinds)
+                             (let ((files (projectile--related-files absolute-path kind)))
+                               (when files
+                                 (push (format "%s:\n  %s"
+                                              (capitalize (substring (symbol-name kind) 1))
+                                              (mapconcat (lambda (f) (file-relative-name f project-root)) files "\n  "))
+                                       results))))
+                           (if (null results)
+                               (format "No related files found for %s\n\nThis file may be standalone or relationships not configured for this project type." relative-path)
+                             (format "Related files for %s:\n\n%s" relative-path (mapconcat #'identity (reverse results) "\n\n")))))
+                     (error (format "Error finding related files for %s: %s" relative-path (error-message-string err))))))))
+ :description "Find all semantically related files for a given file.
+
+This tool discovers files that are logically related to a source file, based on
+project conventions and file relationships. It goes beyond just finding tests.
+
+Use this tool when you need to:
+- Understand the full context around a file (tests, implementations, headers)
+- Navigate between related files (C header ↔ implementation, test ↔ impl)
+- Find all files needed to understand a component
+- Discover file organization patterns in a project
+
+How it works:
+- Analyzes file path and project type
+- Identifies relationship kinds: test, impl (implementation), other
+- Uses project-specific rules for finding related files
+- Returns organized map of all relationships
+
+Relationship types:
+- **test**: Test files for this implementation
+- **impl**: Implementation files for this test/header
+- **other**: Other related files (e.g., C header ↔ source, TypeScript .ts ↔ .d.ts)
+
+Arguments:
+- directory: Project directory path (required). Use list_known_projects to discover projects.
+- file_path: Path to file (required). Can be relative to project root or absolute.
+- relationship_type: Optional filter - 'test', 'impl', 'other', or omit for all relationships
+
+Returns structured information about related files:
+- If relationship_type specified: List of files for that relationship
+- If omitted: All relationships organized by type
+
+Examples:
+- find_related_files('/path/to/project', 'src/parser.c') → finds parser.h (other), test_parser.c (test)
+- find_related_files('/path/to/project', 'include/api.h', 'impl') → finds src/api.c
+- find_related_files('/path/to/project', 'test/test_foo.py', 'impl') → finds src/foo.py
+- find_related_files('/path/to/project', 'Component.tsx') → finds Component.test.tsx, Component.stories.tsx
+
+Common patterns by language:
+- C/C++: header ↔ implementation (.h ↔ .c/.cpp)
+- Python: implementation ↔ test (foo.py ↔ test_foo.py)
+- TypeScript: source ↔ test ↔ types (.ts ↔ .test.ts ↔ .d.ts)
+- Java: implementation ↔ test (Foo.java ↔ FooTest.java)"
+ :args (list '(:name "directory"
+               :type string
+               :description "Project directory path. Use list_known_projects to discover available projects.")
+             '(:name "file_path"
+               :type string
+               :description "Path to file (relative to project root or absolute)")
+             '(:name "relationship_type"
+               :type string
+               :optional t
+               :description "Optional: 'test', 'impl', or 'other'. Omit to see all relationships."))
+ :category "projectile")
+#+end_src
+
+* Provide Feature
+
+#+begin_src emacs-lisp
+  (provide 'projectile-tools)
+  ;;; projectile-tools.el ends here
+#+end_src
