@@ -58,12 +58,30 @@ Notes:
 
 ** GPTEL Configuration
 
+This configuration enables debug mode and prompt caching for easier testing and development:
+- =gptel-log-level= set to ='debug= logs full request/response bodies, headers, and connection settings to the =*gptel-log*= buffer
+- =gptel-cache= set to =t= enables prompt caching for all supported models (particularly Anthropic)
+- =gptel-expert-commands= set to =t= enables advanced options in the gptel transient menu (=C-u C-c RET=)
+
+These settings are useful for:
+- Verifying prompt caching behavior (check =cache_control= blocks and cache hit/miss in response headers)
+- Debugging API issues
+- Inspecting system message structure (especially with gptel skills)
+
+To view logs: =M-x gptel-view-log= or switch to the =*gptel-log*= buffer.
+
+Note: =gptel-cache= can also be set to ='(system message)= to cache only specific parts, or ='(system)= to cache only system messages.
+
 #+begin_src emacs-lisp
   (use-package gptel
     :straight t
     :custom
     (gptel-model 'gpt-4o) ;; model is now a symbol, not a string
+    (gptel-log-level 'debug) ;; Enable debug logging for testing
+    (gptel-cache t) ;; Enable prompt caching (for Anthropic models)
     :config
+    ;; Enable expert commands to show advanced options in transient menu
+    (setq gptel-expert-commands t)
     ;; Configure Perplexity backend
     (gptel-make-perplexity "Perplexity"
       :key (lambda () (auth-source-pick-first-password :host "api.perplexity.ai"))

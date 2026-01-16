@@ -253,6 +253,21 @@ Integrates with completion-at-point-functions."
 
 (defun jf/gptel-skills--transform-inject (fsm)
   "Main prompt transform function for injecting skills.
+
+Skills are injected as a multi-part system message, where each skill
+is a separate element in the gptel--system-message list. This enables
+independent caching per skill when using Anthropic's API with prompt caching.
+
+SKILL ORDERING:
+Skills are ordered as follows:
+1. Skills from buffer-local `gptel-skills' variable (transient menu)
+   appear first, in the order they appear in that list
+2. Additional skills from @mentions appear after, sorted alphabetically
+
+The order matters for caching: changing skill order invalidates the cache,
+as Anthropic's prompt caching is position-sensitive.
+
+DETECTION SOURCES:
 Detects skills from two sources:
 1. Buffer-local gptel-skills variable (set via transient menu)
 2. @mentions in the prompt (backward compatibility)
@@ -273,54 +288,97 @@ Added to gptel-prompt-transform-functions. FSM is the state machine."
            (all-skill-names (delete-dups (append buffer-local-skills mention-names))))
 
       (when all-skill-names
-        (dolist (skill-name all-skill-names)
-          (let ((metadata (gethash skill-name jf/gptel-skills--registry)))
-            (when metadata
-              ;; Load content if not already loaded
-              (unless (plist-get metadata :loaded)
-                (let* ((source (plist-get metadata :source))
-                       (content (cond
-                                 ;; Markdown skills - use existing parser
-                                 ((eq source 'markdown)
-                                  (jf/gptel-skills--parse-content (plist-get metadata :path)))
-                                 ;; Org-roam skills - read file directly
-                                 ((eq source 'org-roam)
-                                  (let ((file (plist-get metadata :file)))
-                                    (when (and file (file-exists-p file))
-                                      (with-temp-buffer
-                                        (insert-file-contents file)
-                                        (buffer-string)))))
-                                 (t nil))))
-                  (when content
-                    (plist-put metadata :loaded t)
-                    (plist-put metadata :content content)
-                    (puthash skill-name metadata jf/gptel-skills--registry))))
+        ;; Sort skills: buffer-local gptel-skills order first, then alphabetically
+        ;; Order matters for caching: changing skill order invalidates cache
+        (let* ((ordered-skills
+                (append
+                 ;; First, skills from buffer-local variable in their specified order
+                 (cl-remove-if-not (lambda (name) (member name all-skill-names))
+                                   buffer-local-skills)
+                 ;; Then, any remaining skills (from @mentions) alphabetically
+                 (sort (cl-remove-if (lambda (name) (member name buffer-local-skills))
+                                     all-skill-names)
+                       #'string<))))
 
-              ;; Get content and inject to system message
-              (let ((content (plist-get metadata :content)))
-                (when content
-                  (when jf/gptel-skills-verbose
-                    (message "Injecting skill: %s" skill-name))
-                  ;; Inject to system message
-                  (jf/gptel-skills--inject-content content skill-name))))))
+          (dolist (skill-name ordered-skills)
+            (let ((metadata (gethash skill-name jf/gptel-skills--registry)))
+              (when metadata
+                ;; Load content if not already loaded
+                (unless (plist-get metadata :loaded)
+                  (let* ((source (plist-get metadata :source))
+                         (content (cond
+                                   ;; Markdown skills - use existing parser
+                                   ((eq source 'markdown)
+                                    (jf/gptel-skills--parse-content (plist-get metadata :path)))
+                                   ;; Org-roam skills - read file directly
+                                   ((eq source 'org-roam)
+                                    (let ((file (plist-get metadata :file)))
+                                      (when (and file (file-exists-p file))
+                                        (with-temp-buffer
+                                          (insert-file-contents file)
+                                          (buffer-string)))))
+                                   (t nil))))
+                    (when content
+                      (plist-put metadata :loaded t)
+                      (plist-put metadata :content content)
+                      (puthash skill-name metadata jf/gptel-skills--registry))))
+
+                ;; Get content and inject to system message
+                (let ((content (plist-get metadata :content)))
+                  (when content
+                    (when jf/gptel-skills-verbose
+                      (message "Injecting skill: %s" skill-name))
+                    ;; Inject to system message
+                    (jf/gptel-skills--inject-content content skill-name))))))))
 
         ;; Strip @mentions if configured (only strip actual mentions, not buffer-local skills)
         (when (and jf/gptel-skills-strip-mentions mention-data)
-          (jf/gptel-skills--strip-mentions))))))
+          (jf/gptel-skills--strip-mentions)))))
 
 (defun jf/gptel-skills--inject-content (content skill-name)
-  "Inject CONTENT for SKILL-NAME into system message.
-All skills are now injected as system-level behavioral guidelines."
-  ;; Append to system message
-  ;; Use setq instead of setq-local - we're in a temp buffer and need to ensure
-  ;; the value propagates correctly to gptel's request
-  (let ((original (if (and (boundp 'gptel--system-message) gptel--system-message)
-                      gptel--system-message
-                    "")))
+  "Inject CONTENT for SKILL-NAME into system message as a separate part.
+
+Each skill becomes a distinct element in the gptel--system-message list,
+enabling independent caching per skill when using Anthropic's API with
+prompt caching (see `gptel-cache').
+
+When gptel--system-message is a list, gptel-anthropic.el (lines 220-226)
+automatically adds cache_control blocks to each element.
+
+NOTE: For multi-part system messages with Anthropic, the format must be
+double-nested: (( \"part1\" \"part2\" ...)) because gptel interprets a
+single-level list as (system-message user1 llm1 ...) directive format."
+  ;; Ensure gptel--system-message is in the correct format for building
+  ;; We want to work with a single-level list and wrap it at the end
+  (cond
+   ;; If it's nil, initialize with empty string
+   ((null gptel--system-message)
+    (setq gptel--system-message (list "")))
+   ;; If it's a string, convert to single-level list
+   ((stringp gptel--system-message)
     (setq gptel--system-message
-          (concat original
-                  (format "\n\n## Skill: %s\n\n" skill-name)
-                  content))))
+          (list (if (string-empty-p gptel--system-message)
+                    ""
+                  gptel--system-message))))
+   ;; If it's already a double-nested list (("part1" ...)), extract inner list
+   ((and (consp gptel--system-message)
+         (consp (car gptel--system-message))
+         (stringp (car (car gptel--system-message))))
+    (setq gptel--system-message (car gptel--system-message)))
+   ;; If it's a single-level list of strings, use as-is
+   ((and (consp gptel--system-message)
+         (stringp (car gptel--system-message)))
+    t)
+   ;; Fallback: create new list with empty base message
+   (t (setq gptel--system-message (list ""))))
+
+  ;; Append skill as new list element with header
+  (setq gptel--system-message
+        (append gptel--system-message
+                (list (format "## Skill: %s\n\n%s" skill-name content))))
+
+  ;; Wrap in outer list for directive format (("part1" "part2" ...))
+  (setq gptel--system-message (list gptel--system-message)))
 
 (defun jf/gptel-skills--strip-mentions ()
   "Remove or hide @mentions from prompt buffer.

@@ -168,6 +168,16 @@ Three-state logic:
 Skills persist for the lifetime of the gptel buffer session.
 You can also use @mention syntax as an alternative interface.
 
+CACHING BEHAVIOR (Anthropic API):
+When using Anthropic models with prompt caching enabled (see `gptel-cache'),
+each skill is cached independently. This means:
+- Unchanged skills hit the cache (faster response, lower cost)
+- Only modified skills need reprocessing
+- Skill order affects caching (reordering invalidates cache)
+
+Tip: Keep your most stable/large skills at the top of your selection
+for optimal cache utilization across conversation turns.
+
 Skills are organized by category:
 - Claude Skills: Markdown skills from ~/.claude/skills/
 - Custom categories: Org-roam skills with :CATEGORY: property
