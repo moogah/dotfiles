@@ -12,47 +12,60 @@ Example: (\"writing-elisp\" \"emacs-elisp-debugging\")")
   "Build structure from jf/gptel-skills--registry.
 
 Returns plist with:
-  :has-categories - t if any skill has :category property
-  :data - Either nested alist (with categories) or flat list (without)
+  :has-categories - Always t (we always use categories)
+  :data - Nested alist of categories to skill names
 
-With categories, data format:
-  ((\"Category1\" . (\"skill1\" \"skill2\"))
-   (\"Category2\" . (\"skill3\"))
-   (nil . (\"uncategorized-skill\")))
+Categories are assigned as:
+  - Markdown skills (from .claude/): \"Claude Skills\"
+  - Org-roam skills with CATEGORY property: use that category
+  - Org-roam skills without CATEGORY: \"Uncategorized\"
 
-Without categories, data format:
-  (\"skill1\" \"skill2\" \"skill3\")"
-  (let ((has-categories nil)
-        (categorized-skills (make-hash-table :test 'equal))
-        (all-skills '()))
+Data format:
+  ((\"Claude Skills\" . (\"skill1\" \"skill2\"))
+   (\"Emacs\" . (\"skill3\"))
+   (\"Uncategorized\" . (\"skill4\")))"
+  (let ((categorized-skills (make-hash-table :test 'equal)))
 
-    ;; First pass: check for categories and collect skills
+    ;; Collect and categorize all skills
     (maphash
      (lambda (skill-name metadata)
-       (let ((category (plist-get metadata :category)))
-         (when category
-           (setq has-categories t))
-         (push skill-name all-skills)
-         ;; Group by category (nil for uncategorized)
-         (let ((skills-list (gethash category categorized-skills)))
-           (puthash category
+       (let* ((source (plist-get metadata :source))
+              (category (plist-get metadata :category))
+              ;; Determine effective category
+              (effective-category
+               (cond
+                ;; Markdown skills from .claude/ -> "Claude Skills"
+                ((eq source 'markdown) "Claude Skills")
+                ;; Org-roam skills with category -> use it
+                (category category)
+                ;; Org-roam skills without category -> "Uncategorized"
+                (t "Uncategorized"))))
+         ;; Add skill to its category
+         (let ((skills-list (gethash effective-category categorized-skills)))
+           (puthash effective-category
                     (cons skill-name skills-list)
                     categorized-skills))))
      jf/gptel-skills--registry)
 
-    ;; Build appropriate structure
-    (if has-categories
-        ;; With categories: return nested alist
-        (let ((categories-alist '()))
-          (maphash
-           (lambda (category skills)
-             (push (cons category (nreverse skills)) categories-alist))
-           categorized-skills)
-          (list :has-categories t
-                :data (nreverse categories-alist)))
-      ;; Without categories: return flat list
-      (list :has-categories nil
-            :data (sort all-skills #'string<)))))
+    ;; Build categories alist
+    (let ((categories-alist '()))
+      (maphash
+       (lambda (category skills)
+         (push (cons category (sort (nreverse skills) #'string<))
+               categories-alist))
+       categorized-skills)
+      ;; Sort categories alphabetically, but with "Claude Skills" first
+      (setq categories-alist
+            (sort categories-alist
+                  (lambda (a b)
+                    (let ((cat-a (car a))
+                          (cat-b (car b)))
+                      (cond
+                       ((equal cat-a "Claude Skills") t)
+                       ((equal cat-b "Claude Skills") nil)
+                       (t (string< cat-a cat-b)))))))
+      (list :has-categories t
+            :data categories-alist))))
 
 (defun jf/gptel-skills--init-value (skill-name)
   "Return initial value for SKILL-NAME switch.
@@ -155,8 +168,10 @@ Three-state logic:
 Skills persist for the lifetime of the gptel buffer session.
 You can also use @mention syntax as an alternative interface.
 
-When categories are defined, skills are organized by category.
-Without categories, all skills appear in a single list."
+Skills are organized by category:
+- Claude Skills: Markdown skills from ~/.claude/skills/
+- Custom categories: Org-roam skills with :CATEGORY: property
+- Uncategorized: Org-roam skills without category"
   :refresh-suffixes t
   [:description "Select skills for this gptel session"
    [""
@@ -175,105 +190,77 @@ Without categories, all skills appear in a single list."
     ("RET" "Confirm selection"
      (lambda ()
        (interactive)
-       (let ((selected-skills (plist-get (transient-scope 'gptel-skills) :skills)))
+       (let ((selected-skills (plist-get (transient-scope) :skills)))
          (setq gptel-skills selected-skills)
-         (message "Activated %d skill%s for this buffer"
+         (message "Activated %d skill%s for this buffer: %S"
                   (length selected-skills)
-                  (if (= (length selected-skills) 1) "" "s"))))
+                  (if (= (length selected-skills) 1) "" "s")
+                  selected-skills)))
      :transient transient--do-return)
     ("q" "Cancel" transient-quit-one)]]
-  ;; Dynamic layout based on whether categories exist
+  ;; Left column: categories
   [[:class transient-column
     :setup-children
     (lambda (_)
       (let* ((structure (jf/gptel-skills--build-structure))
-             (has-categories (plist-get structure :has-categories))
              (data (plist-get structure :data)))
-        (if has-categories
-            ;; Two-column layout: categories
-            (transient-parse-suffixes
-             'gptel-skills
-             (cl-loop
-              for (category . skills) in data
-              with unused-keys = (nconc (number-sequence ?a ?z)
-                                        (number-sequence ?0 ?9))
-              for category-key = (seq-first unused-keys)
-              do (setq unused-keys (cdr unused-keys))
-              collect (list (key-description (list category-key))
-                           (concat (propertize (or category "Uncategorized")
-                                              'face 'transient-heading)
-                                   (make-string (max (- 20 (length (or category "Uncategorized"))) 0) ? ))
-                           (char-to-string category-key)
-                           :format " %k %d %v"
-                           :class 'jf/gptel-skills--switch-category
-                           :category category)
-              into categories
-              finally do (plist-put (transient-scope) :keys unused-keys)
-              finally return categories))
-          ;; Single-column layout: all skills
-          (transient-parse-suffixes
-           'gptel-skills
-           (when data
-             (cl-loop
-              for skill-name in data
-              with unused-keys = (nconc (number-sequence ?a ?z)
-                                        (number-sequence ?0 ?9))
-              for skill-key = (seq-first unused-keys)
-              do (setq unused-keys (cdr unused-keys))
-              collect (list (key-description (list skill-key))
-                           (concat (propertize skill-name 'face 'bold)
-                                   (make-string (max (- 25 (length skill-name)) 0) ? )
-                                   (propertize
-                                    (concat "(" (jf/gptel-skills--get-description skill-name) ")")
-                                    'face 'shadow))
-                           skill-name
-                           :format " %k %d"
-                           :init-value (lambda (obj)
-                                        (oset obj value
-                                              (jf/gptel-skills--init-value
-                                               (oref obj skill-name))))
-                           :class 'jf/gptel-skills--switch
-                           :skill-name skill-name)))))))]
+        (transient-parse-suffixes
+         'gptel-skills
+         (cl-loop
+          for (category . skills) in data
+          with unused-keys = (nconc (number-sequence ?a ?z)
+                                    (number-sequence ?0 ?9))
+          for category-key = (seq-first unused-keys)
+          for display-category = (or category "Uncategorized")
+          do (setq unused-keys (cdr unused-keys))
+          collect (list (key-description (list category-key))
+                       (concat (propertize display-category 'face 'transient-heading)
+                               (make-string (max (- 20 (length display-category)) 0) ? ))
+                       (char-to-string category-key)
+                       :format " %k %d %v"
+                       :class 'jf/gptel-skills--switch-category
+                       :category category)
+          into categories
+          finally do (plist-put (transient-scope) :keys unused-keys)
+          finally return categories))))]
    [:class transient-column
     :setup-children
     (lambda (_)
-      ;; Second column: skills for selected category (only when categories exist)
-      (let* ((structure (jf/gptel-skills--build-structure))
-             (has-categories (plist-get structure :has-categories)))
-        (when has-categories
-          (transient-parse-suffixes
-           'gptel-skills
-           (when-let* ((category (plist-get (transient-scope) :category))
-                      (skill-keys (plist-get (transient-scope) :keys))
-                      (data (plist-get structure :data))
-                      (category-skills (cdr (assoc category data))))
-             (cl-loop
-              for skill-name in category-skills
-              for skill-key = (seq-first skill-keys)
-              do (setq skill-keys (cdr skill-keys))
-              collect (list (key-description (list skill-key))
-                           (concat (make-string (max (- 25 (length skill-name)) 0) ? )
-                                   (propertize
-                                    (concat "(" (jf/gptel-skills--get-description skill-name) ")")
-                                    'face 'shadow))
-                           skill-name
-                           :format " %k %v %d"
-                           :init-value (lambda (obj)
-                                        (oset obj value
-                                              (jf/gptel-skills--init-value
-                                               (oref obj skill-name))))
-                           :class 'jf/gptel-skills--switch
-                           :skill-name skill-name)
-              into infixes-for-category
-              finally return
-              (cons (list :info
-                         (lambda ()
-                           (concat
-                            (propertize (plist-get (transient-scope) :key)
-                                       'face 'transient-key)
-                            (propertize " toggle all" 'face 'transient-heading)))
-                         :format " %d")
-                    infixes-for-category)))))))]]
+      ;; Right column: skills for selected category
+      (let* ((structure (jf/gptel-skills--build-structure)))
+        (transient-parse-suffixes
+         'gptel-skills
+         (when-let* ((category (plist-get (transient-scope) :category))
+                    (skill-keys (plist-get (transient-scope) :keys))
+                    (data (plist-get structure :data))
+                    (category-skills (cdr (assoc category data))))
+           (cl-loop
+            for skill-name in category-skills
+            for skill-key = (seq-first skill-keys)
+            do (setq skill-keys (cdr skill-keys))
+            collect (list (key-description (list skill-key))
+                         (concat (make-string (max (- 25 (length skill-name)) 0) ? )
+                                 (propertize
+                                  (concat "(" (jf/gptel-skills--get-description skill-name) ")")
+                                  'face 'shadow))
+                         skill-name
+                         :format " %k %v %d"
+                         :init-value (lambda (obj)
+                                      (oset obj value
+                                            (jf/gptel-skills--init-value
+                                             (oref obj skill-name))))
+                         :class 'jf/gptel-skills--switch
+                         :skill-name skill-name)
+            into infixes-for-category
+            finally return
+            (cons (list :info
+                       (lambda ()
+                         (concat
+                          (propertize (plist-get (transient-scope) :key)
+                                     'face 'transient-key)
+                          (propertize " toggle all" 'face 'transient-heading)))
+                       :format " %d")
+                  infixes-for-category))))))]]
   (interactive)
   (unless (hash-table-p jf/gptel-skills--registry)
     (user-error "Skills registry not initialized. Run M-x jf/gptel-skills-reload"))
@@ -287,5 +274,21 @@ Without categories, all skills appear in a single list."
 (with-eval-after-load 'gptel
   (when (boundp 'gptel-mode-map)
     (define-key gptel-mode-map (kbd "C-c @ s") 'gptel-skills)))
+
+(with-eval-after-load 'gptel-transient
+  ;; Add skills section to gptel-menu after the tools section
+  (transient-append-suffix 'gptel-menu '(0 -1)
+    [:pad-keys t
+     ""
+     (:info
+      (lambda ()
+        (let ((count (length gptel-skills)))
+          (concat "Skills"
+                  (when (> count 0)
+                    (concat " (" (propertize (format "%d active" count)
+                                            'face 'warning)
+                            ")")))))
+      :format "%d" :face transient-heading)
+     ("S" "Select skills" gptel-skills :transient t)]))
 
 (provide 'gptel-skills-transient)

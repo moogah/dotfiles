@@ -294,8 +294,8 @@ Returns plist with :title, :description, :file, :name, and optionally :category.
                             :source 'org-roam
                             :loaded nil
                             :content nil)))
-        ;; Add category only if present
-        (when category
+        ;; Add category only if present and not the org-mode default placeholder
+        (when (and category (not (equal category "???")))
           (plist-put metadata :category category))
         metadata))))
 #+end_src

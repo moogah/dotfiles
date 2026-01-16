@@ -1,8 +1,6 @@
 ;; -*- lexical-binding: t; -*-
 (require 'cl-lib)
 (require 'gptel nil t)
-(require 'gptel-skills-roam nil t)
-(require 'gptel-skills-transient nil t)
 
 (defgroup gptel-skills nil
   "Skills system for gptel with @mention activation."
@@ -278,8 +276,11 @@ Added to gptel-prompt-transform-functions. FSM is the state machine."
     (let* ((mention-data (jf/gptel-skills--detect-mentions))
            ;; Extract skill names from mentions
            (mention-names (mapcar #'car mention-data))
-           ;; Get skills from buffer-local variable (may be nil)
-           (buffer-local-skills (and (boundp 'gptel-skills) gptel-skills))
+           ;; Get skills from buffer-local variable in the ORIGINAL buffer
+           ;; (transform runs in temp buffer, need to access original)
+           (original-buffer (plist-get (gptel-fsm-info fsm) :buffer))
+           (buffer-local-skills (when original-buffer
+                                  (buffer-local-value 'gptel-skills original-buffer)))
            ;; Combine and deduplicate
            (all-skill-names (delete-dups (append buffer-local-skills mention-names))))
 
@@ -325,13 +326,17 @@ All skills are now injected as system-level behavioral guidelines."
   ;; Append to system message
   ;; Use setq instead of setq-local - we're in a temp buffer and need to ensure
   ;; the value propagates correctly to gptel's request
-  (setq gptel--system-message
-        (if (and (boundp 'gptel--system-message) gptel--system-message)
-            (concat gptel--system-message
-                    (format "\n\n## Skill: %s\n\n" skill-name)
-                    content)
-          (concat (format "## Skill: %s\n\n" skill-name)
-                  content))))
+  (let ((original (if (and (boundp 'gptel--system-message) gptel--system-message)
+                      gptel--system-message
+                    "")))
+    (setq gptel--system-message
+          (concat original
+                  (format "\n\n## Skill: %s\n\n" skill-name)
+                  content))
+    (when jf/gptel-skills-verbose
+      (message "System message after injection (%d chars): %s..."
+               (length gptel--system-message)
+               (substring gptel--system-message 0 (min 100 (length gptel--system-message)))))))
 
 (defun jf/gptel-skills--strip-mentions ()
   "Remove or hide @mentions from prompt buffer.

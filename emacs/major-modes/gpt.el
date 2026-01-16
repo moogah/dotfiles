@@ -1,4 +1,4 @@
-﻿;; -*- lexical-binding: t; -*-
+;; -*- lexical-binding: t; -*-
 (require 'cl-lib)
 
 ;;  (use-package shell-maker
@@ -58,10 +58,13 @@
 (jf/load-module (expand-file-name "major-modes/gpt-tools/meta-tools.el" jf/emacs-dir))
 (jf/load-module (expand-file-name "major-modes/gpt-tools/community-tools.el" jf/emacs-dir))
 (jf/load-module (expand-file-name "major-modes/gpt-tools/org-roam-tools.el" jf/emacs-dir))
+(jf/load-module (expand-file-name "major-modes/gpt-tools/projectile-tools.el" jf/emacs-dir))
+(jf/load-module (expand-file-name "major-modes/gpt-tools/ggtags-tools.el" jf/emacs-dir))
 
 ;; Load skills system
 (jf/load-module (expand-file-name "major-modes/gptel-skills.el" jf/emacs-dir))
 (jf/load-module (expand-file-name "major-modes/gptel-skills-roam.el" jf/emacs-dir))
+(jf/load-module (expand-file-name "major-modes/gptel-skills-transient.el" jf/emacs-dir))
 
 (defun jf/gptel-launcher ()
   "Launch gptel session with a selected backend and model.
