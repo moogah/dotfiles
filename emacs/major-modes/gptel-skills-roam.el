@@ -39,7 +39,6 @@ Each entry is a plist with keys:
   :name             - Skill name (file basename without .org)
   :title            - Node title from #+TITLE (string)
   :description      - SKILL_DESCRIPTION property (string)
-  :injection-mode   - SKILL_INJECTION_MODE property (symbol)
   :file             - Full file path (string)
   :source           - Always 'org-roam (symbol)
   :loaded           - Whether content loaded (boolean)
@@ -63,7 +62,7 @@ Returns list of full file paths."
 
 (defun jf/gptel-skills-roam--parse-file-metadata (file)
   "Parse skill metadata from FILE.
-Returns plist with :title, :description, :injection-mode, :file, :name."
+Returns plist with :title, :description, :file, :name."
   (when (file-exists-p file)
     (with-temp-buffer
       (insert-file-contents file)
@@ -72,16 +71,10 @@ Returns plist with :title, :description, :injection-mode, :file, :name."
       ;; Get properties from file
       (let ((title (org-roam-get-keyword "TITLE"))
             (description (org-entry-get (point-min) "SKILL_DESCRIPTION" t))
-            (injection-mode-str (org-entry-get (point-min) "SKILL_INJECTION_MODE" t))
             (skill-name (file-name-base file)))
         (list :name skill-name
               :title (or title skill-name)
               :description (or description "")
-              :injection-mode (cond
-                              ((equal injection-mode-str "system") 'system)
-                              ((equal injection-mode-str "context") 'context)
-                              ((equal injection-mode-str "user") 'user)
-                              (t 'auto))
               :file file
               :source 'org-roam
               :loaded nil
@@ -134,30 +127,24 @@ Discovers and registers all skill files."
     (when jf/gptel-skills-roam-verbose
       (message "Org-roam skills system initialized"))))
 
-(defun jf/gptel-skills-roam-create-skill (title description injection-mode)
+(defun jf/gptel-skills-roam-create-skill (title description)
   "Create a new org-roam skill node.
 
 TITLE is the skill name.
-DESCRIPTION is the skill description for discovery/matching.
-INJECTION-MODE is one of: system, context, user, or auto."
+DESCRIPTION is the skill description for discovery/matching."
   (interactive
    (list
     (read-string "Skill title: ")
-    (read-string "Skill description (use when...): ")
-    (intern (completing-read "Injection mode: "
-                             '("system" "context" "user" "auto")
-                             nil t nil nil "auto"))))
+    (read-string "Skill description (use when...): ")))
   ;; Build the header template with proper variable substitution
-  (let* ((injection-mode-str (symbol-name injection-mode))
-         (header (format ":PROPERTIES:
+  (let* ((header (format ":PROPERTIES:
 :ID:       %%(org-id-new)
 :SKILL_DESCRIPTION: %s
-:SKILL_INJECTION_MODE: %s
 :END:
 #+title: ${title}
 #+filetags: :skill:
 
-" description injection-mode-str))
+" description))
          (org-roam-capture-templates
           `(("s" "Skill" plain
              "* Overview\n\n%?\n\n* When to Use\n\n* Quick Reference\n\n"

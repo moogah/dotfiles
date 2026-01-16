@@ -11,18 +11,31 @@ from =~/.claude/skills/= that provide context, guidelines, and reference materia
 
 ** Architecture Overview
 
-Skills work through explicit mention and dynamic injection:
+The skills system operates in four phases, each serving a specific purpose in the
+@mention-to-injection pipeline:
 
-1. **Discovery** (initialization): Scan skills directory, parse metadata with lazy loading
-2. **Mention Detection** (typing): Detect =@skill-name= syntax, add visual overlays
-3. **Dynamic Injection** (sending): Hook into =gptel-prompt-transform-functions=, inject based on mode
-4. **Progressive Disclosure** (optional): Auto-load referenced resources
+1. **Discovery** (initialization): Scan skills directory (=~/.claude/skills/= for markdown,
+   =~/.org-roam/skills/= for org-roam), parse metadata (name, description)
+   with lazy loading. Both skill types are unified in a single registry.
+
+2. **Mention Detection** (typing): As you type in gptel buffers, the system detects
+   =@skill-name= patterns, validates against the registry, and creates visual overlays
+   with help-echo descriptions. Updates buffer-local active skills list.
+
+3. **Dynamic Injection** (sending): When you press =C-c RET= to send, hooks into
+   =gptel-prompt-transform-functions= to:
+   - Load skill content (if not cached)
+   - Inject content into system message
+   - Strip @mentions from visible prompt
+
+4. **Progressive Disclosure** (optional): Load additional resources referenced within
+   skills (currently basic support via =jf/gptel-skills--load-resource=)
 
 ** Key Features
 
 - **Explicit activation**: Type =@skill-name= in gptel buffer
 - **Visual feedback**: Overlays show active skills (like @mentions)
-- **Smart injection**: Content goes to system message, context, or user message
+- **System message injection**: Content appended to system message as behavioral guidelines
 - **Lazy loading**: Skills load on first mention, then cached
 - **Completion support**: TAB completion for skill names
 
@@ -31,12 +44,77 @@ Skills work through explicit mention and dynamic injection:
 #+begin_example
 User types in gptel buffer:
 "Help me write elisp @writing-elisp"
-                       ^^^^^^^^^^^^^^ <- overlay appears
+                       ^^^^^^^^^^^^^^ <- overlay appears (green underline + description on hover)
 
 User sends (C-c RET):
-→ Skill content injected as system message
-→ @mention stripped from prompt
-→ LLM receives prompt with skill guidance
+→ Transform hook detects @writing-elisp
+→ Loads skill content (lazy, cached after first load)
+→ Appends to gptel--system-message:
+  "\n\n## Skill: writing-elisp\n\n[skill content with elisp best practices]"
+→ Strips @mention from prompt (makes invisible)
+→ Request sent to LLM with enhanced system message
+
+Result: LLM receives behavioral guidance about elisp without @mention clutter
+#+end_example
+
+** System Architecture Diagram
+
+#+begin_example
+┌───────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                         GPTEL SKILLS SYSTEM                                            │
+└───────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+INITIALIZATION (Phase 1: Discovery)
+┌─────────────────────────────────────┐     ┌─────────────────────────────────────┐
+│ ~/.claude/skills/*/SKILL.md         │     │ ~/.org-roam/skills/*.org            │
+│ (Markdown skills)                   │     │ (Org-roam skills)                   │
+└────────────┬────────────────────────┘     └────────────┬────────────────────────┘
+             │                                            │
+             │ jf/gptel-skills--discover()               │ jf/gptel-skills-roam--discover-files()
+             │ jf/gptel-skills--parse-metadata()         │ jf/gptel-skills-roam--parse-file-metadata()
+             │                                            │
+             └────────────────┬───────────────────────────┘
+                              ↓
+                 ┌────────────────────────────────────────────┐
+                 │  jf/gptel-skills--registry (hash table)    │
+                 │  Keys: skill-name (string)                 │
+                 │  Values: metadata plist                    │
+                 │    :name :description                      │
+                 │    :path/:file :source :loaded :content    │
+                 └────────────────────────────────────────────┘
+
+USER INTERACTION (Phase 2: Mention Detection & Visual Feedback)
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│  GPTEL BUFFER (with gptel-mode enabled)                                                             │
+│  ┌───────────────────────────────────────────────────────────────────────────────────────────────┐ │
+│  │ User prompt: "Help me write elisp @writing-elisp"                                             │ │
+│  │                                     ^^^^^^^^^^^^^^^^                                           │ │
+│  │                                     │ Overlay with face + help-echo                           │ │
+│  └───────────────────────────────────────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────┘
+                                            ↑
+                                            │
+                        ┌───────────────────┴────────────────────┐
+                        │ after-change-functions hook            │
+                        │ jf/gptel-skills--update-overlays()     │
+                        │   ├─ detect mentions                   │
+                        │   ├─ create overlays                   │
+                        │   └─ update jf/gptel-skills--active    │
+                        └────────────────────────────────────────┘
+
+SENDING REQUEST (Phase 3: Dynamic Injection)
+User presses C-c RET (gptel-send)
+             ↓
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│ gptel-prompt-transform-functions hook                                                  │
+│ jf/gptel-skills--transform-inject(fsm)                                                 │
+│   ├─ Detect mentions                                                                   │
+│   ├─ Load content (lazy, with caching)                                                 │
+│   ├─ Inject content to gptel--system-message                                           │
+│   └─ Strip @mentions (make invisible)                                                  │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+             ↓
+        Request sent to LLM with skill content injected
 #+end_example
 
 * Configuration
@@ -109,7 +187,6 @@ Each entry is a plist with keys:
   :dir           - Skill directory path (string) [markdown only]
   :file          - Full path to .org skill file (string) [org-roam only]
   :source        - Source type: 'markdown or 'org-roam (symbol)
-  :injection-mode - Where to inject: system|context|user|auto (symbol)
   :loaded        - Whether content has been loaded (boolean)
   :content       - Cached skill content (string or nil)")
 
@@ -119,6 +196,63 @@ Each entry is a plist with keys:
 (defvar-local jf/gptel-skills--overlays nil
   "List of skill mention overlays in current buffer.")
 #+end_src
+
+** Component Relationships Diagram
+
+#+begin_example
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                   COMPONENT RELATIONSHIP DIAGRAM                                     │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+CORE DATA STRUCTURES
+┌───────────────────────────────────────────────┐
+│ jf/gptel-skills--registry (hash table)        │
+│   Populated by:                               │
+│   • jf/gptel-skills--discover()               │
+│   • jf/gptel-skills--parse-metadata()         │
+│   • jf/gptel-skills-roam--discover-files()    │
+│   • jf/gptel-skills-roam--parse-file-metadata()│
+│                                                │
+│   Queried by:                                  │
+│   • jf/gptel-skills--detect-mentions()        │
+│   • jf/gptel-skills--completion-at-point()    │
+│   • jf/gptel-skills--transform-inject()       │
+│                                                │
+│   Modified by:                                 │
+│   • jf/gptel-skills--transform-inject()       │
+│     (loads content, updates :loaded/:content) │
+└───────────────────────────────────────────────┘
+                    ↓
+┌───────────────────────────────────────────────┐
+│ jf/gptel-skills--active (buffer-local list)   │
+│   Updated by:                                  │
+│   • jf/gptel-skills--update-overlays()        │
+│                                                │
+│   Used by:                                     │
+│   • jf/gptel-skills-list-active()             │
+└───────────────────────────────────────────────┘
+                    ↓
+┌───────────────────────────────────────────────┐
+│ jf/gptel-skills--overlays (buffer-local list) │
+│   Updated by:                                  │
+│   • jf/gptel-skills--add-overlay()            │
+│   • jf/gptel-skills--update-overlays()        │
+│                                                │
+│   Cleared by:                                  │
+│   • jf/gptel-skills-clear-mentions()          │
+│   • jf/gptel-skills-reload()                  │
+└───────────────────────────────────────────────┘
+
+HOOK INTEGRATION
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│ gptel-mode enabled                                                                     │
+│   ├─ gptel-mode-hook                                                                   │
+│   │   ├─ after-change-functions ← jf/gptel-skills--update-overlays()                  │
+│   │   └─ completion-at-point-functions ← jf/gptel-skills--completion-at-point()       │
+│   │                                                                                     │
+│   └─ gptel-prompt-transform-functions ← jf/gptel-skills--transform-inject(fsm)        │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+#+end_example
 
 * Discovery and Parsing (Phase 1)
 
@@ -144,7 +278,7 @@ Returns list of absolute paths to SKILL.md files."
 #+begin_src emacs-lisp
 (defun jf/gptel-skills--parse-metadata (skill-path)
   "Parse YAML frontmatter from SKILL.md at SKILL-PATH.
-Returns plist with :name, :description, :injection-mode, :path, :dir.
+Returns plist with :name, :description, :path, :dir.
 Returns nil if parsing fails."
   (condition-case err
       (with-temp-buffer
@@ -178,11 +312,6 @@ Returns nil if parsing fails."
               (when (re-search-forward "^description:[ \t]+\\(.+\\)$" yaml-end t)
                 (setq metadata (plist-put metadata :description (string-trim (match-string 1)))))
 
-              ;; Parse injection-mode
-              (goto-char yaml-start)
-              (when (re-search-forward "^injection-mode:[ \t]+\\(system\\|context\\|user\\|auto\\)$" yaml-end t)
-                (setq metadata (plist-put metadata :injection-mode (intern (match-string 1)))))
-
               ;; Add path, directory, and source
               (setq metadata (plist-put metadata :path skill-path))
               (setq metadata (plist-put metadata :dir (file-name-directory skill-path)))
@@ -196,8 +325,6 @@ Returns nil if parsing fails."
               (unless (plist-get metadata :description)
                 (setq metadata (plist-put metadata :description
                                           (plist-get metadata :name))))
-              (unless (plist-get metadata :injection-mode)
-                (setq metadata (plist-put metadata :injection-mode 'auto)))
 
               ;; Initialize loading state
               (setq metadata (plist-put metadata :loaded nil))
@@ -348,24 +475,93 @@ Integrates with completion-at-point-functions."
               (lambda (candidate)
                 (let* ((skill-name (substring candidate (length jf/gptel-skills-mention-prefix)))
                        (metadata (gethash skill-name jf/gptel-skills--registry))
-                       (mode (plist-get metadata :injection-mode))
                        (source (plist-get metadata :source)))
-                  (format " (%s %s)"
-                          (or mode 'auto)
-                          (cond
-                           ((eq source 'org-roam) "org-roam")
-                           ((eq source 'markdown) "md")
-                           (t ""))))))))))
+                  (cond
+                   ((eq source 'org-roam) " (org-roam)")
+                   ((eq source 'markdown) " (md)")
+                   (t "")))))))))
 #+end_src
 
 * Dynamic Injection (Phase 3)
+
+** Understanding the Transform Hook and FSM
+
+The gptel-skills system integrates with gptel through the =gptel-prompt-transform-functions=
+hook, which provides a powerful extension point for modifying requests before they're sent
+to the LLM.
+
+*** What is the FSM?
+
+FSM is a finite state machine object (gptel-fsm) created by =gptel-request.el= that tracks
+the complete lifecycle of an LLM request. It's passed to all transform functions to provide:
+
+- Access to request metadata via =(gptel-fsm-info fsm)=
+- Context about where the request originated
+- Information about the target backend and model
+- The temporary buffer containing the prompt text
+
+*** Hook Execution Context
+
+When =gptel-prompt-transform-functions= runs:
+
+1. A temporary buffer is created containing the prompt text
+2. The hook runs IN THIS TEMP BUFFER with point at the end of the prompt
+3. Buffer-local variables from the originating buffer are accessible
+4. Transform functions can modify the temp buffer content
+5. Transform functions can modify buffer-local variables like:
+   - =gptel--system-message= (prepend to system instructions)
+   - =gptel-context= (add additional context buffers/files)
+
+*** FSM Info Structure
+
+The FSM contains a plist accessible via =(gptel-fsm-info fsm)=:
+
+| Key | Type | Description |
+|-----|------|-------------|
+| =:buffer= | buffer | Original gptel buffer where request was initiated |
+| =:backend= | gptel-backend | Active LLM backend (Anthropic, OpenAI, etc) |
+| =:data= | buffer | Temporary buffer containing prompt text to send |
+| =:position= | integer | Position in original buffer |
+| =:stream= | boolean | Whether streaming is enabled |
+| =:system= | string | System message for this request |
+
+*** Transform Function Contract
+
+Transform functions in =gptel-prompt-transform-functions= can be:
+
+*Synchronous* (1 argument):
+#+begin_src emacs-lisp
+(defun my-transform (fsm)
+  "Transform function that runs and completes immediately."
+  ;; Modify temp buffer or variables
+  ;; No return value needed
+  )
+#+end_src
+
+*Asynchronous* (2 arguments):
+#+begin_src emacs-lisp
+(defun my-async-transform (callback fsm)
+  "Transform function that may need to wait for external operations."
+  ;; Do async work
+  ;; Call (funcall callback) when done
+  )
+#+end_src
+
+*** What jf/gptel-skills--transform-inject Does
+
+1. Detects @mentions in the temp buffer
+2. Loads skill content (lazy loading with caching)
+3. Injects content into =gptel--system-message=
+4. Strips @mentions from the temp buffer (makes them invisible)
+
+The transform function does NOT return anything - it modifies state in place.
 
 ** Transform Inject
 
 #+begin_src emacs-lisp
 (defun jf/gptel-skills--transform-inject (fsm)
   "Main prompt transform function for injecting skills.
-Detects @mentions, loads content, determines injection mode, and injects.
+Detects @mentions, loads content, and injects to system message.
 Added to gptel-prompt-transform-functions. FSM is the state machine."
   (when (> (hash-table-count jf/gptel-skills--registry) 0)
     ;; Always detect mentions directly - don't rely on jf/gptel-skills--active
@@ -396,87 +592,61 @@ Added to gptel-prompt-transform-functions. FSM is the state machine."
                     (plist-put metadata :content content)
                     (puthash skill-name metadata jf/gptel-skills--registry))))
 
-              ;; Get content and determine injection mode
+              ;; Get content and inject to system message
               (let ((content (plist-get metadata :content)))
                 (when content
-                  (let* ((mode-specified (plist-get metadata :injection-mode))
-                         (mode (if (eq mode-specified 'auto)
-                                  (jf/gptel-skills--determine-injection-mode metadata content)
-                                mode-specified)))
-
-                    (when mode
-                      (when jf/gptel-skills-verbose
-                        (message "Injecting skill: %s (mode: %s)" skill-name mode))
-
-                      ;; Inject based on mode
-                      (jf/gptel-skills--inject-content content mode skill-name))))))))
+                  (when jf/gptel-skills-verbose
+                    (message "Injecting skill: %s" skill-name))
+                  ;; Inject to system message
+                  (jf/gptel-skills--inject-content content skill-name))))))
 
         ;; Strip @mentions if configured
         (when jf/gptel-skills-strip-mentions
           (jf/gptel-skills--strip-mentions))))))
 #+end_src
 
-** Determine Injection Mode
-
-#+begin_src emacs-lisp
-(defun jf/gptel-skills--determine-injection-mode (metadata content)
-  "Analyze CONTENT and determine best injection mode.
-Returns symbol: system, context, or user."
-  ;; Simple heuristic analysis
-  (cond
-   ;; Behavioral guidelines → system
-   ((string-match-p "^\\(You are\\|When \\|Always \\|Never \\)" content)
-    'system)
-
-   ;; Has code blocks, tables, references → context
-   ((or (string-match-p "```" content)
-        (string-match-p "^|.*|$" content)
-        (> (length content) 1000))
-    'context)
-
-   ;; Has numbered steps, immediate instructions → user
-   ((string-match-p "^[0-9]+\\." content)
-    'user)
-
-   ;; Default: system (behavioral guidance)
-   (t 'system)))
-#+end_src
-
 ** Inject Content
 
 #+begin_src emacs-lisp
-(defun jf/gptel-skills--inject-content (content mode skill-name)
-  "Inject CONTENT based on MODE for SKILL-NAME.
-MODE is symbol: system, context, or user."
-  (pcase mode
-    ('system
-     ;; Append to system message
-     (setq-local gptel--system-message
-                (if gptel--system-message
-                    (concat gptel--system-message
-                            (format "\n\n## Skill: %s\n\n" skill-name)
-                            content)
-                  (concat (format "## Skill: %s\n\n" skill-name)
-                          content))))
-
-    ('context
-     ;; Add to gptel-context as a buffer-like source
-     (let ((temp-buf (generate-new-buffer (format " *gptel-skill-%s*" skill-name))))
-       (with-current-buffer temp-buf
-         (insert (format "# Skill: %s\n\n" skill-name))
-         (insert content))
-       ;; Add to context list
-       (setq-local gptel-context
-                  (append gptel-context (list temp-buf)))))
-
-    ('user
-     ;; Insert directly in prompt buffer at beginning
-     (save-excursion
-       (goto-char (point-min))
-       (insert (format "## Reference: %s\n\n" skill-name))
-       (insert content)
-       (insert "\n\n---\n\n")))))
+(defun jf/gptel-skills--inject-content (content skill-name)
+  "Inject CONTENT for SKILL-NAME into system message.
+All skills are now injected as system-level behavioral guidelines."
+  ;; Append to system message
+  ;; Use setq instead of setq-local - we're in a temp buffer and need to ensure
+  ;; the value propagates correctly to gptel's request
+  (setq gptel--system-message
+        (if (and (boundp 'gptel--system-message) gptel--system-message)
+            (concat gptel--system-message
+                    (format "\n\n## Skill: %s\n\n" skill-name)
+                    content)
+          (concat (format "## Skill: %s\n\n" skill-name)
+                  content))))
 #+end_src
+
+*** Injection Example
+
+This section shows a concrete example of how skill content is injected.
+
+**Scenario**: Skill contains behavioral guidelines
+
+Before injection:
+#+begin_example
+gptel--system-message = "You are a helpful assistant"
+#+end_example
+
+After =jf/gptel-skills--inject-content=:
+#+begin_example
+gptel--system-message = "You are a helpful assistant
+
+## Skill: writing-elisp
+
+Always use lexical binding. Prefer higher-order functions.
+Use cl-lib instead of deprecated cl package. Include docstrings
+for all public functions."
+#+end_example
+
+**Result**: Behavioral guidance is appended to system message, influencing all
+responses in the conversation.
 
 ** Strip Mentions
 
@@ -521,13 +691,7 @@ Prompts for skill using completing-read."
   (interactive)
   (if (null jf/gptel-skills--active)
       (message "No active skills in current buffer")
-    (let ((skill-info
-           (mapcar (lambda (name)
-                    (let* ((metadata (gethash name jf/gptel-skills--registry))
-                           (mode (plist-get metadata :injection-mode)))
-                      (format "%s (%s)" name mode)))
-                  jf/gptel-skills--active)))
-      (message "Active skills: %s" (string-join skill-info ", ")))))
+    (message "Active skills: %s" (string-join jf/gptel-skills--active ", "))))
 #+end_src
 
 ** Clear Mentions
@@ -637,7 +801,6 @@ markdown and org-roam skills."
       (with-output-to-temp-buffer (format "*Skill: %s*" skill-name)
         (princ (format "Skill: %s\n\n" skill-name))
         (princ (format "Description: %s\n" (plist-get metadata :description)))
-        (princ (format "Injection mode: %s\n" (plist-get metadata :injection-mode)))
         (princ (format "Path: %s\n" (plist-get metadata :path)))
         (princ (format "Loaded: %s\n" (if (plist-get metadata :loaded) "yes" "no")))
         (when (plist-get metadata :loaded)

@@ -13,7 +13,7 @@ disclosure, and native integration with org-roam workflows.
 ** Architecture Overview
 
 1. **Discovery**: Query org-roam DB for nodes tagged ~:skill:~
-2. **Metadata**: Extract from org properties (SKILL_DESCRIPTION, SKILL_INJECTION_MODE)
+2. **Metadata**: Extract from org properties (SKILL_DESCRIPTION)
 3. **Content Extraction**: Parse org-mode heading structure at multiple granularity levels
 4. **Progressive Disclosure**: Follow links to reference nodes on-demand
 5. **Integration**: Unified registry with markdown skills, same @mention syntax
@@ -26,6 +26,151 @@ disclosure, and native integration with org-roam workflows.
 - Progressive disclosure via link relationships
 - Heading-level content injection
 - Compatible with existing markdown skills
+
+** Org-Roam Skills: Complete Guide
+
+This section explains how to create, manage, and use org-roam based skills.
+
+*** Why Org-Roam Skills?
+
+Org-roam skills offer advantages over markdown SKILL.md files:
+
+- *Native integration*: Works with your existing org-roam workflow
+- *Linking*: Can link to other org-roam nodes for progressive disclosure
+- *Org-mode features*: Full org-mode editing, folding, properties
+- *Same interface*: Uses the same @mention syntax as markdown skills
+
+*** Skill File Structure
+
+A complete org-roam skill file example:
+
+#+begin_example
+:PROPERTIES:
+:ID:       a1b2c3d4-e5f6-7890-abcd-ef1234567890
+:SKILL_DESCRIPTION: Guide for writing valid Emacs Lisp with incremental validation
+:END:
+#+title: writing-elisp
+#+filetags: :skill:
+
+* Overview
+
+Guidance for writing valid Emacs Lisp code with proper syntax validation.
+
+* Key Principles
+
+Always use lexical binding. Prefer ~let*~ over ~let~ for sequential bindings.
+Use ~cl-lib~ functions instead of deprecated ~cl~ package.
+
+* Common Patterns
+
+** Error Handling
+...
+#+end_example
+
+**** Required Components
+
+| Component | Purpose | Example |
+|-----------|---------|---------|
+| =:ID:= property | Org-roam node identifier | Auto-generated via =org-id-new= |
+| =:SKILL_DESCRIPTION:= | Shown in completion UI | "Guide for writing elisp" |
+| =#+title:= | Node title / skill name | =writing-elisp= |
+| =#+filetags:= | Must include =:skill:= | =:skill:= or =:skill:reference:= |
+
+**** File Location
+
+Org-roam skills must be in: =~/.org-roam/skills/= (or =org-roam-directory/skills=)
+
+The discovery mechanism scans all =.org= files in this directory - no database
+queries needed. Files don't need to be in the org-roam database to work.
+
+*** Creating Skills
+
+**** Interactive Creation
+
+Use =jf/gptel-skills-roam-create-skill= for guided creation:
+
+#+begin_src emacs-lisp :tangle no
+M-x jf/gptel-skills-roam-create-skill
+  Skill title: writing-elisp
+  Skill description: Guide for writing valid Emacs Lisp
+#+end_src
+
+This uses org-roam-capture to create a properly structured file with:
+- Auto-generated ID
+- Proper properties
+- Template structure (Overview, When to Use, Quick Reference)
+- Correct file location
+
+**** Manual Creation
+
+1. Create file in =~/.org-roam/skills/skillname.org=
+2. Add required properties:
+   - Press =C-c C-x p= (org-set-property)
+   - Add =ID= with =(org-id-new)= value
+   - Add =SKILL_DESCRIPTION=
+3. Add =#+title:= and =#+filetags: :skill:=
+4. Write skill content
+5. Run =jf/gptel-skills-reload= to register it
+
+*** Property Reference
+
+**** SKILL_DESCRIPTION
+
+Brief description shown during completion and in skill listing.
+
+Format: Single line, 50-100 characters, describes when to use the skill.
+
+Examples:
+- "Guide for writing valid Emacs Lisp with validation"
+- "Conventions for dotfiles repository structure"
+- "Debugging strategies for missing parentheses"
+
+*** Discovery and Loading
+
+**** Discovery Process
+
+On initialization (or =jf/gptel-skills-reload=):
+
+1. Scan =~/.org-roam/skills/= directory for =*.org= files
+2. Read each file in a temp buffer with =org-mode= enabled
+3. Extract =#+title:= (via =org-roam-get-keyword=)
+4. Extract properties (via =org-entry-get=)
+5. Build metadata plist
+6. Register in =jf/gptel-skills--registry= (unified with markdown skills)
+
+**** Lazy Loading
+
+Content is loaded on first @mention:
+- Reads entire .org file into string
+- Caches in =:content= property
+- Subsequent mentions use cached version
+
+**** Cache Invalidation
+
+#+begin_src emacs-lisp :tangle no
+;; Invalidate single skill
+(jf/gptel-skills-roam--invalidate-cache "writing-elisp")
+
+;; Invalidate all caches
+(jf/gptel-skills-roam--invalidate-all-caches)
+
+;; Full reload (re-discovers and clears caches)
+(jf/gptel-skills-reload)
+#+end_src
+
+*** Using Org-Roam Skills
+
+Org-roam skills use identical syntax to markdown skills:
+
+#+begin_example
+In gptel buffer, type:
+"Help me with my config @emacs-literate-programming"
+
+Press C-c RET to send.
+The skill content is injected into the system message.
+#+end_example
+
+No difference from user perspective - org-roam vs markdown is transparent.
 
 * Configuration
 
@@ -81,7 +226,6 @@ Each entry is a plist with keys:
   :name             - Skill name (file basename without .org)
   :title            - Node title from #+TITLE (string)
   :description      - SKILL_DESCRIPTION property (string)
-  :injection-mode   - SKILL_INJECTION_MODE property (symbol)
   :file             - Full file path (string)
   :source           - Always 'org-roam (symbol)
   :loaded           - Whether content loaded (boolean)
@@ -119,7 +263,7 @@ Parse metadata directly from skill files using org-mode functions.
 #+begin_src emacs-lisp
 (defun jf/gptel-skills-roam--parse-file-metadata (file)
   "Parse skill metadata from FILE.
-Returns plist with :title, :description, :injection-mode, :file, :name."
+Returns plist with :title, :description, :file, :name."
   (when (file-exists-p file)
     (with-temp-buffer
       (insert-file-contents file)
@@ -128,16 +272,10 @@ Returns plist with :title, :description, :injection-mode, :file, :name."
       ;; Get properties from file
       (let ((title (org-roam-get-keyword "TITLE"))
             (description (org-entry-get (point-min) "SKILL_DESCRIPTION" t))
-            (injection-mode-str (org-entry-get (point-min) "SKILL_INJECTION_MODE" t))
             (skill-name (file-name-base file)))
         (list :name skill-name
               :title (or title skill-name)
               :description (or description "")
-              :injection-mode (cond
-                              ((equal injection-mode-str "system") 'system)
-                              ((equal injection-mode-str "context") 'context)
-                              ((equal injection-mode-str "user") 'user)
-                              (t 'auto))
               :file file
               :source 'org-roam
               :loaded nil
@@ -212,30 +350,24 @@ Discovers and registers all skill files."
 ** Create New Skill Node
 
 #+begin_src emacs-lisp
-(defun jf/gptel-skills-roam-create-skill (title description injection-mode)
+(defun jf/gptel-skills-roam-create-skill (title description)
   "Create a new org-roam skill node.
 
 TITLE is the skill name.
-DESCRIPTION is the skill description for discovery/matching.
-INJECTION-MODE is one of: system, context, user, or auto."
+DESCRIPTION is the skill description for discovery/matching."
   (interactive
    (list
     (read-string "Skill title: ")
-    (read-string "Skill description (use when...): ")
-    (intern (completing-read "Injection mode: "
-                             '("system" "context" "user" "auto")
-                             nil t nil nil "auto"))))
+    (read-string "Skill description (use when...): ")))
   ;; Build the header template with proper variable substitution
-  (let* ((injection-mode-str (symbol-name injection-mode))
-         (header (format ":PROPERTIES:
+  (let* ((header (format ":PROPERTIES:
 :ID:       %%(org-id-new)
 :SKILL_DESCRIPTION: %s
-:SKILL_INJECTION_MODE: %s
 :END:
 #+title: ${title}
 #+filetags: :skill:
 
-" description injection-mode-str))
+" description))
          (org-roam-capture-templates
           `(("s" "Skill" plain
              "* Overview\n\n%?\n\n* When to Use\n\n* Quick Reference\n\n"
