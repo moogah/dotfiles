@@ -78,8 +78,9 @@ Note: =gptel-cache= can also be set to ='(system message)= to cache only specifi
     :custom
     (gptel-model 'gpt-4o) ;; model is now a symbol, not a string
     (gptel-log-level 'debug) ;; Enable debug logging for testing
-    (gptel-cache t) ;; Enable prompt caching (for Anthropic models)
     :config
+    ;; Enable prompt caching for Anthropic models
+    (setq gptel-cache t)
     ;; Enable expert commands to show advanced options in transient menu
     (setq gptel-expert-commands t)
     ;; Configure Perplexity backend

@@ -19,7 +19,12 @@
   :straight t
   :custom
   (gptel-model 'gpt-4o) ;; model is now a symbol, not a string
+  (gptel-log-level 'debug) ;; Enable debug logging for testing
   :config
+  ;; Enable prompt caching for Anthropic models
+  (setq gptel-cache t)
+  ;; Enable expert commands to show advanced options in transient menu
+  (setq gptel-expert-commands t)
   ;; Configure Perplexity backend
   (gptel-make-perplexity "Perplexity"
     :key (lambda () (auth-source-pick-first-password :host "api.perplexity.ai"))
