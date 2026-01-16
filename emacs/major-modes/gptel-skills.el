@@ -51,7 +51,6 @@ Each entry is a plist with keys:
   :dir           - Skill directory path (string) [markdown only]
   :file          - Full path to .org skill file (string) [org-roam only]
   :source        - Source type: 'markdown or 'org-roam (symbol)
-  :injection-mode - Where to inject: system|context|user|auto (symbol)
   :loaded        - Whether content has been loaded (boolean)
   :content       - Cached skill content (string or nil)")
 
@@ -110,11 +109,6 @@ Returns nil if parsing fails."
               (when (re-search-forward "^description:[ \t]+\\(.+\\)$" yaml-end t)
                 (setq metadata (plist-put metadata :description (string-trim (match-string 1)))))
 
-              ;; Parse injection-mode
-              (goto-char yaml-start)
-              (when (re-search-forward "^injection-mode:[ \t]+\\(system\\|context\\|user\\|auto\\)$" yaml-end t)
-                (setq metadata (plist-put metadata :injection-mode (intern (match-string 1)))))
-
               ;; Add path, directory, and source
               (setq metadata (plist-put metadata :path skill-path))
               (setq metadata (plist-put metadata :dir (file-name-directory skill-path)))
@@ -128,8 +122,6 @@ Returns nil if parsing fails."
               (unless (plist-get metadata :description)
                 (setq metadata (plist-put metadata :description
                                           (plist-get metadata :name))))
-              (unless (plist-get metadata :injection-mode)
-                (setq metadata (plist-put metadata :injection-mode 'auto)))
 
               ;; Initialize loading state
               (setq metadata (plist-put metadata :loaded nil))
@@ -254,14 +246,11 @@ Integrates with completion-at-point-functions."
               (lambda (candidate)
                 (let* ((skill-name (substring candidate (length jf/gptel-skills-mention-prefix)))
                        (metadata (gethash skill-name jf/gptel-skills--registry))
-                       (mode (plist-get metadata :injection-mode))
                        (source (plist-get metadata :source)))
-                  (format " (%s %s)"
-                          (or mode 'auto)
-                          (cond
-                           ((eq source 'org-roam) "org-roam")
-                           ((eq source 'markdown) "md")
-                           (t ""))))))))))
+                  (cond
+                   ((eq source 'org-roam) " (org-roam)")
+                   ((eq source 'markdown) " (md)")
+                   (t "")))))))))
 
 (defun my-transform (fsm)
   "Transform function that runs and completes immediately."
@@ -277,7 +266,7 @@ Integrates with completion-at-point-functions."
 
 (defun jf/gptel-skills--transform-inject (fsm)
   "Main prompt transform function for injecting skills.
-Detects @mentions, loads content, determines injection mode, and injects.
+Detects @mentions, loads content, and injects to system message.
 Added to gptel-prompt-transform-functions. FSM is the state machine."
   (when (> (hash-table-count jf/gptel-skills--registry) 0)
     ;; Always detect mentions directly - don't rely on jf/gptel-skills--active
@@ -308,78 +297,29 @@ Added to gptel-prompt-transform-functions. FSM is the state machine."
                     (plist-put metadata :content content)
                     (puthash skill-name metadata jf/gptel-skills--registry))))
 
-              ;; Get content and determine injection mode
+              ;; Get content and inject to system message
               (let ((content (plist-get metadata :content)))
                 (when content
-                  (let* ((mode-specified (plist-get metadata :injection-mode))
-                         (mode (if (eq mode-specified 'auto)
-                                  (jf/gptel-skills--determine-injection-mode metadata content)
-                                mode-specified)))
-
-                    (when mode
-                      (when jf/gptel-skills-verbose
-                        (message "Injecting skill: %s (mode: %s)" skill-name mode))
-
-                      ;; Inject based on mode
-                      (jf/gptel-skills--inject-content content mode skill-name))))))))
+                  (when jf/gptel-skills-verbose
+                    (message "Injecting skill: %s" skill-name))
+                  ;; Inject to system message
+                  (jf/gptel-skills--inject-content content skill-name))))))
 
         ;; Strip @mentions if configured
         (when jf/gptel-skills-strip-mentions
           (jf/gptel-skills--strip-mentions))))))
 
-(defun jf/gptel-skills--determine-injection-mode (metadata content)
-  "Analyze CONTENT and determine best injection mode.
-Returns symbol: system, context, or user."
-  ;; Simple heuristic analysis
-  (cond
-   ;; Behavioral guidelines → system
-   ((string-match-p "^\\(You are\\|When \\|Always \\|Never \\)" content)
-    'system)
-
-   ;; Has code blocks, tables, references → context
-   ((or (string-match-p "```" content)
-        (string-match-p "^|.*|$" content)
-        (> (length content) 1000))
-    'context)
-
-   ;; Has numbered steps, immediate instructions → user
-   ((string-match-p "^[0-9]+\\." content)
-    'user)
-
-   ;; Default: system (behavioral guidance)
-   (t 'system)))
-
-(defun jf/gptel-skills--inject-content (content mode skill-name)
-  "Inject CONTENT based on MODE for SKILL-NAME.
-MODE is symbol: system, context, or user."
-  (pcase mode
-    ('system
-     ;; Append to system message
-     (setq-local gptel--system-message
-                (if gptel--system-message
-                    (concat gptel--system-message
-                            (format "\n\n## Skill: %s\n\n" skill-name)
-                            content)
-                  (concat (format "## Skill: %s\n\n" skill-name)
-                          content))))
-
-    ('context
-     ;; Add to gptel-context as a buffer-like source
-     (let ((temp-buf (generate-new-buffer (format " *gptel-skill-%s*" skill-name))))
-       (with-current-buffer temp-buf
-         (insert (format "# Skill: %s\n\n" skill-name))
-         (insert content))
-       ;; Add to context list
-       (setq-local gptel-context
-                  (append gptel-context (list temp-buf)))))
-
-    ('user
-     ;; Insert directly in prompt buffer at beginning
-     (save-excursion
-       (goto-char (point-min))
-       (insert (format "## Reference: %s\n\n" skill-name))
-       (insert content)
-       (insert "\n\n---\n\n")))))
+(defun jf/gptel-skills--inject-content (content skill-name)
+  "Inject CONTENT for SKILL-NAME into system message.
+All skills are now injected as system-level behavioral guidelines."
+  ;; Append to system message
+  (setq-local gptel--system-message
+              (if gptel--system-message
+                  (concat gptel--system-message
+                          (format "\n\n## Skill: %s\n\n" skill-name)
+                          content)
+                (concat (format "## Skill: %s\n\n" skill-name)
+                        content))))
 
 (defun jf/gptel-skills--strip-mentions ()
   "Remove or hide @mentions from prompt buffer.
@@ -411,13 +351,7 @@ Prompts for skill using completing-read."
   (interactive)
   (if (null jf/gptel-skills--active)
       (message "No active skills in current buffer")
-    (let ((skill-info
-           (mapcar (lambda (name)
-                    (let* ((metadata (gethash name jf/gptel-skills--registry))
-                           (mode (plist-get metadata :injection-mode)))
-                      (format "%s (%s)" name mode)))
-                  jf/gptel-skills--active)))
-      (message "Active skills: %s" (string-join skill-info ", ")))))
+    (message "Active skills: %s" (string-join jf/gptel-skills--active ", "))))
 
 (defun jf/gptel-skills-clear-mentions ()
   "Remove all @mentions from buffer."
@@ -515,7 +449,6 @@ markdown and org-roam skills."
       (with-output-to-temp-buffer (format "*Skill: %s*" skill-name)
         (princ (format "Skill: %s\n\n" skill-name))
         (princ (format "Description: %s\n" (plist-get metadata :description)))
-        (princ (format "Injection mode: %s\n" (plist-get metadata :injection-mode)))
         (princ (format "Path: %s\n" (plist-get metadata :path)))
         (princ (format "Loaded: %s\n" (if (plist-get metadata :loaded) "yes" "no")))
         (when (plist-get metadata :loaded)
