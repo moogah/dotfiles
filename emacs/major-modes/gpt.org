@@ -137,6 +137,7 @@ Each category of tools is configured in its own file.
 ;; Load skills system
 (jf/load-module (expand-file-name "major-modes/gptel-skills.el" jf/emacs-dir))
 (jf/load-module (expand-file-name "major-modes/gptel-skills-roam.el" jf/emacs-dir))
+(jf/load-module (expand-file-name "major-modes/gptel-skills-transient.el" jf/emacs-dir))
 #+end_src
 
 * GPTEL Session Launchers

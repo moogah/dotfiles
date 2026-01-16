@@ -73,6 +73,7 @@ Use ~cl-lib~ functions instead of deprecated ~cl~ package.
 |-----------|---------|---------|
 | =:ID:= property | Org-roam node identifier | Auto-generated via =org-id-new= |
 | =:SKILL_DESCRIPTION:= | Shown in completion UI | "Guide for writing elisp" |
+| =:CATEGORY:= (optional) | Skill category for menu grouping | "Emacs" or "Testing" |
 | =#+title:= | Node title / skill name | =writing-elisp= |
 | =#+filetags:= | Must include =:skill:= | =:skill:= or =:skill:reference:= |
 
@@ -124,6 +125,17 @@ Examples:
 - "Guide for writing valid Emacs Lisp with validation"
 - "Conventions for dotfiles repository structure"
 - "Debugging strategies for missing parentheses"
+
+**** CATEGORY (Optional)
+
+Optional category for organizing skills in the transient menu.
+
+Format: Single word or short phrase (e.g., "Emacs", "Testing", "Documentation").
+
+When present, skills are grouped by category in the transient menu UI.
+When absent, skills appear in the uncategorized group.
+
+Note: Markdown skills (.md files) do not support categories.
 
 *** Discovery and Loading
 
@@ -226,6 +238,7 @@ Each entry is a plist with keys:
   :name             - Skill name (file basename without .org)
   :title            - Node title from #+TITLE (string)
   :description      - SKILL_DESCRIPTION property (string)
+  :category         - Optional CATEGORY property (string, may be nil)
   :file             - Full file path (string)
   :source           - Always 'org-roam (symbol)
   :loaded           - Whether content loaded (boolean)
@@ -263,23 +276,28 @@ Parse metadata directly from skill files using org-mode functions.
 #+begin_src emacs-lisp
 (defun jf/gptel-skills-roam--parse-file-metadata (file)
   "Parse skill metadata from FILE.
-Returns plist with :title, :description, :file, :name."
+Returns plist with :title, :description, :file, :name, and optionally :category."
   (when (file-exists-p file)
     (with-temp-buffer
       (insert-file-contents file)
       (org-mode)
       (goto-char (point-min))
       ;; Get properties from file
-      (let ((title (org-roam-get-keyword "TITLE"))
-            (description (org-entry-get (point-min) "SKILL_DESCRIPTION" t))
-            (skill-name (file-name-base file)))
-        (list :name skill-name
-              :title (or title skill-name)
-              :description (or description "")
-              :file file
-              :source 'org-roam
-              :loaded nil
-              :content nil)))))
+      (let* ((title (org-roam-get-keyword "TITLE"))
+             (description (org-entry-get (point-min) "SKILL_DESCRIPTION" t))
+             (category (org-entry-get (point-min) "CATEGORY" t))
+             (skill-name (file-name-base file))
+             (metadata (list :name skill-name
+                            :title (or title skill-name)
+                            :description (or description "")
+                            :file file
+                            :source 'org-roam
+                            :loaded nil
+                            :content nil)))
+        ;; Add category only if present
+        (when category
+          (plist-put metadata :category category))
+        metadata))))
 #+end_src
 
 * Content Extraction

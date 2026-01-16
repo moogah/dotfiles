@@ -2,6 +2,7 @@
 (require 'cl-lib)
 (require 'gptel nil t)
 (require 'gptel-skills-roam nil t)
+(require 'gptel-skills-transient nil t)
 
 (defgroup gptel-skills nil
   "Skills system for gptel with @mention activation."
@@ -266,16 +267,25 @@ Integrates with completion-at-point-functions."
 
 (defun jf/gptel-skills--transform-inject (fsm)
   "Main prompt transform function for injecting skills.
-Detects @mentions, loads content, and injects to system message.
+Detects skills from two sources:
+1. Buffer-local gptel-skills variable (set via transient menu)
+2. @mentions in the prompt (backward compatibility)
+
+Loads content and injects to system message. Deduplicates skills.
 Added to gptel-prompt-transform-functions. FSM is the state machine."
   (when (> (hash-table-count jf/gptel-skills--registry) 0)
-    ;; Always detect mentions directly - don't rely on jf/gptel-skills--active
-    ;; since that depends on overlays which might not be set up yet
-    (let ((mentions (jf/gptel-skills--detect-mentions)))
-      (when mentions
-        (dolist (mention mentions)
-          (let* ((skill-name (car mention))
-                 (metadata (gethash skill-name jf/gptel-skills--registry)))
+    ;; Collect skill names from both sources
+    (let* ((mention-data (jf/gptel-skills--detect-mentions))
+           ;; Extract skill names from mentions
+           (mention-names (mapcar #'car mention-data))
+           ;; Get skills from buffer-local variable (may be nil)
+           (buffer-local-skills (and (boundp 'gptel-skills) gptel-skills))
+           ;; Combine and deduplicate
+           (all-skill-names (delete-dups (append buffer-local-skills mention-names))))
+
+      (when all-skill-names
+        (dolist (skill-name all-skill-names)
+          (let ((metadata (gethash skill-name jf/gptel-skills--registry)))
             (when metadata
               ;; Load content if not already loaded
               (unless (plist-get metadata :loaded)
@@ -305,8 +315,8 @@ Added to gptel-prompt-transform-functions. FSM is the state machine."
                   ;; Inject to system message
                   (jf/gptel-skills--inject-content content skill-name))))))
 
-        ;; Strip @mentions if configured
-        (when jf/gptel-skills-strip-mentions
+        ;; Strip @mentions if configured (only strip actual mentions, not buffer-local skills)
+        (when (and jf/gptel-skills-strip-mentions mention-data)
           (jf/gptel-skills--strip-mentions))))))
 
 (defun jf/gptel-skills--inject-content (content skill-name)

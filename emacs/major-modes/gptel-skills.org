@@ -1,4 +1,4 @@
-#+title: GPTel Skills System (@Mention-Based)
+#+title: GPTel Skills System
 #+author: Jeff Farr
 #+property: header-args:emacs-lisp :tangle gptel-skills.el
 #+auto_tangle: y
@@ -6,8 +6,12 @@
 * Introduction
 
 This module implements a dynamic skills system for gptel that allows explicit skill
-activation via =@skill-name= mentions during conversations. Skills are Claude Code skills
-from =~/.claude/skills/= that provide context, guidelines, and reference material.
+activation via two interfaces:
+1. **Transient menu** (=C-c @ s=): Session-based activation for buffer lifetime
+2. **@Mention syntax**: Per-request activation via =@skill-name= mentions
+
+Skills are Claude Code skills from =~/.claude/skills/= (markdown) and
+=~/.org-roam/skills/= (org-roam) that provide context, guidelines, and reference material.
 
 ** Architecture Overview
 
@@ -33,13 +37,39 @@ The skills system operates in four phases, each serving a specific purpose in th
 
 ** Key Features
 
-- **Explicit activation**: Type =@skill-name= in gptel buffer
-- **Visual feedback**: Overlays show active skills (like @mentions)
+- **Two activation methods**:
+  - Transient menu (=C-c @ s=) for session-based activation
+  - @mention syntax (=@skill-name=) for per-request activation
+- **Visual feedback**: Overlays show active @mention skills
 - **System message injection**: Content appended to system message as behavioral guidelines
-- **Lazy loading**: Skills load on first mention, then cached
-- **Completion support**: TAB completion for skill names
+- **Lazy loading**: Skills load on first use, then cached
+- **Completion support**: TAB completion for skill names in @mentions
+- **Buffer isolation**: Each gptel buffer has independent skill selection
+- **Deduplication**: Skills from both sources are automatically deduplicated
 
 ** Usage Example
+
+There are two ways to activate skills:
+
+*** Method 1: Transient Menu (Session-based)
+
+#+begin_example
+User in gptel buffer presses: C-c @ s
+→ Opens gptel-skills transient menu
+→ User selects skills by pressing their keys (toggles on/off)
+→ User presses RET to confirm selection
+→ Skills stored in buffer-local gptel-skills variable
+
+User sends any prompt (C-c RET):
+→ Transform hook reads from gptel-skills variable
+→ Loads skill content (lazy, cached after first load)
+→ Appends to gptel--system-message for each skill
+→ Request sent to LLM with enhanced system message
+
+Result: All selected skills active for the buffer session lifetime
+#+end_example
+
+*** Method 2: @Mention Syntax (Per-request)
 
 #+begin_example
 User types in gptel buffer:
@@ -55,6 +85,17 @@ User sends (C-c RET):
 → Request sent to LLM with enhanced system message
 
 Result: LLM receives behavioral guidance about elisp without @mention clutter
+#+end_example
+
+*** Combining Methods
+
+Both methods work together and skills are deduplicated:
+
+#+begin_example
+Buffer has: gptel-skills = ("writing-elisp")  (from transient menu)
+User types: "Help me debug @emacs-elisp-debugging"
+
+Result: Both "writing-elisp" and "emacs-elisp-debugging" injected (deduplicated)
 #+end_example
 
 ** System Architecture Diagram
@@ -126,6 +167,7 @@ Setup lexical binding and dependencies.
 (require 'cl-lib)
 (require 'gptel nil t)
 (require 'gptel-skills-roam nil t)
+(require 'gptel-skills-transient nil t)
 #+end_src
 
 ** Customization Variables
@@ -561,16 +603,25 @@ The transform function does NOT return anything - it modifies state in place.
 #+begin_src emacs-lisp
 (defun jf/gptel-skills--transform-inject (fsm)
   "Main prompt transform function for injecting skills.
-Detects @mentions, loads content, and injects to system message.
+Detects skills from two sources:
+1. Buffer-local gptel-skills variable (set via transient menu)
+2. @mentions in the prompt (backward compatibility)
+
+Loads content and injects to system message. Deduplicates skills.
 Added to gptel-prompt-transform-functions. FSM is the state machine."
   (when (> (hash-table-count jf/gptel-skills--registry) 0)
-    ;; Always detect mentions directly - don't rely on jf/gptel-skills--active
-    ;; since that depends on overlays which might not be set up yet
-    (let ((mentions (jf/gptel-skills--detect-mentions)))
-      (when mentions
-        (dolist (mention mentions)
-          (let* ((skill-name (car mention))
-                 (metadata (gethash skill-name jf/gptel-skills--registry)))
+    ;; Collect skill names from both sources
+    (let* ((mention-data (jf/gptel-skills--detect-mentions))
+           ;; Extract skill names from mentions
+           (mention-names (mapcar #'car mention-data))
+           ;; Get skills from buffer-local variable (may be nil)
+           (buffer-local-skills (and (boundp 'gptel-skills) gptel-skills))
+           ;; Combine and deduplicate
+           (all-skill-names (delete-dups (append buffer-local-skills mention-names))))
+
+      (when all-skill-names
+        (dolist (skill-name all-skill-names)
+          (let ((metadata (gethash skill-name jf/gptel-skills--registry)))
             (when metadata
               ;; Load content if not already loaded
               (unless (plist-get metadata :loaded)
@@ -600,8 +651,8 @@ Added to gptel-prompt-transform-functions. FSM is the state machine."
                   ;; Inject to system message
                   (jf/gptel-skills--inject-content content skill-name))))))
 
-        ;; Strip @mentions if configured
-        (when jf/gptel-skills-strip-mentions
+        ;; Strip @mentions if configured (only strip actual mentions, not buffer-local skills)
+        (when (and jf/gptel-skills-strip-mentions mention-data)
           (jf/gptel-skills--strip-mentions))))))
 #+end_src
 
@@ -860,6 +911,19 @@ Called automatically when this module is loaded."
 #+end_src
 
 * Keybindings
+
+Available keybindings in gptel buffers:
+
+| Keybinding | Command | Description |
+|------------|---------|-------------|
+| =C-c @ s= | =gptel-skills= | Open transient menu to select skills for this buffer session |
+| =C-c @ i= | =jf/gptel-skills-insert-mention= | Insert @mention for a skill at point |
+| =C-c @ l= | =jf/gptel-skills-list-active= | List currently active skills (both menu and @mentions) |
+| =C-c @ c= | =jf/gptel-skills-clear-mentions= | Clear all @mentions from buffer |
+| =C-c @ d= | =jf/gptel-skills-describe= | Describe a skill (show its content) |
+| =C-c @ r= | =jf/gptel-skills-reload= | Reload all skills from disk (clears caches) |
+
+Note: The transient menu keybinding (=C-c @ s=) is defined in =gptel-skills-transient.el=.
 
 #+begin_src emacs-lisp
 ;; Define keybindings in gptel-mode

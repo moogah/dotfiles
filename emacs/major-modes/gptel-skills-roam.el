@@ -39,6 +39,7 @@ Each entry is a plist with keys:
   :name             - Skill name (file basename without .org)
   :title            - Node title from #+TITLE (string)
   :description      - SKILL_DESCRIPTION property (string)
+  :category         - Optional CATEGORY property (string, may be nil)
   :file             - Full file path (string)
   :source           - Always 'org-roam (symbol)
   :loaded           - Whether content loaded (boolean)
@@ -62,23 +63,28 @@ Returns list of full file paths."
 
 (defun jf/gptel-skills-roam--parse-file-metadata (file)
   "Parse skill metadata from FILE.
-Returns plist with :title, :description, :file, :name."
+Returns plist with :title, :description, :file, :name, and optionally :category."
   (when (file-exists-p file)
     (with-temp-buffer
       (insert-file-contents file)
       (org-mode)
       (goto-char (point-min))
       ;; Get properties from file
-      (let ((title (org-roam-get-keyword "TITLE"))
-            (description (org-entry-get (point-min) "SKILL_DESCRIPTION" t))
-            (skill-name (file-name-base file)))
-        (list :name skill-name
-              :title (or title skill-name)
-              :description (or description "")
-              :file file
-              :source 'org-roam
-              :loaded nil
-              :content nil)))))
+      (let* ((title (org-roam-get-keyword "TITLE"))
+             (description (org-entry-get (point-min) "SKILL_DESCRIPTION" t))
+             (category (org-entry-get (point-min) "CATEGORY" t))
+             (skill-name (file-name-base file))
+             (metadata (list :name skill-name
+                            :title (or title skill-name)
+                            :description (or description "")
+                            :file file
+                            :source 'org-roam
+                            :loaded nil
+                            :content nil)))
+        ;; Add category only if present
+        (when category
+          (plist-put metadata :category category))
+        metadata))))
 
 (defun jf/gptel-skills-roam--load-content (skill-name &optional _granularity)
   "Load content for skill with SKILL-NAME.
