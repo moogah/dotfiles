@@ -75,6 +75,7 @@
   (jf/load-module (expand-file-name "major-modes/gpt-tools/filesystem-tools.el" jf/emacs-dir))
   (jf/load-module (expand-file-name "major-modes/gpt-tools/projectile-tools.el" jf/emacs-dir))
   (jf/load-module (expand-file-name "major-modes/gpt-tools/ggtags-tools.el" jf/emacs-dir))
+  (jf/load-module (expand-file-name "major-modes/gpt-tools/treesitter-tools.el" jf/emacs-dir))
   (jf/load-module (expand-file-name "major-modes/gpt-tools/org-roam-tools.el" jf/emacs-dir))
   (jf/load-module (expand-file-name "major-modes/gpt-tools/meta-tools.el" jf/emacs-dir))
 
@@ -82,7 +83,11 @@
   (jf/load-module (expand-file-name "major-modes/gpt-tools/community-tools.el" jf/emacs-dir))
 
   ;; Scan and register agents from all configured directories
-  (gptel-agent-update))
+  (gptel-agent-update)
+
+  ;; Enable Agent tool by default for all gptel sessions
+  ;; This allows the main LLM to delegate tasks to specialized agents
+  (setq-default gptel-tools (list (gptel-get-tool "Agent"))))
 
 (defun jf/gptel-agent--expand-skills (system-text)
   "Expand @skill mentions in SYSTEM-TEXT using gptel-skills.
