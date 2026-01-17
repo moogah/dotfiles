@@ -239,6 +239,70 @@ Run this after gptel-agent-update to inject skill content into agents."
   (advice-add 'gptel-agent-update :after #'jf/gptel-agent--expand-all-agent-skills))
 #+end_src
 
+** Agent Execution Tracing
+
+Advice functions to capture agent execution traces by intercepting =gptel-agent--task=
+and =gptel-request=. Session context is passed via =:context= plist to solve the buffer
+boundary problem (subagents run in separate hidden buffers).
+
+#+begin_src emacs-lisp
+(defun jf/gptel--trace-agent-task (orig-fn main-cb agent-type description prompt)
+  "Advice around `gptel-agent--task' to capture execution trace.
+Passes session-id to subagent via :context, records agent lifecycle."
+  ;; Get session-id from parent buffer (buffer-local variable)
+  (let ((session-id jf/gptel--session-id))
+    (message "DEBUG trace-agent-task: session-id=%s, agent-type=%s" session-id agent-type)
+    (if (not session-id)
+        ;; No active session, run agent without tracing
+        (progn
+          (message "DEBUG trace-agent-task: No session-id, skipping trace")
+          (funcall orig-fn main-cb agent-type description prompt))
+      ;; Create trace entry using registry
+      (let* ((parent-trace-id (jf/gptel--current-trace-id session-id))
+             (trace-id (jf/gptel--create-trace session-id agent-type description
+                                               prompt parent-trace-id)))
+        (message "DEBUG trace-agent-task: Created trace-id=%s, parent=%s" trace-id parent-trace-id)
+        ;; Wrap callback to capture completion
+        (funcall orig-fn
+                 (lambda (result)
+                   (let ((status (cond
+                                  ((null result) "error")
+                                  ((string-prefix-p "Error:" result) "error")
+                                  (t "completed"))))
+                     (message "DEBUG trace-agent-task: Completing trace-id=%s, status=%s" trace-id status)
+                     ;; Complete trace in registry
+                     (jf/gptel--complete-trace session-id trace-id status)
+                     ;; Call original callback
+                     (funcall main-cb result)))
+                 agent-type description prompt)))))
+
+(defun jf/gptel--inject-session-context (orig-fn prompt &rest args)
+  "Advice around `gptel-request' to inject session-id into :context.
+This allows subagents in separate buffers to access session data via registry."
+  (let ((session-id jf/gptel--session-id) ; From parent buffer
+        (context (plist-get args :context)))
+    (message "DEBUG inject-session-context: session-id=%s, context=%S" session-id context)
+    (if (not session-id)
+        ;; No session, call original
+        (progn
+          (message "DEBUG inject-session-context: No session-id, not injecting")
+          (apply orig-fn prompt args))
+      ;; Inject session-id into context
+      (let* ((new-context (if (listp context)
+                             (plist-put (copy-sequence context) :session-id session-id)
+                           (list :session-id session-id)))
+             (new-args (plist-put (copy-sequence args) :context new-context)))
+        (message "DEBUG inject-session-context: Injected session-id into context")
+        (apply orig-fn prompt new-args)))))
+
+;; Install advice after packages load
+(with-eval-after-load 'gptel-agent
+  (advice-add 'gptel-agent--task :around #'jf/gptel--trace-agent-task))
+
+(with-eval-after-load 'gptel
+  (advice-add 'gptel-request :around #'jf/gptel--inject-session-context))
+#+end_src
+
 * GPTEL Tools (Legacy Loading)
 The subagent-tools module is deprecated in favor of gptel-agent's file-based approach.
 See the GPTEL Agent section above for the new architecture.
@@ -362,7 +426,8 @@ MODEL is the model symbol, BACKEND is the backend name."
         :created (format-time-string "%Y-%m-%dT%H:%M:%SZ")
         :tree (list :id "root"
                     :children [])
-        :current_path ["root"]))
+        :current_path ["root"]
+        :agent_traces []))
 
 (defun jf/gptel--read-metadata (session-dir)
   "Read metadata.json from SESSION-DIR.
@@ -501,12 +566,71 @@ Returns format 'message-N' or 'message-N-altM' for forks."
     (format "message-%d" next-num)))
 #+end_src
 
+** Global Session Registry
+
+The session registry solves the buffer boundary problem: subagents run in separate
+hidden buffers and cannot access the parent buffer's buffer-local variables.
+Instead, we store all session state in a global registry keyed by session-id,
+and pass the session-id through the =:context= plist in =gptel-request=.
+
+#+begin_src emacs-lisp
+;; Global session registry for cross-buffer session access
+(defvar jf/gptel--session-registry (make-hash-table :test 'equal)
+  "Global registry mapping session-id to session data plist.
+Each entry: session-id -> (:directory path
+                           :metadata plist
+                           :parent-buffer buffer
+                           :trace-stack list
+                           :trace-counter int
+                           :created time)
+
+This allows subagents running in separate buffers to access
+session context via session-id lookup.")
+
+(defun jf/gptel--generate-session-id ()
+  "Generate unique session ID using timestamp and random component."
+  (format "%s-%04x" (format-time-string "%Y%m%d%H%M%S") (random 65536)))
+
+(defun jf/gptel--register-session (session-dir session-metadata parent-buffer)
+  "Register new session in global registry. Returns session-id."
+  (let ((session-id (jf/gptel--generate-session-id)))
+    (puthash session-id
+             (list :directory session-dir
+                   :metadata session-metadata
+                   :parent-buffer parent-buffer
+                   :trace-stack nil
+                   :trace-counter 0
+                   :created (current-time))
+             jf/gptel--session-registry)
+    session-id))
+
+(defun jf/gptel--unregister-session (session-id)
+  "Remove session from registry (manual cleanup)."
+  (remhash session-id jf/gptel--session-registry))
+
+(defun jf/gptel--get-session-data (session-id)
+  "Lookup session data from registry. Returns plist or nil."
+  (gethash session-id jf/gptel--session-registry))
+
+(defun jf/gptel--update-session-data (session-id key value)
+  "Update specific key in session data."
+  (when-let ((session-data (gethash session-id jf/gptel--session-registry)))
+    (plist-put session-data key value)
+    (puthash session-id session-data jf/gptel--session-registry)))
+#+end_src
+
 ** Session State Tracking
 
 #+begin_src emacs-lisp
 ;; Buffer-local variables to track session state
+;; NOTE: Only session-id is buffer-local now. All other state lives in global registry.
+(defvar-local jf/gptel--session-id nil
+  "Session ID for this buffer. Used to lookup data from global registry.
+All other session state (directory, metadata, traces) stored in registry.")
+
 (defvar-local jf/gptel--session-dir nil
-  "Directory where current session is stored.")
+  "Directory where current session is stored.
+DEPRECATED: Kept for backwards compatibility. Use registry lookup instead.")
 
 (defvar-local jf/gptel--session-metadata nil
   "Metadata plist for current session.")
@@ -523,6 +647,109 @@ Returns format 'message-N' or 'message-N-altM' for forks."
 (defvar-local jf/gptel--agent-name nil
   "Name of the agent currently active in this buffer.
 Set when delegating to a subagent via gptel-agent.")
+#+end_src
+
+** Agent Trace Management
+
+Functions for creating and managing agent execution traces using the global registry.
+All trace state is stored in the registry and accessed via session-id.
+
+#+begin_src emacs-lisp
+(defun jf/gptel--create-trace (session-id agent-type description prompt &optional parent-trace-id)
+  "Create new agent trace entry in session.
+Looks up session from registry, updates metadata, returns trace-id."
+  (when-let* ((session-data (jf/gptel--get-session-data session-id))
+              (metadata (plist-get session-data :metadata)))
+    (let* ((trace-counter (plist-get session-data :trace-counter))
+           (trace-id (format "trace-%d" (cl-incf trace-counter)))
+           (trace-stack (plist-get session-data :trace-stack))
+           (depth (length trace-stack))
+           (trace (list :trace_id trace-id
+                       :agent_type agent-type
+                       :description description
+                       :prompt_preview (substring prompt 0 (min 200 (length prompt)))
+                       :timestamp_start (format-time-string "%Y-%m-%dT%H:%M:%SZ")
+                       :timestamp_end nil
+                       :status "running"
+                       :parent_trace_id parent-trace-id
+                       :depth depth
+                       :tool_calls []
+                       :associated_nodes nil)))
+      ;; Update registry: increment counter, push to stack
+      (jf/gptel--update-session-data session-id :trace-counter trace-counter)
+      (jf/gptel--update-session-data session-id :trace-stack (cons trace-id trace-stack))
+
+      ;; Add to metadata's agent_traces array
+      (let ((traces (plist-get metadata :agent_traces)))
+        (plist-put metadata :agent_traces
+                   (vconcat traces (vector trace))))
+
+      ;; Write metadata to disk (incremental)
+      (let ((session-dir (plist-get session-data :directory)))
+        (jf/gptel--write-metadata session-dir metadata))
+
+      trace-id)))
+
+(defun jf/gptel--record-tool-call (session-id trace-id tool-name args result)
+  "Record tool call incrementally to metadata.json."
+  (when-let* ((session-data (jf/gptel--get-session-data session-id))
+              (metadata (plist-get session-data :metadata))
+              (traces (plist-get metadata :agent_traces)))
+    ;; Find the trace
+    (let ((trace (cl-find-if (lambda (tr)
+                              (equal (plist-get tr :trace_id) trace-id))
+                            (append traces nil))))
+      (when trace
+        ;; Create tool call entry
+        (let ((tool-call (list :tool_name tool-name
+                              :args args
+                              :timestamp (format-time-string "%Y-%m-%dT%H:%M:%SZ")
+                              :result_preview (jf/gptel--preview-string result 200))))
+          ;; Append to trace's tool_calls
+          (let ((calls (plist-get trace :tool_calls)))
+            (plist-put trace :tool_calls (vconcat calls (vector tool-call)))))
+
+        ;; Write metadata immediately (incremental recording)
+        (let ((session-dir (plist-get session-data :directory)))
+          (jf/gptel--write-metadata session-dir metadata))))))
+
+(defun jf/gptel--complete-trace (session-id trace-id status)
+  "Mark trace as completed, pop from stack."
+  (when-let* ((session-data (jf/gptel--get-session-data session-id))
+              (metadata (plist-get session-data :metadata))
+              (traces (plist-get metadata :agent_traces)))
+    ;; Find and update the trace
+    (let ((trace (cl-find-if (lambda (tr)
+                              (equal (plist-get tr :trace_id) trace-id))
+                            (append traces nil))))
+      (when trace
+        (plist-put trace :timestamp_end (format-time-string "%Y-%m-%dT%H:%M:%SZ"))
+        (plist-put trace :status status)
+
+        ;; Pop from trace stack in registry
+        (let ((trace-stack (plist-get session-data :trace-stack)))
+          (jf/gptel--update-session-data session-id :trace-stack
+                                        (remove trace-id trace-stack)))
+
+        ;; Write metadata to disk
+        (let ((session-dir (plist-get session-data :directory)))
+          (jf/gptel--write-metadata session-dir metadata))))))
+
+(defun jf/gptel--current-trace-id (session-id)
+  "Get current trace ID (top of stack) from session."
+  (when-let ((session-data (jf/gptel--get-session-data session-id)))
+    (car (plist-get session-data :trace-stack))))
+
+(defun jf/gptel--preview-string (obj &optional max-len)
+  "Create preview string from OBJ (string, list, etc)."
+  (let* ((max-len (or max-len 200))
+         (str (cond
+               ((stringp obj) obj)
+               ((listp obj) (format "%S" obj))
+               (t (format "%s" obj)))))
+    (if (> (length str) max-len)
+        (concat (substring str 0 max-len) "...")
+      str)))
 #+end_src
 
 ** Session Reconstruction Helpers
@@ -636,6 +863,20 @@ This function is added to `gptel-post-response-functions'."
             (jf/gptel--update-metadata-tree msg-id msg-file msg-preview
                                             resp-id resp-file resp-preview)
 
+            ;; Link any completed traces to this message/response
+            (when jf/gptel--session-id
+              (when-let* ((session-data (jf/gptel--get-session-data jf/gptel--session-id))
+                          (metadata (plist-get session-data :metadata))
+                          (traces (plist-get metadata :agent_traces)))
+                (dolist (trace (append traces nil))  ; Convert vector to list
+                  (when (and (equal (plist-get trace :status) "completed")
+                             (null (plist-get trace :associated_nodes)))
+                    ;; This trace just completed, associate it
+                    (plist-put trace :associated_nodes (vector msg-id resp-id))))
+                ;; Write updated metadata
+                (let ((session-dir (plist-get session-data :directory)))
+                  (jf/gptel--write-metadata session-dir metadata))))
+
             (message "Session saved: %s/%s"
                      (file-name-nondirectory jf/gptel--session-dir)
                      resp-file)))
@@ -645,7 +886,7 @@ This function is added to `gptel-post-response-functions'."
        (message "gptel autosave error: %s" (error-message-string err))))))
 
 (defun jf/gptel--initialize-session ()
-  "Initialize a new session directory and metadata."
+  "Initialize a new session directory, metadata, and register in global registry."
   (let* ((dirname (jf/gptel--generate-session-dirname))
          (sessions-base (expand-file-name jf/gptel-sessions-directory))
          (session-dir (expand-file-name dirname sessions-base))
@@ -653,17 +894,22 @@ This function is added to `gptel-post-response-functions'."
     ;; Create session directory
     (make-directory session-dir t)
 
-    ;; Create initial metadata
+    ;; Create initial metadata (now includes :agent_traces [])
     (setq jf/gptel--session-metadata
           (jf/gptel--create-metadata session-dir dirname gptel-model backend-name))
 
     ;; Write metadata
     (jf/gptel--write-metadata session-dir jf/gptel--session-metadata)
 
-    ;; Store directory
-    (setq jf/gptel--session-dir session-dir)
+    ;; Register in global registry
+    (let ((session-id (jf/gptel--register-session session-dir jf/gptel--session-metadata
+                                                  (current-buffer))))
+      ;; Store session-id as buffer-local variable
+      (setq jf/gptel--session-id session-id)
+      ;; Keep old vars for backwards compatibility
+      (setq jf/gptel--session-dir session-dir)
 
-    (message "Created session: %s" dirname)))
+      (message "Created session: %s (ID: %s)" dirname session-id))))
 
 (defun jf/gptel--extract-last-message (response-start)
   "Extract user's last message before RESPONSE-START using text properties."
