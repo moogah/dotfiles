@@ -65,6 +65,7 @@
 (jf/load-module (expand-file-name "major-modes/gpt-tools/org-roam-tools.el" jf/emacs-dir))
 (jf/load-module (expand-file-name "major-modes/gpt-tools/projectile-tools.el" jf/emacs-dir))
 (jf/load-module (expand-file-name "major-modes/gpt-tools/ggtags-tools.el" jf/emacs-dir))
+(jf/load-module (expand-file-name "major-modes/gpt-tools/subagent-tools.el" jf/emacs-dir))
 
 ;; Load skills system
 (jf/load-module (expand-file-name "major-modes/gptel-skills.el" jf/emacs-dir))

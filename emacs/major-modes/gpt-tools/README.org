@@ -209,14 +209,163 @@ For long-running operations, mark the tool as =:async t=. The function should:
  :async t)  ; Mark as async
 #+end_src
 
+* Subagent Tools
+
+** Overview
+
+Subagent tools enable LLM agents to delegate specialized tasks to isolated subagents
+running in their own contexts with dedicated tool sets and configurations. This allows
+complex tasks to be broken down into focused subtasks handled by specialized agents.
+
+** Architecture
+
+Subagents run in visible buffers with complete state isolation:
+
+- *FSM Isolation*: Each subagent gets its own =gptel-fsm= instance
+- *Buffer-Local State*: Separate tools, backend, model, and system message
+- *Async Execution*: Subagents stream results back via callbacks
+- *Profile-Based*: Reusable configurations defined with =gptel-make-preset=
+- *Visible Buffers*: Named =*gptel-subagent-PROFILE-TIMESTAMP*= for easy inspection
+
+** Available Subagent Profiles
+
+*** explore-agent
+
+Read-only code exploration and semantic analysis agent.
+
+*Tools*:
+- Filesystem: =read_file=, =list_directory=
+- Projectile: =list_known_projects=, =get_project_info=, =list_project_files=
+- Ggtags: =find_definition=, =find_references=, =find_symbol=
+- Web: =web_search=, =read_url=
+
+*Use Cases*:
+- Analyzing code structure and organization
+- Understanding implementations and architectures
+- Tracing dependencies and data flow
+- Gathering information about unfamiliar codebases
+
+*** plan-agent
+
+Planning and requirements gathering agent with delegation capability.
+
+*Tools*:
+- Delegation: =invoke_subagent= (can invoke explore-agent)
+- Basic: =read_file=, =list_directory=
+
+*Use Cases*:
+- Developing implementation plans
+- Gathering requirements through dialog
+- Breaking down complex tasks
+- Coordinating multiple exploration tasks
+
+** Usage Example
+
+Primary agent delegates to subagent:
+
+#+begin_src emacs-lisp
+;; LLM calls this tool
+invoke_subagent(
+  agent_profile="explore-agent",
+  task_description="Analyze the authentication system in /path/to/project. Identify key functions, security patterns, and data flow.",
+  context_files=["/path/to/project/auth.el", "/path/to/project/session.el"]
+)
+#+end_src
+
+The subagent will:
+1. Run in isolated context with read-only tools
+2. Read specified files
+3. Navigate code structure
+4. Use semantic tools as needed
+5. Return final analysis summary
+
+** Nested Delegation
+
+Plan agent can invoke explore agent for code investigation:
+
+#+begin_example
+Primary Agent
+  └─> plan-agent: "Develop implementation plan for feature X"
+       └─> explore-agent: "Analyze existing authentication patterns"
+       └─> explore-agent: "Find all database access points"
+#+end_example
+
+*Depth Limit*: Maximum delegation depth is 3 levels (configurable via =jf/gptel-max-delegation-depth=)
+
+** Dialog Coordination
+
+When plan-agent needs user input, it includes questions in its result. The primary
+agent should forward these questions to you.
+
+Example result from plan-agent:
+
+#+begin_example
+=== Subagent Result ===
+Agent: plan-agent
+Task: Develop authentication plan
+
+Based on exploration, I've identified two approaches:
+
+1. Token-based (JWT) - stateless, scalable
+2. Session-based - simpler, server-managed state
+
+Questions for user:
+- Do you need mobile client support? (JWT recommended)
+- What's your expected user scale? (<1000 users: sessions fine, >10k: JWT better)
+- Do you have Redis/Memcached available? (needed for distributed sessions)
+
+Once I know your answers, I can finalize the implementation plan.
+=== End Subagent Result ===
+#+end_example
+
+** Result Format
+
+Subagents return final responses only (not full conversation history). Results are
+formatted with clear delimiters:
+
+- Agent profile name
+- Task description
+- Final response/summary
+
+This keeps context manageable while providing the primary agent with actionable information.
+
+** Security
+
+- Subagent invocation requires confirmation (=:confirm t=)
+- Explore agent has read-only tools only
+- Recursion prevented via depth tracking
+- Subagent buffers remain open for inspection (kill manually when done)
+
+** Configuration
+
+Subagent profiles are defined in =subagent-tools.org= using =gptel-make-preset=:
+
+#+begin_src emacs-lisp
+(gptel-make-preset 'explore-agent
+  :description "Read-only code exploration"
+  :backend "Claude"
+  :model 'claude-3-7-sonnet-20250219
+  :system "You are an exploration agent..."
+  :tools '("read_file" "list_directory" ...)
+  :temperature 0.5)
+#+end_src
+
+To add new subagent types:
+1. Define profile with =gptel-make-preset=
+2. Add to =invoke_subagent= tool's =:enum= list
+3. Document expected behavior
+
 * Organization
 
 Tools are organized by category in separate files:
 
 - =filesystem-tools.org= :: File and directory operations
-- =emacs-tools.org= :: Buffer, window, and Emacs introspection
-- =system-tools.org= :: Shell commands and system interaction
-- =network-tools.org= :: Web requests and API calls
+- =projectile-tools.org= :: Project-aware navigation and file discovery
+- =ggtags-tools.org= :: Semantic code navigation using GNU Global
+- =org-roam-tools.org= :: Knowledge management and note operations
+- =meta-tools.org= :: Tools for generating new tools
+- =subagent-tools.org= :: Delegation to specialized subagents
+- =community-tools.org= :: External tool packages (gptel-agent, ragmacs, etc.)
 
 Each =.org= file tangles to a =.el= file that is loaded by =major-modes/gpt.org=.
 
