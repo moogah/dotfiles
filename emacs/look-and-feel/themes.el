@@ -33,12 +33,11 @@
 ;; doom-laserwave
 ;; doom-moonlight
 ;; doom-palenight
-;;(load-theme 'doom-palenight t)
-;;(load-theme 'doom-palenight)
-;;(enable-theme 'doom-palenight)
-(load-theme 'distinguished)
-(enable-theme 'distinguished)
+(load-theme 'doom-palenight t)
+;; (load-theme 'distinguished)
+;; (enable-theme 'distinguished)
 ;;(set-background-color "black")
 
 ;; set font size to 14pt for my aging eyes
-(setq default-frame-alist '((font . "Menlo-14")))
+;; Add font to existing default-frame-alist instead of replacing it
+(add-to-list 'default-frame-alist '(font . "Menlo-14"))

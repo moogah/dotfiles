@@ -6,6 +6,9 @@
 
 (use-package evil
   :straight t
+  :init
+  ;; Must be set before evil loads, required by evil-collection
+  (setq evil-want-keybinding nil)
   :config
   (evil-mode 1)
   (setq evil-want-fine-undo t)

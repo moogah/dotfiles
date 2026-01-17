@@ -1,4 +1,4 @@
-﻿;; -*- lexical-binding: t; -*-
+;; -*- lexical-binding: t; -*-
 
 ;; ===============================================================================
 ;; Frame Size and Position
@@ -13,14 +13,18 @@
 (defvar jf/frame-height jf/display-height)
 
 ;; Set default frame size and position
+;; Use text-pixels to specify exact pixel dimensions, avoiding font-dependent calculations
 (setq default-frame-alist
-      `((width . ,(/ jf/frame-width (frame-char-width)))
-        (height . ,(/ jf/frame-height (frame-char-height)))
+      `((width . (text-pixels . ,jf/frame-width))
+        (height . (text-pixels . ,jf/frame-height))
         (left . 0)
         (top . 0)))
 
 ;; Apply to the initial frame too
 (setq initial-frame-alist default-frame-alist)
+
+;; Allow frame resizing by pixels for precise sizing
+(setq frame-resize-pixelwise t)
 
 ;; ===============================================================================
 ;; Clean UI Settings

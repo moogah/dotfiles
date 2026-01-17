@@ -45,20 +45,20 @@ Install a selection of popular themes.
 Set the active theme.
 
 #+begin_src emacs-lisp
-;; set default theme
-;; doom-henna
-;; doom-peacock
-;; doom-vibrant
-;; doom-ir
-;; doom-old-hope
-;; doom-ephemeral
-;; doom-laserwave
-;; doom-moonlight
-;; doom-palenight
-;;(load-theme 'doom-palenight t)
-(load-theme 'distinguished)
-(enable-theme 'distinguished)
-;;(set-background-color "black")
+  ;; set default theme
+  ;; doom-henna
+  ;; doom-peacock
+  ;; doom-vibrant
+  ;; doom-ir
+  ;; doom-old-hope
+  ;; doom-ephemeral
+  ;; doom-laserwave
+  ;; doom-moonlight
+  ;; doom-palenight
+  (load-theme 'doom-palenight t)
+  ;; (load-theme 'distinguished)
+  ;; (enable-theme 'distinguished)
+  ;;(set-background-color "black")
 #+end_src
 
 * Custom Theme Tweaks
@@ -96,7 +96,8 @@ Configure the default font.
 
 #+begin_src emacs-lisp
 ;; set font size to 14pt for my aging eyes
-(setq default-frame-alist '((font . "Menlo-14")))
+;; Add font to existing default-frame-alist instead of replacing it
+(add-to-list 'default-frame-alist '(font . "Menlo-14"))
 #+end_src
 
 * Usage Notes

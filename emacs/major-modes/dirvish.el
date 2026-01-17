@@ -1,5 +1,4 @@
-﻿;; -*- lexical-binding: t; -*-
-
+;; -*- lexical-binding: t; -*-
 
 ;; Core Dirvish setup with specific version
 (use-package dirvish
@@ -57,7 +56,7 @@
 If MULTI-LINE, make every path occupy a new line.
 Uses dirvish's built-in project detection via project.el."
   (interactive "P")
-  (if-let ((project-root (dirvish--get-project-root)))
+  (if-let ((project-root (dirvish--vc-root-dir)))
       (let* ((files (mapcar #'file-local-name (dired-get-marked-files)))
              (relative-files (mapcar (lambda (file)
                                        (file-relative-name file project-root))

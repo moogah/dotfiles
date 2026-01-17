@@ -10,8 +10,6 @@
    ("C-x b" . consult-buffer)
    ("C-s" . consult-line))
   :config
-  (consult-customize consult--source-buffer :hidden t :default nil)
-  
   ;; Only add perspective integration if it's loaded
   (with-eval-after-load 'perspective
     (when (boundp 'persp-consult-source)
