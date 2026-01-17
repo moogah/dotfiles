@@ -493,6 +493,90 @@ After using this tool, STOP. Analyze the backlinks. Then use read_roam_node to v
 
 * Write Tools
 
+** Markdown to Org Conversion Helper
+Helper function to convert markdown formatting to org-mode format using pandoc.
+
+#+begin_src emacs-lisp
+(defvar jf/markdown-to-org-debug t
+  "When non-nil, log conversion inputs and outputs to ~/markdown-conversion-debug.log
+Set to nil to disable debug logging once issues are resolved.")
+
+(defun jf/markdown-to-org (text)
+  "Convert markdown text to org-mode format using pandoc.
+Falls back to returning text unchanged if pandoc is unavailable.
+Removes PROPERTIES drawers that pandoc adds for cleaner output.
+Detects if input is already org-mode format and skips conversion."
+  ;; Debug logging if enabled
+  (when jf/markdown-to-org-debug
+    (with-temp-buffer
+      (insert (format "\n\n========== CONVERSION INPUT [%s] ==========\n"
+                      (format-time-string "%Y-%m-%d %H:%M:%S")))
+      (insert text)
+      (insert "\n========== END INPUT ==========\n")
+      (append-to-file (point-min) (point-max) "~/markdown-conversion-debug.log")))
+
+  ;; Check if input is already org-mode format
+  ;; Org-mode indicators: lines starting with "* ", "#+begin_src", "#+end_src"
+  (let ((is-org-mode (or (string-match-p "^\\* " text)
+                         (string-match-p "^#\\+begin_src" text)
+                         (string-match-p "^#\\+end_src" text))))
+    (when (and jf/markdown-to-org-debug is-org-mode)
+      (with-temp-buffer
+        (insert (format "\n========== DETECTED ORG-MODE FORMAT - SKIPPING CONVERSION ==========\n"))
+        (append-to-file (point-min) (point-max) "~/markdown-conversion-debug.log")))
+
+    (if is-org-mode
+        ;; Already org-mode, return as-is
+        text
+      ;; Not org-mode, proceed with conversion
+      (if (executable-find "pandoc")
+      (with-temp-buffer
+        (insert text)
+        ;; Call pandoc to convert from markdown to org
+        ;; --wrap=none prevents pandoc from wrapping long lines
+        ;; -f markdown = from markdown
+        ;; -t org = to org-mode
+        (let ((exit-code
+               (call-process-region
+                (point-min) (point-max)
+                "pandoc"
+                t    ; delete input text
+                t    ; output to current buffer
+                nil  ; no display
+                "-f" "markdown"
+                "-t" "org"
+                "--wrap=none")))
+          (if (eq exit-code 0)
+              (progn
+                ;; Remove PROPERTIES drawers that pandoc adds (CUSTOM_ID, etc.)
+                ;; These add clutter and aren't needed for our use case
+                (goto-char (point-min))
+                (while (re-search-forward "^:PROPERTIES:\n\\(?:.*\n\\)*?:END:\n" nil t)
+                  (replace-match ""))
+
+                ;; Clean up any empty lines left behind
+                (goto-char (point-min))
+                (while (re-search-forward "\n\n\n+" nil t)
+                  (replace-match "\n\n"))
+
+                (let ((output (buffer-string)))
+                  ;; Debug logging if enabled
+                  (when jf/markdown-to-org-debug
+                    (with-temp-buffer
+                      (insert (format "\n========== CONVERSION OUTPUT [%s] ==========\n"
+                                      (format-time-string "%Y-%m-%d %H:%M:%S")))
+                      (insert output)
+                      (insert "\n========== END OUTPUT ==========\n\n")
+                      (append-to-file (point-min) (point-max) "~/markdown-conversion-debug.log")))
+                  output))
+            (progn
+              (message "Warning: pandoc conversion failed, using original text")
+              text))))
+        (progn
+          (message "Warning: pandoc not found, markdown will not be converted. Install with: brew install pandoc")
+          text)))))
+#+end_src
+
 ** create_roam_node
 Create a new org-roam node programmatically.
 
@@ -542,7 +626,7 @@ Create a new org-roam node programmatically.
                      (insert (format "#+roam_refs: %s\n" ref))))
                  (insert "\n")
                  (when content
-                   (insert content)
+                   (insert (jf/markdown-to-org content))
                    (insert "\n")))
 
                ;; Update org-roam database
@@ -566,6 +650,8 @@ Use this to add new nodes to your knowledge base. The node will be created with 
 For gptel agents: Set capture_session_metadata to true and subdirectory to 'gptel' to create agent-attributed notes.
 
 The node is created as a file-level node (level 0) in your org-roam-directory (or a subdirectory). You can add tags, initial content, and reference URLs.
+
+MARKDOWN CONVERSION: Content will be automatically converted from markdown to org-mode format using pandoc (if available).
 
 IMPORTANT: This operation creates a new file. Confirm before proceeding.
 
@@ -653,7 +739,7 @@ knowledge base.
 
                  (insert "\n")
                  (insert "* Summary\n\n")
-                 (insert summary)
+                 (insert (jf/markdown-to-org summary))
                  (insert "\n"))
 
                ;; Update org-roam database
@@ -685,6 +771,8 @@ The summary should be:
 - Focused on the key insights or information
 - Written in your own words, not copied verbatim
 - Sufficient to understand the main points without reading the source
+
+MARKDOWN CONVERSION: Summary will be automatically converted from markdown to org-mode format using pandoc (if available).
 
 Reference nodes can then be linked to your knowledge notes using link_roam_nodes
 to show provenance and enable following sources.
