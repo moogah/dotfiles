@@ -1,4 +1,4 @@
-﻿;; -*- lexical-binding: t; -*-
+;; -*- lexical-binding: t; -*-
 
 ;; org-roam is sensitive to org version changes
 ;; Ensure we have a compatible version of org loaded
@@ -16,6 +16,12 @@
          ("C-c n d" . org-roam-dailies-goto-today))
   :config
   (setq org-roam-directory (file-truename "~/org/roam"))
+
+  ;; Ensure gptel subdirectory exists for agent-created notes
+  (let ((gptel-dir (expand-file-name "gptel" org-roam-directory)))
+    (unless (file-directory-p gptel-dir)
+      (make-directory gptel-dir t)))
+
   (setq find-file-visit-truename t)
   (setq org-roam-completion-everywhere t)
   (org-roam-db-autosync-mode))

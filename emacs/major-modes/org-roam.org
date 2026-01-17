@@ -7,6 +7,13 @@
 This file configures Org Roam, a personal knowledge management system for Emacs based on the Zettelkasten method.
 It includes settings for basic functionality, daily notes, capture templates, and Git synchronization.
 
+Directory structure:
+- ~/org/roam/ - Main roam directory
+  - dailies/ - Daily journal entries (hostname-specific subdirectories)
+  - gptel/ - Notes created by gptel agents (AI-assisted research)
+  - inbox/ - Quick capture inbox
+  - skills/ - Skill documentation
+
 
 * Basic Configuration
 Setup lexical binding and core dependencies.
@@ -51,6 +58,12 @@ Configure the main Org Roam package with keybindings and basic settings.
          ("C-c n d" . org-roam-dailies-goto-today))
   :config
   (setq org-roam-directory (file-truename "~/org/roam"))
+
+  ;; Ensure gptel subdirectory exists for agent-created notes
+  (let ((gptel-dir (expand-file-name "gptel" org-roam-directory)))
+    (unless (file-directory-p gptel-dir)
+      (make-directory gptel-dir t)))
+
   (setq find-file-visit-truename t)
   (setq org-roam-completion-everywhere t)
   (org-roam-db-autosync-mode))
@@ -137,6 +150,86 @@ Configure capture templates for web content via org-roam-protocol.
         (file+head "${slug}.org" "#+title: ${title}\n\n")
         :unnarrowed t)))
 #+end_src
+
+* Gptel Agent Integration
+Configure how gptel agents interact with org-roam for knowledge management.
+
+** Agent-Created Notes Directory
+Gptel agents create research notes in =~/org/roam/gptel/= to separate
+AI-assisted notes from user-created content while maintaining full org-roam
+integration.
+
+Agent notes are:
+- Fully searchable via org-roam (=org-roam-node-find=)
+- Linkable to/from any roam nodes
+- Tagged with session metadata for traceability
+
+** Querying Agent Notes
+Find notes by session, agent, or model:
+
+#+begin_src emacs-lisp :tangle no
+;; All gptel agent notes
+(org-roam-db-query
+ [:select [nodes:id nodes:title nodes:file]
+  :from nodes
+  :where (like file "%/gptel/%")])
+
+;; Notes from specific session
+(org-roam-db-query
+ [:select [nodes:id nodes:title properties:value]
+  :from nodes
+  :inner :join properties :on (= nodes:id properties:node_id)
+  :where (and (= properties:property "GPTEL_SESSION")
+              (= properties:value "SESSION-ID"))])
+
+;; Notes by specific agent
+(org-roam-db-query
+ [:select [nodes:id nodes:title properties:value]
+  :from nodes
+  :inner :join properties :on (= nodes:id properties:node_id)
+  :where (and (= properties:property "GPTEL_AGENT")
+              (= properties:value "explorer"))])
+#+end_src
+
+** Agent Workflow
+
+*** Zettelkasten Agent
+The =zettelkasten= agent specializes in creating interconnected knowledge notes:
+1. Searches existing knowledge base for related notes
+2. Delegates to explorer/researcher agents to gather information
+3. Synthesizes findings into atomic notes (one concept per note)
+4. Creates descriptive, concept-focused titles
+5. Links new notes to related existing knowledge
+6. Tags notes for discoverability
+
+Usage: =M-x gptel-agent= → select =zettelkasten= → provide research topic
+
+See =emacs/major-modes/gpt-tools/agents/zettelkasten.md= for detailed
+Zettelkasten methodology.
+
+*** Explorer Agent
+The =explorer= agent focuses on code analysis and semantic navigation:
+1. Semantic analysis using tree-sitter, ggtags, projectile
+2. Web research for external APIs/libraries
+3. Synthesis into exploration report
+
+Usage: =M-x gptel-agent= → select =explorer= → provide research question
+
+** Known Limitations (V1)
+
+*** Session Metadata in Subagent-Created Notes
+When agents delegate to subagents (e.g., zettelkasten delegates to explorer),
+session metadata properties (=GPTEL_SESSION=, =GPTEL_AGENT=, =GPTEL_MODEL=, etc.)
+may be incomplete or missing.
+
+*Reason*: Subagents execute in isolated buffer contexts where parent session
+buffer-local variables are not accessible.
+
+*Impact*: Notes created by delegated agents may lack full traceability metadata.
+The notes themselves remain fully functional and integrated into org-roam.
+
+*Workaround*: Direct tool calls (not via subagent delegation) capture metadata
+correctly. A future version will implement cross-agent context passing.
 
 * Automatic Git Synchronization
 Setup automatic Git synchronization for your knowledge base.

@@ -377,6 +377,10 @@ Returns format 'message-N' or 'message-N-altM' for forks."
 (defvar-local jf/gptel--branch-id nil
   "Branch ID to use for next message when branching.")
 
+(defvar-local jf/gptel--agent-name nil
+  "Name of the agent currently active in this buffer.
+Set when delegating to a subagent via gptel-agent.")
+
 (defun jf/gptel--insert-context (context &optional include-final-prompt)
   "Insert CONTEXT (list of message/response plists) with proper formatting.
 Adds text properties, prefixes, and separators.
@@ -422,6 +426,18 @@ If INCLUDE-FINAL-PROMPT is non-nil, adds a final prompt prefix for user input."
     ;; Restore model (convert string to symbol)
     (when model-name
       (setq-local gptel-model (intern model-name)))))
+
+(defun jf/gptel--get-session-context ()
+  "Extract gptel session context from current buffer.
+Returns plist with :session-id, :model, :backend, :agent-name, :timestamp.
+Returns nil if not in a gptel session."
+  (when (and gptel-mode jf/gptel--session-dir)
+    (list :session-id (when jf/gptel--session-metadata
+                        (plist-get jf/gptel--session-metadata :session_id))
+          :model (when gptel-model (symbol-name gptel-model))
+          :backend (when gptel-backend (gptel-backend-name gptel-backend))
+          :agent-name jf/gptel--agent-name
+          :timestamp (format-time-string "%Y-%m-%dT%H:%M:%SZ"))))
 
 (defun jf/gptel--autosave-session (response-start response-end)
   "Automatically save gptel session after LLM response.

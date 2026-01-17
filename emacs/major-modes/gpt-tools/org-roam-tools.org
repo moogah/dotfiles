@@ -499,17 +499,42 @@ Create a new org-roam node programmatically.
 #+begin_src emacs-lisp
 (gptel-make-tool
  :name "create_roam_node"
- :function (lambda (title &optional tags content refs)
-             (let* ((slug (org-roam-node-slug (org-roam-node-create :title title)))
+ :function (lambda (title &optional tags content refs subdirectory capture-session-metadata)
+             (let* ((subdir (or subdirectory ""))
+                    (slug (org-roam-node-slug (org-roam-node-create :title title)))
                     (filename (format "%s-%s.org"
                                      (format-time-string "%Y%m%d%H%M%S")
                                      slug))
-                    (filepath (expand-file-name filename org-roam-directory))
-                    (id (org-id-new)))
+                    (target-dir (expand-file-name subdir org-roam-directory))
+                    (filepath (expand-file-name filename target-dir))
+                    (id (org-id-new))
+                    (session-ctx (when capture-session-metadata
+                                   (jf/gptel--get-session-context))))
+
+               ;; Ensure target directory exists
+               (unless (file-directory-p target-dir)
+                 (make-directory target-dir t))
+
                ;; Create the file with org-roam structure
                (with-temp-file filepath
-                 (insert (format ":PROPERTIES:\n:ID:       %s\n:END:\n" id))
+                 (insert (format ":PROPERTIES:\n:ID:       %s\n" id))
+
+                 ;; Add gptel session metadata if requested and available
+                 (when session-ctx
+                   (when-let ((session-id (plist-get session-ctx :session-id)))
+                     (insert (format ":GPTEL_SESSION: %s\n" session-id)))
+                   (when-let ((agent (plist-get session-ctx :agent-name)))
+                     (insert (format ":GPTEL_AGENT: %s\n" agent)))
+                   (when-let ((model (plist-get session-ctx :model)))
+                     (insert (format ":GPTEL_MODEL: %s\n" model)))
+                   (when-let ((backend (plist-get session-ctx :backend)))
+                     (insert (format ":GPTEL_BACKEND: %s\n" backend)))
+                   (when-let ((timestamp (plist-get session-ctx :timestamp)))
+                     (insert (format ":GPTEL_CREATED: %s\n" timestamp))))
+
+                 (insert ":END:\n")
                  (insert (format "#+title: %s\n" title))
+
                  (when tags
                    (insert (format "#+filetags: :%s:\n" (mapconcat 'identity tags ":"))))
                  (when refs
@@ -519,19 +544,28 @@ Create a new org-roam node programmatically.
                  (when content
                    (insert content)
                    (insert "\n")))
+
                ;; Update org-roam database
                (org-roam-db-update-file filepath)
-               (format "Created new org-roam node:\n\nTitle: %s\nID: %s\nFile: %s\nTags: %s\nRefs: %s\n\n[Use read_roam_node to view the node, or link_roam_nodes to connect it to other nodes]"
+
+               (format "Created new org-roam node:\n\nTitle: %s\nID: %s\nFile: %s\nDirectory: %s\nTags: %s\nRefs: %s%s\n\n[Use read_roam_node to view the node, or link_roam_nodes to connect it to other nodes]"
                       title
                       id
                       filepath
+                      (if (string-empty-p subdir) "root" subdir)
                       (if tags (mapconcat 'identity tags ", ") "none")
-                      (if refs (mapconcat 'identity refs ", ") "none"))))
+                      (if refs (mapconcat 'identity refs ", ") "none")
+                      (if session-ctx
+                          (format "\nSession metadata captured: %s"
+                                 (plist-get session-ctx :session-id))
+                        ""))))
  :description "Create a new org-roam node programmatically.
 
 Use this to add new nodes to your knowledge base. The node will be created with a unique ID and filename based on the title.
 
-The node is created as a file-level node (level 0) in your org-roam-directory. You can add tags, initial content, and reference URLs.
+For gptel agents: Set capture_session_metadata to true and subdirectory to 'gptel' to create agent-attributed notes.
+
+The node is created as a file-level node (level 0) in your org-roam-directory (or a subdirectory). You can add tags, initial content, and reference URLs.
 
 IMPORTANT: This operation creates a new file. Confirm before proceeding.
 
@@ -552,7 +586,15 @@ After creation, use read_roam_node to verify the node, or link_roam_nodes to con
                :type array
                :items (:type string)
                :optional t
-               :description "Reference URLs to associate with the node"))
+               :description "Reference URLs to associate with the node")
+             '(:name "subdirectory"
+               :type string
+               :optional t
+               :description "Subdirectory within org-roam-directory (e.g., 'gptel', 'inbox'). Defaults to root.")
+             '(:name "capture_session_metadata"
+               :type boolean
+               :optional t
+               :description "If true, capture gptel session metadata (session_id, agent, model, backend) as properties"))
  :category "org-roam"
  :confirm t)
 #+end_src
