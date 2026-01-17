@@ -1,17 +1,11 @@
 ;; -*- lexical-binding: t; -*-
 
-;; Enable tool confirmations globally for safety
-(setq gptel-confirm-tool-calls t)
+;; Set confirmation mode to 'auto - let tools and agents decide
+;; - 'auto: Respect per-tool :confirm and per-agent confirm-tool-calls settings
+;; - t: Always confirm all tools
+;; - nil: Never confirm any tools
+(setq gptel-confirm-tool-calls 'auto)
 (setq gptel-use-tools t)
-
-(use-package gptel-agent
-  :straight t
-  :after gptel
-  :demand t
-  :config
-  ;; Most actions require confirmation by default (preserved for safety)
-  ;; Read-only operations (web search, file reading) don't require confirmation
-  )
 
 (use-package gptel-got
   :straight '(gptel-got :type git

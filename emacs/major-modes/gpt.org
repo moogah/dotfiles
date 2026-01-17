@@ -138,20 +138,106 @@ Testing the Claude-thinking config in isolation with paren counting.
 #+RESULTS:
 : #[nil ((let ((key (gptel--get-api-key (lambda nil (auth-source-pick-first-password :host "api.anthropic.com"))))) `(("x-api-key" \, key) ("anthropic-version" . "2023-06-01") ("anthropic-beta" . "pdfs-2024-09-25") ("anthropic-beta" . "output-128k-2025-02-19") ("anthropic-beta" . "prompt-caching-2024-07-31")))) nil]
 
-* GPTEL Tools
-Define custom tools and functions that can be used by LLMs to interact with the Emacs environment.
+* GPTEL Agent
+Configure gptel-agent package for subagent delegation with file-based agent definitions.
 
-Tools are organized in the gpt-tools/ subdirectory for better maintainability.
-Each category of tools is configured in its own file.
+gptel-agent provides:
+- Invisible subagent execution (no buffer clutter)
+- File-based agent definitions with YAML frontmatter
+- "Agent" tool for delegating to specialized subagents
+- Robust FSM and callback handling
 
 #+begin_src emacs-lisp
-;; Load individual tool modules
-(jf/load-module (expand-file-name "major-modes/gpt-tools/filesystem-tools.el" jf/emacs-dir))
-(jf/load-module (expand-file-name "major-modes/gpt-tools/meta-tools.el" jf/emacs-dir))
-(jf/load-module (expand-file-name "major-modes/gpt-tools/community-tools.el" jf/emacs-dir))
-(jf/load-module (expand-file-name "major-modes/gpt-tools/org-roam-tools.el" jf/emacs-dir))
-(jf/load-module (expand-file-name "major-modes/gpt-tools/projectile-tools.el" jf/emacs-dir))
-(jf/load-module (expand-file-name "major-modes/gpt-tools/ggtags-tools.el" jf/emacs-dir))
+(use-package gptel-agent
+  :straight t
+  :after gptel
+  :demand t
+  :config
+  ;; Add our custom agent directory to the scan path
+  (add-to-list 'gptel-agent-dirs
+               (expand-file-name "major-modes/gpt-tools/agents/" jf/emacs-dir))
+
+  ;; Load custom tools BEFORE agent update so agents can reference them
+  (jf/load-module (expand-file-name "major-modes/gpt-tools/filesystem-tools.el" jf/emacs-dir))
+  (jf/load-module (expand-file-name "major-modes/gpt-tools/projectile-tools.el" jf/emacs-dir))
+  (jf/load-module (expand-file-name "major-modes/gpt-tools/ggtags-tools.el" jf/emacs-dir))
+  (jf/load-module (expand-file-name "major-modes/gpt-tools/org-roam-tools.el" jf/emacs-dir))
+  (jf/load-module (expand-file-name "major-modes/gpt-tools/meta-tools.el" jf/emacs-dir))
+
+  ;; Load community tools (other than gptel-agent which is loaded above)
+  (jf/load-module (expand-file-name "major-modes/gpt-tools/community-tools.el" jf/emacs-dir))
+
+  ;; Scan and register agents from all configured directories
+  (gptel-agent-update))
+#+end_src
+
+** Agent Skills Integration
+
+Allow agents to reference skills via =@mention= syntax in their system prompts.
+Skills provide reusable knowledge modules that can be injected into agent contexts.
+
+#+begin_src emacs-lisp
+(defun jf/gptel-agent--expand-skills (system-text)
+  "Expand @skill mentions in SYSTEM-TEXT using gptel-skills.
+Returns updated system text with skill content injected.
+If skills system not loaded or no mentions found, returns text unchanged."
+  (if (and (fboundp 'jf/gptel-skills--detect-mentions)
+           (boundp 'jf/gptel-skills--registry)
+           (string-match-p "@" system-text))
+      (with-temp-buffer
+        (insert system-text)
+        (let* ((mentions-data (jf/gptel-skills--detect-mentions (current-buffer)))
+               (skill-names (mapcar #'car mentions-data)))
+          (when skill-names
+            ;; For each unique skill, replace @mention with content
+            (dolist (skill-name (delete-dups skill-names))
+              (let* ((metadata (gethash skill-name jf/gptel-skills--registry))
+                     (skill-path (plist-get metadata :path))
+                     (skill-content (when skill-path
+                                     (jf/gptel-skills--parse-content skill-path))))
+                (when skill-content
+                  (goto-char (point-min))
+                  (while (re-search-forward
+                          (concat "@" (regexp-quote skill-name) "\\>")
+                          nil t)
+                    (replace-match skill-content t t))))))
+          (buffer-string)))
+    ;; No skills system or no mentions - return unchanged
+    system-text))
+
+(defun jf/gptel-agent--expand-all-agent-skills ()
+  "Expand @skill mentions in all registered agent system prompts.
+Run this after gptel-agent-update to inject skill content into agents."
+  (when (and (boundp 'gptel-agent--agents)
+             (fboundp 'jf/gptel-skills--discover))
+    ;; Ensure skills are discovered first
+    (jf/gptel-skills--discover)
+
+    ;; Process each agent
+    (dolist (agent-entry gptel-agent--agents)
+      (let* ((agent-name (car agent-entry))
+             (plist (cdr agent-entry))
+             (system (plist-get plist :system)))
+        (when (and system (stringp system))
+          (let ((expanded (jf/gptel-agent--expand-skills system)))
+            (unless (string= expanded system)
+              (plist-put plist :system expanded)
+              (when jf/gptel-skills-verbose
+                (message "Expanded skills in agent: %s" agent-name)))))))))
+
+;; Hook into gptel-agent-update to auto-expand skills
+(with-eval-after-load 'gptel-agent
+  (advice-add 'gptel-agent-update :after #'jf/gptel-agent--expand-all-agent-skills))
+#+end_src
+
+* GPTEL Tools (Legacy Loading)
+The subagent-tools module is deprecated in favor of gptel-agent's file-based approach.
+See the GPTEL Agent section above for the new architecture.
+
+#+begin_src emacs-lisp
+;; DEPRECATED: Legacy subagent implementation
+;; Kept for reference only - functionality replaced by gptel-agent
+;; (jf/load-module (expand-file-name "major-modes/gpt-tools/subagent-tools.el" jf/emacs-dir))
 
 ;; Load skills system
 (jf/load-module (expand-file-name "major-modes/gptel-skills.el" jf/emacs-dir))
