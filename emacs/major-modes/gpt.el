@@ -30,19 +30,23 @@
     :key (lambda () (auth-source-pick-first-password :host "api.perplexity.ai"))
     :stream t)
   
-  ;; Configure Anthropic backend for Claude Sonnet
+  ;; Configure Anthropic backend with curated Claude 4.5 models
+  ;; Includes lightweight (Haiku), balanced (Sonnet), and heavyweight (Opus) options
   (gptel-make-anthropic "Claude"
     :stream t
-    :key (lambda () (auth-source-pick-first-password :host "api.anthropic.com")))
-  
-  ;; Configure Anthropic backend for Claude 3.7 Sonnet with thinking mode
+    :key (lambda () (auth-source-pick-first-password :host "api.anthropic.com"))
+    :models '(claude-haiku-4-5-20251001      ; Fast & economical for simple tasks
+              claude-sonnet-4-5-20250929     ; Balanced for most use cases
+              claude-opus-4-5-20251101))     ; Most capable for complex reasoning
+
+  ;; Configure Claude Sonnet 4.5 with extended thinking mode for complex problems
+  ;; Thinking mode provides detailed reasoning before answering
   (gptel-make-anthropic "Claude-thinking"
     :key (lambda () (auth-source-pick-first-password :host "api.anthropic.com"))
     :stream t
-    :models '(claude-3-7-sonnet-20250219)
+    :models '(claude-sonnet-4-5-20250929)
     :header (lambda ()
               (let ((key (gptel--get-api-key
-                          ;; Explicitly use the same key function as defined above
                           (lambda () (auth-source-pick-first-password :host "api.anthropic.com")))))
                 `(("x-api-key" . ,key)
                   ("anthropic-version" . "2023-06-01")
