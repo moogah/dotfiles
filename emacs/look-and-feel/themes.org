@@ -34,7 +34,11 @@ Install a selection of popular themes.
 (use-package distinguished-theme
   :straight t)
 (use-package doom-themes
-  :straight t)
+  :straight t
+  :init
+  ;; Enable bold and italic (set before theme loads)
+  (setq doom-themes-enable-bold t
+        doom-themes-enable-italic t))
 (use-package nano-theme
   :straight (nano-theme :type git :host github :repo "rougier/nano-theme"))
 (use-package timu-macos-theme
@@ -55,7 +59,15 @@ Set the active theme.
   ;; doom-laserwave
   ;; doom-moonlight
   ;; doom-palenight
-  (load-theme 'doom-palenight t)
+
+  ;; Load theme after Emacs fully starts to ensure all UI elements are initialized
+  ;; This fixes issues with doom themes not applying colors correctly on startup
+  (add-hook 'emacs-startup-hook
+            (lambda ()
+              (load-theme 'doom-palenight t)
+              ;; Apply doom-themes configuration after theme loads
+              (doom-themes-org-config)))
+
   ;; (load-theme 'distinguished)
   ;; (enable-theme 'distinguished)
   ;;(set-background-color "black")
@@ -94,10 +106,27 @@ Custom adjustments to the active theme (currently commented out).
 * Font Configuration
 Configure the default font.
 
+NOTE: This configuration uses `setq` to replace `default-frame-alist` which discards
+the frame size settings from core/defaults. This is not ideal, but necessary because:
+- Using `add-to-list` (with or without append) causes theme faces to render with
+  incorrect/low-contrast colors on startup
+- The issue affects multiple themes (doom-palenight, distinguished, etc.)
+- Theme colors render correctly when manually switching themes with consult-theme
+- Root cause: Unknown interaction between font parameter position in default-frame-alist
+  and theme face initialization
+- Attempted fixes that didn't work:
+  * `add-to-list` prepending (adds to beginning)
+  * `add-to-list` with append flag (adds to end)
+  * `frame-resize-pixelwise` disabled (was causing bug#38497)
+  * Loading theme in `emacs-startup-hook`
+  * `set-face-attribute` approaches
+
+TODO: Investigate proper font setting approach that doesn't interfere with themes
+or find alternative way to preserve frame size settings from core/defaults.
+
 #+begin_src emacs-lisp
 ;; set font size to 14pt for my aging eyes
-;; Add font to existing default-frame-alist instead of replacing it
-(add-to-list 'default-frame-alist '(font . "Menlo-14"))
+(setq default-frame-alist '((font . "Menlo-14")))
 #+end_src
 
 * Usage Notes

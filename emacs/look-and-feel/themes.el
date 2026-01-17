@@ -17,7 +17,11 @@
 (use-package distinguished-theme
   :straight t)
 (use-package doom-themes
-  :straight t)
+  :straight t
+  :init
+  ;; Enable bold and italic (set before theme loads)
+  (setq doom-themes-enable-bold t
+        doom-themes-enable-italic t))
 (use-package nano-theme
   :straight (nano-theme :type git :host github :repo "rougier/nano-theme"))
 (use-package timu-macos-theme
@@ -33,11 +37,18 @@
 ;; doom-laserwave
 ;; doom-moonlight
 ;; doom-palenight
-(load-theme 'doom-palenight t)
+
+;; Load theme after Emacs fully starts to ensure all UI elements are initialized
+;; This fixes issues with doom themes not applying colors correctly on startup
+(add-hook 'emacs-startup-hook
+          (lambda ()
+            (load-theme 'doom-palenight t)
+            ;; Apply doom-themes configuration after theme loads
+            (doom-themes-org-config)))
+
 ;; (load-theme 'distinguished)
 ;; (enable-theme 'distinguished)
 ;;(set-background-color "black")
 
 ;; set font size to 14pt for my aging eyes
-;; Add font to existing default-frame-alist instead of replacing it
-(add-to-list 'default-frame-alist '(font . "Menlo-14"))
+(setq default-frame-alist '((font . "Menlo-14")))

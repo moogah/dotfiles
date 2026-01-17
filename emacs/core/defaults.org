@@ -42,8 +42,10 @@ Configure the initial and default frame size and position.
 ;; Apply to the initial frame too
 (setq initial-frame-alist default-frame-alist)
 
-;; Allow frame resizing by pixels for precise sizing
-(setq frame-resize-pixelwise t)
+;; NOTE: frame-resize-pixelwise disabled due to bug#38497
+;; Setting this to t can cause theme faces not to render correctly
+;; when combined with custom fonts and certain themes
+;; (setq frame-resize-pixelwise t)
 #+end_src
 
 * Basic UI Settings
