@@ -23,24 +23,11 @@ All tools are configured with confirmation enabled by default for security.
 
 * GPTEL Agent
 
-Provides agentic tools for autonomous task execution including:
-- Web search and URL fetching
-- File operations (read, write, edit)
-- Emacs state access and elisp evaluation
-- Bash command execution
+NOTE: gptel-agent configuration has been moved to =major-modes/gpt.org= to properly
+configure the agent directory and tool loading order. See the "GPTEL Agent" section
+in gpt.org for the current configuration.
 
 From: https://github.com/karthink/gptel-agent
-
-#+begin_src emacs-lisp
-(use-package gptel-agent
-  :straight t
-  :after gptel
-  :demand t
-  :config
-  ;; Most actions require confirmation by default (preserved for safety)
-  ;; Read-only operations (web search, file reading) don't require confirmation
-  )
-#+end_src
 
 * GPTEL Org Tools
 

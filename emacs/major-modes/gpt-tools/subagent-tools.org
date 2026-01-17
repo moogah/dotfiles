@@ -1,13 +1,73 @@
-#+title: GPTEL Subagent Tools
+#+title: GPTEL Subagent Tools (DEPRECATED)
 #+author: Jeff Farr
-#+property: header-args:emacs-lisp :tangle subagent-tools.el
-#+auto_tangle: y
+#+property: header-args:emacs-lisp :tangle no
+#+auto_tangle: no
 
-* Introduction
+* DEPRECATED - Legacy Implementation
 
-Tools for subagent delegation within gptel sessions. This enables primary agents
+**This file has been superseded by gptel-agent integration.**
+
+This file contains a legacy custom subagent implementation that is preserved
+for reference only. The functionality has been replaced by integrating the
+gptel-agent package with custom agent definitions.
+
+** Why Deprecated
+
+The gptel-agent package provides superior implementation:
+- *Proven invisible execution* - No buffer clutter from subagent execution
+- *File-based agent definitions* - Agents defined in markdown/org files with YAML frontmatter
+- *Robust FSM and callback handling* - 500+ lines of battle-tested state management
+- *Standard "Agent" tool* - Consistent with upstream gptel ecosystem
+- *Template system* - Dynamic agent discovery via {{AGENTS}} templates
+- *Community alignment* - Uses patterns others can understand and extend
+
+Our custom implementation had significant limitations:
+- *Visible buffers* - Created `*gptel-subagent-*` buffers that cluttered the UI
+- *Hardcoded presets* - Used `gptel-make-preset` directly in elisp, not file-based
+- *Custom tool* - `invoke_subagent` duplicated functionality of gptel-agent's "Agent" tool
+- *Complex manual FSM* - Callback logic was error-prone and hard to maintain
+
+** Migration Guide
+
+Use the "Agent" tool with agents defined in `emacs/major-modes/gpt-tools/agents/`:
+
+- *explorer* - Read-only code exploration (filesystem, projectile, ggtags tools)
+- *planner* - Planning and requirements gathering (can delegate to explorer)
+- *executor* - Autonomous execution with file modifications
+- *researcher* - Web research and documentation (from gptel-agent)
+- *introspector* - Emacs/elisp introspection (from gptel-agent)
+
+See `emacs/major-modes/gpt-tools/README.org` for complete documentation.
+
+** Agent Definition Example
+
+#+begin_example
+---
+name: my-agent
+description: Brief description of agent purpose
+tools:
+  - Glob
+  - Read
+  - my_custom_tool
+backend: Claude
+model: claude-3-7-sonnet-20250219
+temperature: 0.5
+---
+
+You are a custom agent...
+
+<agent instructions here>
+#+end_example
+
+Run `(gptel-agent-update)` to register the agent.
+
+* Legacy Implementation (Reference Only)
+
+The code below is kept for reference but is no longer loaded.
+
+Tools for subagent delegation within gptel sessions. This enabled primary agents
 to delegate specialized tasks to isolated subagents (Explore and Plan types) that
-run with their own tool sets, models, and configurations.
+ran with their own tool sets, models, and configurations.
 
 ** Architecture
 

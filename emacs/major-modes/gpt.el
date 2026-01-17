@@ -58,14 +58,83 @@
     :stream t
     :models '(gpt-4o gpt-4o-mini gpt-4-turbo gpt-3.5-turbo)))
 
-;; Load individual tool modules
-(jf/load-module (expand-file-name "major-modes/gpt-tools/filesystem-tools.el" jf/emacs-dir))
-(jf/load-module (expand-file-name "major-modes/gpt-tools/meta-tools.el" jf/emacs-dir))
-(jf/load-module (expand-file-name "major-modes/gpt-tools/community-tools.el" jf/emacs-dir))
-(jf/load-module (expand-file-name "major-modes/gpt-tools/org-roam-tools.el" jf/emacs-dir))
-(jf/load-module (expand-file-name "major-modes/gpt-tools/projectile-tools.el" jf/emacs-dir))
-(jf/load-module (expand-file-name "major-modes/gpt-tools/ggtags-tools.el" jf/emacs-dir))
-(jf/load-module (expand-file-name "major-modes/gpt-tools/subagent-tools.el" jf/emacs-dir))
+(use-package gptel-agent
+  :straight t
+  :after gptel
+  :demand t
+  :config
+  ;; Add our custom agent directory to the scan path
+  (add-to-list 'gptel-agent-dirs
+               (expand-file-name "major-modes/gpt-tools/agents/" jf/emacs-dir))
+
+  ;; Load custom tools BEFORE agent update so agents can reference them
+  (jf/load-module (expand-file-name "major-modes/gpt-tools/filesystem-tools.el" jf/emacs-dir))
+  (jf/load-module (expand-file-name "major-modes/gpt-tools/projectile-tools.el" jf/emacs-dir))
+  (jf/load-module (expand-file-name "major-modes/gpt-tools/ggtags-tools.el" jf/emacs-dir))
+  (jf/load-module (expand-file-name "major-modes/gpt-tools/org-roam-tools.el" jf/emacs-dir))
+  (jf/load-module (expand-file-name "major-modes/gpt-tools/meta-tools.el" jf/emacs-dir))
+
+  ;; Load community tools (other than gptel-agent which is loaded above)
+  (jf/load-module (expand-file-name "major-modes/gpt-tools/community-tools.el" jf/emacs-dir))
+
+  ;; Scan and register agents from all configured directories
+  (gptel-agent-update))
+
+(defun jf/gptel-agent--expand-skills (system-text)
+  "Expand @skill mentions in SYSTEM-TEXT using gptel-skills.
+Returns updated system text with skill content injected.
+If skills system not loaded or no mentions found, returns text unchanged."
+  (if (and (fboundp 'jf/gptel-skills--detect-mentions)
+           (boundp 'jf/gptel-skills--registry)
+           (string-match-p "@" system-text))
+      (with-temp-buffer
+        (insert system-text)
+        (let* ((mentions-data (jf/gptel-skills--detect-mentions (current-buffer)))
+               (skill-names (mapcar #'car mentions-data)))
+          (when skill-names
+            ;; For each unique skill, replace @mention with content
+            (dolist (skill-name (delete-dups skill-names))
+              (let* ((metadata (gethash skill-name jf/gptel-skills--registry))
+                     (skill-path (plist-get metadata :path))
+                     (skill-content (when skill-path
+                                     (jf/gptel-skills--parse-content skill-path))))
+                (when skill-content
+                  (goto-char (point-min))
+                  (while (re-search-forward
+                          (concat "@" (regexp-quote skill-name) "\\>")
+                          nil t)
+                    (replace-match skill-content t t))))))
+          (buffer-string)))
+    ;; No skills system or no mentions - return unchanged
+    system-text))
+
+(defun jf/gptel-agent--expand-all-agent-skills ()
+  "Expand @skill mentions in all registered agent system prompts.
+Run this after gptel-agent-update to inject skill content into agents."
+  (when (and (boundp 'gptel-agent--agents)
+             (fboundp 'jf/gptel-skills--discover))
+    ;; Ensure skills are discovered first
+    (jf/gptel-skills--discover)
+
+    ;; Process each agent
+    (dolist (agent-entry gptel-agent--agents)
+      (let* ((agent-name (car agent-entry))
+             (plist (cdr agent-entry))
+             (system (plist-get plist :system)))
+        (when (and system (stringp system))
+          (let ((expanded (jf/gptel-agent--expand-skills system)))
+            (unless (string= expanded system)
+              (plist-put plist :system expanded)
+              (when jf/gptel-skills-verbose
+                (message "Expanded skills in agent: %s" agent-name)))))))))
+
+;; Hook into gptel-agent-update to auto-expand skills
+(with-eval-after-load 'gptel-agent
+  (advice-add 'gptel-agent-update :after #'jf/gptel-agent--expand-all-agent-skills))
+
+;; DEPRECATED: Legacy subagent implementation
+;; Kept for reference only - functionality replaced by gptel-agent
+;; (jf/load-module (expand-file-name "major-modes/gpt-tools/subagent-tools.el" jf/emacs-dir))
 
 ;; Load skills system
 (jf/load-module (expand-file-name "major-modes/gptel-skills.el" jf/emacs-dir))

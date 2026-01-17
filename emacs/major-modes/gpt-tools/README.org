@@ -209,151 +209,251 @@ For long-running operations, mark the tool as =:async t=. The function should:
  :async t)  ; Mark as async
 #+end_src
 
-* Subagent Tools
+* Subagent System
 
 ** Overview
 
-Subagent tools enable LLM agents to delegate specialized tasks to isolated subagents
-running in their own contexts with dedicated tool sets and configurations. This allows
-complex tasks to be broken down into focused subtasks handled by specialized agents.
+The subagent system enables LLM agents to delegate specialized tasks to isolated subagents
+that run with dedicated tool sets, models, and configurations. This preserves the primary
+agent's context window by offloading complex subtasks to specialized agents that return
+concise summaries.
+
+Built on [[https://github.com/karthink/gptel-agent][gptel-agent]] infrastructure for robust, battle-tested subagent execution.
 
 ** Architecture
 
-Subagents run in visible buffers with complete state isolation:
+*File-Based Agent Definitions*: Agents are defined in markdown/org files with YAML frontmatter
 
-- *FSM Isolation*: Each subagent gets its own =gptel-fsm= instance
-- *Buffer-Local State*: Separate tools, backend, model, and system message
-- *Async Execution*: Subagents stream results back via callbacks
-- *Profile-Based*: Reusable configurations defined with =gptel-make-preset=
-- *Visible Buffers*: Named =*gptel-subagent-PROFILE-TIMESTAMP*= for easy inspection
+*Invisible Execution*: Subagents run in the background without creating visible buffers
 
-** Available Subagent Profiles
+*Standard Tool*: Use the =Agent= tool (from gptel-agent) to invoke subagents
 
-*** explore-agent
+*Complete Isolation*: Each subagent gets its own:
+- FSM (finite state machine) instance for state management
+- Tool set (defined in agent file)
+- Backend and model configuration
+- System prompt with specialized instructions
+- Optional skills integration via =@mention= syntax
 
-Read-only code exploration and semantic analysis agent.
+** Available Agents
 
-*Tools*:
-- Filesystem: =read_file=, =list_directory=
-- Projectile: =list_known_projects=, =get_project_info=, =list_project_files=
-- Ggtags: =find_definition=, =find_references=, =find_symbol=
-- Web: =web_search=, =read_url=
+*** explorer
+
+Read-only code exploration and semantic analysis.
+
+*Tools*: Glob, Grep, Read, list_known_projects, get_project_info, list_project_files,
+search_project_content, check_ggtags_project, find_definition, find_references, find_symbol
+
+*Model*: claude-3-7-sonnet-20250219 (temperature: 0.5)
 
 *Use Cases*:
 - Analyzing code structure and organization
 - Understanding implementations and architectures
 - Tracing dependencies and data flow
-- Gathering information about unfamiliar codebases
+- Finding where functionality is implemented
+- Semantic code navigation with ggtags
 
-*** plan-agent
+*Location*: =emacs/major-modes/gpt-tools/agents/explorer.md=
 
-Planning and requirements gathering agent with delegation capability.
+*** planner
 
-*Tools*:
-- Delegation: =invoke_subagent= (can invoke explore-agent)
-- Basic: =read_file=, =list_directory=
+Planning and requirements gathering with delegation capability.
+
+*Tools*: Agent (can delegate to other agents), Glob, Grep, Read
+
+*Model*: claude-3-7-sonnet-20250219 (temperature: 0.7)
 
 *Use Cases*:
 - Developing implementation plans
-- Gathering requirements through dialog
-- Breaking down complex tasks
-- Coordinating multiple exploration tasks
+- Breaking down complex tasks into steps
+- Gathering requirements and identifying constraints
+- Coordinating exploration via delegation to explorer/researcher
+- Considering architectural trade-offs
 
-** Usage Example
+*Location*: =emacs/major-modes/gpt-tools/agents/planner.md=
 
-Primary agent delegates to subagent:
+*** executor
 
-#+begin_src emacs-lisp
-;; LLM calls this tool
-invoke_subagent(
-  agent_profile="explore-agent",
-  task_description="Analyze the authentication system in /path/to/project. Identify key functions, security patterns, and data flow.",
-  context_files=["/path/to/project/auth.el", "/path/to/project/session.el"]
+Autonomous execution with file modification capabilities.
+
+*Tools*: Agent, TodoWrite, Glob, Grep, Read, Insert, Edit, Write, Mkdir, Eval, Bash,
+WebSearch, WebFetch, YouTube, list_known_projects, get_project_info, list_project_files,
+search_project_content
+
+*Model*: claude-3-7-sonnet-20250219 (temperature: 0.3)
+
+*Special Features*: Includes guidance on Emacs literate programming (edit .org files, not .el)
+
+*Use Cases*:
+- Autonomous execution of well-defined tasks
+- File modifications (create, edit, write)
+- Running commands, tests, builds
+- Multi-step tasks with TodoWrite planning
+- Delegates to explorer/researcher when needs investigation
+
+*Location*: =emacs/major-modes/gpt-tools/agents/executor.md=
+
+*** researcher (from gptel-agent)
+
+Web research and codebase exploration for information gathering.
+
+*Tools*: Glob, Grep, Read, WebSearch, WebFetch, YouTube
+
+*Use Cases*:
+- Searching the web for documentation and solutions
+- Research best practices and current information
+- Codebase exploration (alternative to explorer agent)
+- Multi-source information synthesis
+
+*** introspector (from gptel-agent)
+
+Emacs and elisp introspection specialist.
+
+*Use Cases*:
+- Understanding elisp APIs and Emacs internals
+- Exploring Emacs state and package functionality
+- Documenting Emacs built-in functions
+
+** Usage
+
+*** Basic Invocation
+
+Invoke agents via the =Agent= tool in gptel:
+
+#+begin_example
+Agent(
+  subagent_type="explorer",
+  description="Understand authentication system",
+  prompt="Analyze the authentication implementation in this codebase.
+         Find the key modules, trace the login flow, and identify security patterns."
 )
-#+end_src
+#+end_example
 
-The subagent will:
-1. Run in isolated context with read-only tools
-2. Read specified files
-3. Navigate code structure
-4. Use semantic tools as needed
-5. Return final analysis summary
+*** Delegation Chains
 
-** Nested Delegation
-
-Plan agent can invoke explore agent for code investigation:
+Agents can delegate to other agents:
 
 #+begin_example
 Primary Agent
-  └─> plan-agent: "Develop implementation plan for feature X"
-       └─> explore-agent: "Analyze existing authentication patterns"
-       └─> explore-agent: "Find all database access points"
+  └─> planner: "Design implementation for feature X"
+       └─> explorer: "Find existing authentication patterns"
+       └─> researcher: "Research OAuth 2.0 best practices"
 #+end_example
 
-*Depth Limit*: Maximum delegation depth is 3 levels (configurable via =jf/gptel-max-delegation-depth=)
+The planner agent automatically has access to the =Agent= tool for delegation.
 
-** Dialog Coordination
+*** Result Format
 
-When plan-agent needs user input, it includes questions in its result. The primary
-agent should forward these questions to you.
-
-Example result from plan-agent:
+Subagents return only their final response (not full conversation history):
 
 #+begin_example
-=== Subagent Result ===
-Agent: plan-agent
-Task: Develop authentication plan
+[executor] result for task: Create authentication module
 
-Based on exploration, I've identified two approaches:
+Created authentication module with the following components:
+- auth.org (source file)
+- auth.el (tangled output)
+- Functions: jf/auth-login, jf/auth-logout, jf/auth-verify-token
+- Validation passed (check-parens)
 
-1. Token-based (JWT) - stateless, scalable
-2. Session-based - simpler, server-managed state
-
-Questions for user:
-- Do you need mobile client support? (JWT recommended)
-- What's your expected user scale? (<1000 users: sessions fine, >10k: JWT better)
-- Do you have Redis/Memcached available? (needed for distributed sessions)
-
-Once I know your answers, I can finalize the implementation plan.
-=== End Subagent Result ===
+Files modified:
+- emacs/core/auth.org
+- emacs/core/auth.el
 #+end_example
 
-** Result Format
+** Creating Custom Agents
 
-Subagents return final responses only (not full conversation history). Results are
-formatted with clear delimiters:
+*** Agent Definition Format
 
-- Agent profile name
-- Task description
-- Final response/summary
+Create a markdown or org file in =emacs/major-modes/gpt-tools/agents/=:
 
-This keeps context manageable while providing the primary agent with actionable information.
+#+begin_example
+---
+name: my-agent
+description: >
+  Brief description of agent purpose and capabilities.
+  Used in agent selection UI.
+tools:
+  - Glob
+  - Read
+  - my_custom_tool
+backend: Claude
+model: claude-3-7-sonnet-20250219
+temperature: 0.5
+---
 
-** Security
+You are a custom agent for <specific purpose>.
 
-- Subagent invocation requires confirmation (=:confirm t=)
-- Explore agent has read-only tools only
-- Recursion prevented via depth tracking
-- Subagent buffers remain open for inspection (kill manually when done)
+<core_responsibilities>
+- Responsibility 1
+- Responsibility 2
+</core_responsibilities>
+
+<tool_usage_guidelines>
+Specific guidance on when and how to use tools...
+</tool_usage_guidelines>
+
+<output_requirements>
+Format expectations for results...
+</output_requirements>
+#+end_example
+
+*** Skills Integration
+
+Agents can reference skills via =@mention= syntax:
+
+#+begin_example
+---
+name: emacs-expert
+description: Emacs configuration specialist
+---
+
+@emacs-literate-programming
+@emacs-modular-config
+
+You are an Emacs configuration expert...
+#+end_example
+
+When =gptel-agent-update= runs, =@mentions= are automatically expanded with skill content.
+
+*** Register New Agent
+
+After creating the agent file, register it:
+
+#+begin_src emacs-lisp
+(gptel-agent-update)  ; Scans agent directories and registers new agents
+#+end_src
+
+The agent will now appear in the =Agent= tool's enum list.
+
+*** Project-Specific Agents
+
+Agents can also be defined in =.agents/= directories within project roots.
+gptel-agent will scan these locations automatically.
 
 ** Configuration
 
-Subagent profiles are defined in =subagent-tools.org= using =gptel-make-preset=:
+Agent directory is configured in =emacs/major-modes/gpt.org=:
 
 #+begin_src emacs-lisp
-(gptel-make-preset 'explore-agent
-  :description "Read-only code exploration"
-  :backend "Claude"
-  :model 'claude-3-7-sonnet-20250219
-  :system "You are an exploration agent..."
-  :tools '("read_file" "list_directory" ...)
-  :temperature 0.5)
+(add-to-list 'gptel-agent-dirs
+             (expand-file-name "major-modes/gpt-tools/agents/" jf/emacs-dir))
 #+end_src
 
-To add new subagent types:
-1. Define profile with =gptel-make-preset=
-2. Add to =invoke_subagent= tool's =:enum= list
-3. Document expected behavior
+** Comparison to Legacy Implementation
+
+Previous custom implementation (now deprecated):
+- Created visible buffers (=*gptel-subagent-*=)
+- Hardcoded presets in elisp
+- Custom =invoke_subagent= tool
+- Manual FSM and callback management
+
+Current gptel-agent implementation:
+- Invisible background execution
+- File-based agent definitions
+- Standard =Agent= tool
+- Proven FSM and state management
+- Skills integration support
+- Template system for agent discovery
 
 * Organization
 
@@ -364,8 +464,18 @@ Tools are organized by category in separate files:
 - =ggtags-tools.org= :: Semantic code navigation using GNU Global
 - =org-roam-tools.org= :: Knowledge management and note operations
 - =meta-tools.org= :: Tools for generating new tools
-- =subagent-tools.org= :: Delegation to specialized subagents
 - =community-tools.org= :: External tool packages (gptel-agent, ragmacs, etc.)
+
+Agent definitions:
+
+- =agents/= :: Directory containing agent definition files (markdown/org with YAML frontmatter)
+  - =explorer.md= :: Read-only code exploration agent
+  - =planner.md= :: Planning and requirements gathering agent
+  - =executor.md= :: Autonomous execution agent with file modifications
+
+Deprecated files:
+
+- =subagent-tools.org= :: Legacy subagent implementation (superseded by gptel-agent integration)
 
 Each =.org= file tangles to a =.el= file that is loaded by =major-modes/gpt.org=.
 

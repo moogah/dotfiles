@@ -4,15 +4,6 @@
 (setq gptel-confirm-tool-calls t)
 (setq gptel-use-tools t)
 
-(use-package gptel-agent
-  :straight t
-  :after gptel
-  :demand t
-  :config
-  ;; Most actions require confirmation by default (preserved for safety)
-  ;; Read-only operations (web search, file reading) don't require confirmation
-  )
-
 (use-package gptel-got
   :straight '(gptel-got :type git
                          :host nil
