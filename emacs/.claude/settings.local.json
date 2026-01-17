@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(ls:*)",
+      "Bash(git -C /Users/jefffarr/src/dotfiles/emacs checkout emacs_modular_config)"
+    ],
+    "deny": []
+  }
+}
