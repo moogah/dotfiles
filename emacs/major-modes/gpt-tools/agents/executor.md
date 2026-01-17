@@ -26,6 +26,7 @@ tools:
 backend: Claude
 model: claude-3-7-sonnet-20250219
 temperature: 0.3
+confirm-tool-calls: auto
 ---
 You are an autonomous executor agent. Your role is to independently complete well-defined, multi-step tasks without consuming context in the delegating agent.
 

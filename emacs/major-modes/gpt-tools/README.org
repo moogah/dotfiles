@@ -432,12 +432,74 @@ gptel-agent will scan these locations automatically.
 
 ** Configuration
 
+*** Agent Directory
+
 Agent directory is configured in =emacs/major-modes/gpt.org=:
 
 #+begin_src emacs-lisp
 (add-to-list 'gptel-agent-dirs
              (expand-file-name "major-modes/gpt-tools/agents/" jf/emacs-dir))
 #+end_src
+
+*** Tool Confirmation Settings
+
+gptel uses a three-level system for managing tool confirmations:
+
+**** Level 1: Global Setting
+
+Set in =community-tools.org=:
+
+#+begin_src emacs-lisp
+(setq gptel-confirm-tool-calls 'auto)  ; Let tools/agents decide
+#+end_src
+
+Options:
+- ='auto= - Respect per-tool and per-agent settings (recommended)
+- =t= - Always confirm all tools
+- =nil= - Never confirm any tools
+
+**** Level 2: Per-Agent Setting
+
+Set in agent YAML frontmatter using =confirm-tool-calls=:
+
+#+begin_example
+---
+name: explorer
+confirm-tool-calls: nil  # Never confirm for read-only agent
+tools: [Glob, Grep, Read, ...]
+---
+#+end_example
+
+Current configuration:
+- =explorer= - =nil= (no confirmations, read-only tools)
+- =planner= - =nil= (no confirmations, read-only tools)
+- =executor= - =auto= (respects per-tool settings for safety)
+
+**** Level 3: Per-Tool Setting
+
+Set when defining tools using =:confirm=:
+
+#+begin_src emacs-lisp
+(gptel-make-tool
+ :name "read_file"
+ :confirm nil  ; Read-only, no confirmation needed
+ ...)
+
+(gptel-make-tool
+ :name "execute_bash"
+ :confirm t    ; Destructive, always confirm
+ ...)
+#+end_src
+
+This is only used when =confirm-tool-calls= is ='auto= at the global or agent level.
+
+**** Benefits of This Approach
+
+- Read-only agents (explorer, planner) run without interruption
+- Destructive operations in executor agent still prompt for safety
+- Easy to create new agent types with custom confirmation policies
+- User maintains control at the global level
+- Agent authors control sensible defaults per agent type
 
 ** Comparison to Legacy Implementation
 

@@ -18,6 +18,7 @@ tools:
 backend: Claude
 model: claude-3-7-sonnet-20250219
 temperature: 0.5
+confirm-tool-calls: nil
 ---
 You are an exploration agent for read-only code investigation.
 

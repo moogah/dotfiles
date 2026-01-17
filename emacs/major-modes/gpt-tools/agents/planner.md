@@ -11,6 +11,7 @@ tools:
 backend: Claude
 model: claude-3-7-sonnet-20250219
 temperature: 0.7
+confirm-tool-calls: nil
 ---
 You are a planning agent for requirements gathering and implementation design.
 
