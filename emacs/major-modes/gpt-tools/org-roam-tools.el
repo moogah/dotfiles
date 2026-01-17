@@ -529,7 +529,110 @@ After creation, use read_roam_node to verify the node, or link_roam_nodes to con
                :optional t
                :description "If true, capture gptel session metadata (session_id, agent, model, backend) as properties"))
  :category "org-roam"
- :confirm t)
+ :confirm nil)
+
+(gptel-make-tool
+ :name "create_reference_node"
+ :function (lambda (url title summary &optional tags capture-session-metadata)
+             (let* ((slug (org-roam-node-slug (org-roam-node-create :title title)))
+                    (filename (format "%s-%s.org"
+                                     (format-time-string "%Y%m%d%H%M%S")
+                                     slug))
+                    (target-dir (expand-file-name "reference" org-roam-directory))
+                    (filepath (expand-file-name filename target-dir))
+                    (id (org-id-new))
+                    (session-ctx (when capture-session-metadata
+                                   (jf/gptel--get-session-context))))
+
+               ;; Ensure target directory exists
+               (unless (file-directory-p target-dir)
+                 (make-directory target-dir t))
+
+               ;; Create the reference node file
+               (with-temp-file filepath
+                 (insert (format ":PROPERTIES:\n:ID:       %s\n" id))
+
+                 ;; Add ROAM_REFS property for the URL
+                 (insert (format ":ROAM_REFS: %s\n" url))
+
+                 ;; Add gptel session metadata if requested and available
+                 (when session-ctx
+                   (when-let ((session-id (plist-get session-ctx :session-id)))
+                     (insert (format ":GPTEL_SESSION: %s\n" session-id)))
+                   (when-let ((agent (plist-get session-ctx :agent-name)))
+                     (insert (format ":GPTEL_AGENT: %s\n" agent)))
+                   (when-let ((model (plist-get session-ctx :model)))
+                     (insert (format ":GPTEL_MODEL: %s\n" model)))
+                   (when-let ((backend (plist-get session-ctx :backend)))
+                     (insert (format ":GPTEL_BACKEND: %s\n" backend)))
+                   (when-let ((timestamp (plist-get session-ctx :timestamp)))
+                     (insert (format ":GPTEL_CREATED: %s\n" timestamp))))
+
+                 (insert ":END:\n")
+                 (insert (format "#+title: %s\n" title))
+
+                 (when tags
+                   (insert (format "#+filetags: :%s:\n" (mapconcat 'identity tags ":"))))
+
+                 (insert "\n")
+                 (insert "* Summary\n\n")
+                 (insert summary)
+                 (insert "\n"))
+
+               ;; Update org-roam database
+               (org-roam-db-update-file filepath)
+
+               (format "Created reference node:\n\nTitle: %s\nID: %s\nURL: %s\nFile: %s\nTags: %s%s\n\n[Use read_roam_node to view the reference, or link_roam_nodes to connect it to other nodes]"
+                      title
+                      id
+                      url
+                      filepath
+                      (if tags (mapconcat 'identity tags ", ") "none")
+                      (if session-ctx
+                          (format "\nSession metadata captured: %s"
+                                 (plist-get session-ctx :session-id))
+                        ""))))
+ :description "Create a reference node that summarizes external source material.
+
+Reference nodes are specialized org-roam nodes that capture summaries of external
+resources like web pages, papers, or documentation. They live in the reference/
+subdirectory and use the ROAM_REFS property to link to their source URL.
+
+Use this when:
+- Summarizing a web article, blog post, or documentation page
+- Capturing key points from an academic paper or book
+- Creating a concise summary of any external reference material
+
+The summary should be:
+- Complete but concise (2-5 paragraphs typically)
+- Focused on the key insights or information
+- Written in your own words, not copied verbatim
+- Sufficient to understand the main points without reading the source
+
+Reference nodes can then be linked to your knowledge notes using link_roam_nodes
+to show provenance and enable following sources.
+
+IMPORTANT: This operation creates a new file. Confirm before proceeding."
+ :args (list '(:name "url"
+               :type string
+               :description "URL of the source material (web page, paper, documentation)")
+             '(:name "title"
+               :type string
+               :description "Title for the reference node (usually the source title)")
+             '(:name "summary"
+               :type string
+               :description "Complete but concise summary of the reference content (2-5 paragraphs)")
+             '(:name "tags"
+               :type array
+               :items (:type string)
+               :optional t
+               :description "Tags for categorization (e.g., 'paper', 'documentation', 'article')")
+             '(:name "capture_session_metadata"
+               :type boolean
+               :optional t
+               :description "If true, capture gptel session metadata as properties"))
+ :category "org-roam"
+ :confirm nil)
 
 (gptel-make-tool
  :name "link_roam_nodes"

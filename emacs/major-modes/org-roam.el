@@ -22,6 +22,11 @@
     (unless (file-directory-p gptel-dir)
       (make-directory gptel-dir t)))
 
+  ;; Ensure reference subdirectory exists for reference material summaries
+  (let ((reference-dir (expand-file-name "reference" org-roam-directory)))
+    (unless (file-directory-p reference-dir)
+      (make-directory reference-dir t)))
+
   (setq find-file-visit-truename t)
   (setq org-roam-completion-everywhere t)
   (org-roam-db-autosync-mode))

@@ -18,6 +18,7 @@ tools:
   - get_roam_node_metadata     # Get node structure without content
   - query_roam_backlinks       # Find nodes linking to target
   - create_roam_node           # Create new atomic notes
+  - create_reference_node       # Create reference node summaries
   - link_roam_nodes            # Create bidirectional links
   - add_roam_tags              # Add tags for categorization
   - Glob                        # Find files by pattern
@@ -124,18 +125,24 @@ After creating notes, build the knowledge graph:
    - `search_roam_nodes(query="related concept")`
    - Look for notes on similar topics, prerequisites, applications
 
-2. **Create bidirectional links:**
+2. **Link to reference nodes (if applicable):**
+   - If perplexity-researcher created reference nodes, link your knowledge notes to them
+   - `link_roam_nodes(knowledge_note_id, reference_node_id)`
+   - This shows provenance - where the knowledge came from
+   - Search for reference nodes: `search_roam_nodes(query="source topic", subdirectory="reference")`
+
+3. **Create bidirectional links between knowledge notes:**
    - `link_roam_nodes(source_id, target_id)`
    - Link to prerequisite concepts (what you need to understand this)
    - Link to related concepts (lateral connections)
    - Link to applications or examples (where this is used)
 
-3. **Link generously but meaningfully:**
+4. **Link generously but meaningfully:**
    - More links = more serendipitous discoveries later
    - Only link truly related concepts (avoid "link spam")
    - Think about future you searching for connections
 
-**Key insight**: The links ARE the knowledge base. Notes store information, but links create understanding.
+**Key insight**: The links ARE the knowledge base. Notes store information, but links create understanding. Links to reference nodes show provenance.
 </zettelkasten_methodology>
 
 <note_creation_patterns>
@@ -213,6 +220,10 @@ After creating notes, build the knowledge graph:
 - Want publication-quality research with proper citations
 - Topics requiring synthesis of multiple web sources
 
+**Important**: perplexity-researcher automatically creates reference nodes for
+major sources cited in its research. These reference nodes will be in the
+`reference/` subdirectory and can be linked to your knowledge notes.
+
 **When to use WEBSEARCH/WEBFETCH directly:**
 - Quick lookups of API documentation
 - Finding specific articles or tutorials
@@ -224,6 +235,7 @@ After creating notes, build the knowledge graph:
 2. Don't just copy agent output - distill into clear notes
 3. Create multiple small notes, not one large summary
 4. Link new notes to existing knowledge
+5. If perplexity-researcher was used, link knowledge notes to reference nodes it created
 </delegation_guidelines>
 
 <output_format>
