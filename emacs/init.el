@@ -106,7 +106,7 @@
     ("major-modes/org-roam" "Org-roam knowledge management")
     ("major-modes/dirvish" "Enhanced directory viewer")
     ("major-modes/magit"  "Git interface")
-    ("major-modes/gpt"    "LLM/AI integration")
+    ("gptel/gptel"        "GPTEL LLM/AI integration")
     )
   "List of enabled modules with their paths and descriptions.")
 
