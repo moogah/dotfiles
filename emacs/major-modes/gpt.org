@@ -237,6 +237,13 @@ Run this after gptel-agent-update to inject skill content into agents."
 ;; Hook into gptel-agent-update to auto-expand skills
 (with-eval-after-load 'gptel-agent
   (advice-add 'gptel-agent-update :after #'jf/gptel-agent--expand-all-agent-skills))
+
+;; Disable confirmation for Agent tool (subagent invocations)
+;; The Agent tool by default has :confirm t, but we trust our subagents
+(with-eval-after-load 'gptel-agent-tools
+  (when-let ((agent-tool (gptel-get-tool "Agent")))
+    (setf (gptel-tool-confirm agent-tool) nil)
+    (message "Disabled confirmation for Agent tool")))
 #+end_src
 
 ** Agent Execution Tracing
@@ -1320,6 +1327,308 @@ If NEXT-MESSAGE-TEXT is provided, insert it as the starting prompt for editing."
           (setq found (jf/gptel--find-node-recursive child path (1+ depth)))))
       found)))
 #+end_src
+
+** Session Architecture & Subagent Capture
+
+This section documents how the session system captures complete execution traces
+including all subagent activity, streaming responses, and tool calls.
+
+*** Quick Reference
+
+*What gets captured*:
+- User messages and LLM responses (main conversation)
+- Subagent prompts (what task was delegated)
+- Streaming LLM responses to subagents (real-time chunks)
+- Final results returned from subagents
+- Tool calls with arguments and results
+- Timestamps for every message
+- Trace hierarchy (parent/child relationships)
+
+*Key locations*:
+- Session directory: =~/gptel-sessions/TIMESTAMP-MODEL/=
+- Main metadata: =metadata.json= (conversation tree + agent_traces array)
+- Trace directories: =traces/trace-N/=
+- Trace metadata: =traces/trace-N/metadata.json=
+
+*Browsing traces*:
+#+begin_src bash
+# List all sessions
+ls ~/gptel-sessions/
+
+# View a session's traces
+ls ~/gptel-sessions/20260117-223347-*/traces/
+
+# Read a subagent prompt
+cat ~/gptel-sessions/*/traces/trace-0/prompt.txt
+
+# See streaming responses
+cat ~/gptel-sessions/*/traces/trace-0/response-*.txt
+
+# View trace metadata (timestamps, tool calls)
+cat ~/gptel-sessions/*/traces/trace-0/metadata.json | jq .
+#+end_src
+
+*** Overview
+
+The session system provides:
+- Complete conversation history with message/response pairs
+- Full subagent execution traces (prompts, streaming responses, results)
+- Trace hierarchy tracking (parent/child subagent relationships)
+- Tool call recording with arguments and results
+- Timestamps for every message and response
+- Metadata for session restoration and analysis
+
+*** Execution Flow Diagram
+
+#+begin_example
+User sends prompt
+      ↓
+jf/gptel--inject-session-context (advice #1)
+  - Initialize session if needed
+  - Inject session-id into :context (overlay property or plist)
+      ↓
+jf/gptel--capture-subagent-messages (advice #2)
+  - Wrap callback to intercept responses
+  - Extract session-id from context
+      ↓
+gptel-request (original function)
+  - Process user prompt
+  - LLM decides to use Agent tool
+      ↓
+jf/gptel--trace-agent-task (advice #3)
+  - Create trace entry in registry
+  - Save prompt.txt
+  - Wrap subagent callback
+      ↓
+gptel-agent--task (creates subagent buffer)
+  - Run in hidden buffer (no buffer-local vars!)
+  - Session-id available via :context parameter
+      ↓
+Subagent calls gptel-request
+  - Advice chain runs again (recursive!)
+  - inject-session-context: finds session-id already in context
+  - capture-subagent-messages: wraps callback
+      ↓
+LLM streams responses
+  - Each chunk → jf/gptel--capture-subagent-messages
+  - Saves response-0.txt, response-1.txt, etc.
+  - Records tool calls
+      ↓
+Subagent completes
+  - jf/gptel--trace-agent-task callback fires
+  - Saves result.txt
+  - Marks trace as completed
+  - Updates metadata.json
+      ↓
+Main conversation continues
+  - Response shown to user
+  - Session auto-saved with full trace history
+#+end_example
+
+*** Directory Structure
+
+Each session creates a dedicated directory with the following structure:
+
+#+begin_example
+~/gptel-sessions/TIMESTAMP-MODEL/
+├── metadata.json          # Session metadata with conversation tree & trace array
+├── message-1.md           # User message
+├── response-1.md          # LLM response
+├── message-2.md           # Next user message
+├── response-2.md          # Next response
+└── traces/                # Subagent execution traces
+    ├── trace-0/           # First subagent (e.g., zettelkasten)
+    │   ├── metadata.json  # Trace-specific metadata (timestamps, messages, tools)
+    │   ├── prompt.txt     # Initial task given to subagent
+    │   ├── response-0.txt # First streaming response chunk
+    │   ├── response-1.txt # Second chunk
+    │   ├── response-N.txt # Subsequent chunks
+    │   └── result.txt     # Final result returned to parent
+    └── trace-1/           # Nested subagent (e.g., perplexity-researcher)
+        ├── metadata.json  # Links to parent via parent_trace_id
+        ├── prompt.txt
+        ├── response-0.txt
+        └── result.txt
+#+end_example
+
+*** Session Metadata Structure
+
+The main =metadata.json= contains:
+
+#+begin_src json
+{
+  "session_id": "20260117222122-0cfc",
+  "timestamp": "2026-01-17T22:21:22Z",
+  "backend": "Claude",
+  "model": "claude-sonnet-4-5-20250929",
+  "conversation_tree": {
+    "root": {
+      "children": ["message-1"],
+      "current": false
+    },
+    "message-1": {
+      "type": "message",
+      "file": "message-1.md",
+      "children": ["response-1"],
+      "parent": "root"
+    },
+    "response-1": {
+      "type": "response",
+      "file": "response-1.md",
+      "children": [],
+      "parent": "message-1"
+    }
+  },
+  "current_path": ["root", "message-1", "response-1"],
+  "agent_traces": [
+    {
+      "trace_id": "trace-0",
+      "agent_type": "zettelkasten",
+      "description": "Research Illinois capital",
+      "status": "completed",
+      "timestamp_start": "2026-01-17T22:21:38Z",
+      "timestamp_end": "2026-01-17T22:22:32Z",
+      "parent_trace_id": null,
+      "depth": 0,
+      "associated_nodes": ["message-1", "response-1"]
+    },
+    {
+      "trace_id": "trace-1",
+      "agent_type": "perplexity-researcher",
+      "description": "Research factual information",
+      "status": "completed",
+      "parent_trace_id": "trace-0",
+      "depth": 1,
+      "associated_nodes": ["message-1", "response-1"]
+    }
+  ]
+}
+#+end_src
+
+*** Trace Metadata Structure
+
+Each =traces/trace-N/metadata.json= contains:
+
+#+begin_src json
+{
+  "trace_id": "trace-0",
+  "messages": [
+    {
+      "id": "prompt.txt",
+      "file": "prompt.txt",
+      "timestamp": "2026-01-17T22:21:38Z",
+      "tokens": 0
+    },
+    {
+      "id": "response-0.txt",
+      "file": "response-0.txt",
+      "timestamp": "2026-01-17T22:21:41Z",
+      "tokens": 0
+    },
+    {
+      "id": "result.txt",
+      "file": "result.txt",
+      "timestamp": "2026-01-17T22:22:32Z",
+      "tokens": 0
+    }
+  ],
+  "tool_calls": [
+    {
+      "tool_name": "search_roam_nodes",
+      "args": {"query": "Illinois capital"},
+      "timestamp": "2026-01-17T22:21:45Z",
+      "result_preview": "No results found..."
+    }
+  ],
+  "total_tokens": 0
+}
+#+end_src
+
+*** How Subagent Capture Works
+
+The capture system uses three advice functions that intercept gptel and gptel-agent calls:
+
+**** 1. =jf/gptel--inject-session-context=
+- Runs FIRST (advice added last, runs first in chain)
+- Initializes session if needed
+- Injects session-id into =:context= parameter
+- For overlays (gptel-agent): stores session-id as overlay property
+- For plists: merges session-id into plist
+
+**** 2. =jf/gptel--capture-subagent-messages=
+- Runs SECOND (can now find session-id in context)
+- Wraps the callback to intercept responses
+- Saves streaming response chunks to =response-N.txt= files
+- Records tool calls with arguments
+- Handles different response types (strings, tool-calls, stream-end markers)
+
+**** 3. =jf/gptel--trace-agent-task=
+- Wraps =gptel-agent--task= to capture subagent lifecycle
+- Creates trace entry in global registry
+- Saves initial prompt to =prompt.txt=
+- Saves final result to =result.txt=
+- Marks trace as completed in metadata
+- Links trace to conversation nodes
+
+*** Context Passing Strategy
+
+To pass session-id across buffer boundaries (subagents run in hidden buffers):
+
+- *Problem*: Buffer-local variables don't transfer to subagent buffers
+- *Solution*: Global registry (=jf/gptel--session-registry=) indexed by session-id
+- *Challenge*: gptel-agent uses =:context= for UI overlay
+- *Solution*: Store session-id as overlay property (=jf/session-id=)
+  - gptel-agent gets its overlay intact
+  - We retrieve session-id via =overlay-get=
+  - No conflicts, both systems work
+
+*** Trace Hierarchy
+
+Traces support nesting:
+- =trace-0= has =parent_trace_id: null= and =depth: 0= (top-level)
+- =trace-1= has =parent_trace_id: "trace-0"= and =depth: 1= (nested)
+- =trace-2= could have =parent_trace_id: "trace-1"= and =depth: 2= (deeply nested)
+
+This allows reconstruction of the full subagent call chain.
+
+*** Associated Nodes
+
+Each trace links to the conversation nodes that triggered it:
+- =associated_nodes= contains message-id and response-id
+- Links trace activity to specific user prompts and LLM responses
+- Enables "show me what the subagent did for this response" queries
+
+*** Message Capture Details
+
+*Streaming responses*:
+- Each chunk saved as separate =response-N.txt= file
+- Numbered sequentially: =response-0.txt=, =response-1.txt=, etc.
+- Timestamps show real-time progression
+- Full conversation reconstructable by concatenating in order
+
+*Tool calls*:
+- Recorded in trace metadata =tool_calls= array
+- Includes tool name, arguments, timestamp
+- Result preview (first 200 chars) for quick inspection
+- Full results available via tool-specific logging
+
+*** Session Restoration
+
+When reopening a saved session:
+1. Load =metadata.json= to get conversation tree
+2. Load =agent_traces= array to get trace hierarchy
+3. Reconstruct conversation in buffer
+4. Trace files remain on disk for inspection
+5. UI for exploring traces (future work)
+
+*** Debugging
+
+The system includes extensive DEBUG logging:
+- "DEBUG inject-session-context" - Session-id injection
+- "DEBUG trace-agent-task" - Trace creation/completion
+- "DEBUG capture-subagent" - Message capture
+
+Check =*Messages*= buffer for trace flow visibility.
 
 ** Session Browser
 

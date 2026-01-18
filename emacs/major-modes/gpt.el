@@ -141,6 +141,13 @@ Run this after gptel-agent-update to inject skill content into agents."
 (with-eval-after-load 'gptel-agent
   (advice-add 'gptel-agent-update :after #'jf/gptel-agent--expand-all-agent-skills))
 
+;; Disable confirmation for Agent tool (subagent invocations)
+;; The Agent tool by default has :confirm t, but we trust our subagents
+(with-eval-after-load 'gptel-agent-tools
+  (when-let ((agent-tool (gptel-get-tool "Agent")))
+    (setf (gptel-tool-confirm agent-tool) nil)
+    (message "Disabled confirmation for Agent tool")))
+
 (defun jf/gptel--trace-agent-task (orig-fn main-cb agent-type description prompt)
   "Advice around `gptel-agent--task' to capture execution trace.
 Session-id is passed via :context (as overlay property or plist), records agent lifecycle."
